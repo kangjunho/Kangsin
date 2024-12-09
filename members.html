@@ -1,1 +1,78 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Members - Kang's Bioinformatics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .member-card {
+            margin: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .member-card img {
+            object-fit: cover;
+            height: 300px;
+        }
+        .member-card .card-body {
+            text-align: center;
+        }
+        .member-card .card-title {
+            font-size: 1.5rem;
+            color: #0056b3;
+        }
+        .member-card .card-text {
+            font-size: 0.9rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
+                Kang's Bioinformatics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="members.html">Members</a></li>
+                    <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
+                    <li class="nav-item"><a class="nav-link" href="e-learning.html">E-learning</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Members Section -->
+    <section class="py-5">
+        <div class="container">
+            <h1 class="text-center mb-4">Members</h1>
+            <div class="row justify-content-center">
+                <!-- Member Card -->
+                <div class="col-md-4">
+                    <div class="card member-card">
+                        <img src="https://dongsan.dsmc.or.kr:49870/data/doctor/%EC%97%B0%EA%B5%AC%EC%B2%98%20%EA%B0%95%EC%A4%80%ED%98%B8%20%EA%B5%90%EC%88%98.jpg" class="card-img-top" alt="Professor Kang Junho">
+                        <div class="card-body">
+                            <h5 class="card-title">Professor Kang Junho</h5>
+                            <p class="card-text">Head of Kang's Bioinformatics Lab<br>
+                                Specialized in bioinformatics and multi-omics analysis.
+                            </p>
+                            <a href="mailto:kang.bioinformatics@dsmc.or.kr" class="btn btn-primary">Contact</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
