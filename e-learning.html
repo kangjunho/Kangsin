@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-learning Resources</title>
+    <title>E-learning - Kang's Bioinformatics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.html">
+                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
                 Kang's Bioinformatics
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -30,21 +33,109 @@
     </nav>
 
     <!-- E-learning Section -->
-    <div class="container mt-5">
-        <h1 class="text-center">E-learning Resources</h1>
-        <p class="text-center">Explore educational resources and materials.</p>
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <h3>Lecture Videos</h3>
-                <p>Access video lectures covering various topics in bioinformatics.</p>
-                <a href="https://example.com/lecture-videos" class="btn btn-primary" target="_blank">Watch Now</a>
-            </div>
-            <div class="col-md-6">
-                <h3>Documentation & Tutorials</h3>
-                <p>Find detailed guides and tutorials for bioinformatics tools and analysis.</p>
-                <a href="https://example.com/tutorials" class="btn btn-primary" target="_blank">Explore Tutorials</a>
+    <section class="py-5">
+        <div class="container">
+            <h1 class="text-center mb-4">E-learning</h1>
+            <p class="text-center">Explore resources for Genomics, Transcriptomics, Epigenomics, Microbiomics, and Administrative tasks.</p>
+
+            <!-- Accordion for E-learning topics -->
+            <div class="accordion" id="eLearningAccordion">
+                <!-- Genomics -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="genomicsHeading">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#genomicsContent" aria-expanded="true" aria-controls="genomicsContent">
+                            Genomics
+                        </button>
+                    </h2>
+                    <div id="genomicsContent" class="accordion-collapse collapse show" aria-labelledby="genomicsHeading" data-bs-parent="#eLearningAccordion">
+                        <div class="accordion-body">
+                            <p>Learn about sequencing technologies, genome assembly, and annotation methods.</p>
+                            <ul>
+                                <li>Introduction to NGS platforms</li>
+                                <li>Genome assembly tools</li>
+                                <li>Functional annotation pipelines</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcriptomics -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="transcriptomicsHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#transcriptomicsContent" aria-expanded="false" aria-controls="transcriptomicsContent">
+                            Transcriptomics
+                        </button>
+                    </h2>
+                    <div id="transcriptomicsContent" class="accordion-collapse collapse" aria-labelledby="transcriptomicsHeading" data-bs-parent="#eLearningAccordion">
+                        <div class="accordion-body">
+                            <p>Explore RNA sequencing, differential expression analysis, and transcriptome reconstruction.</p>
+                            <ul>
+                                <li>RNA-seq preprocessing</li>
+                                <li>Differential expression analysis</li>
+                                <li>Transcript assembly and quantification</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Epigenomics -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="epigenomicsHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#epigenomicsContent" aria-expanded="false" aria-controls="epigenomicsContent">
+                            Epigenomics
+                        </button>
+                    </h2>
+                    <div id="epigenomicsContent" class="accordion-collapse collapse" aria-labelledby="epigenomicsHeading" data-bs-parent="#eLearningAccordion">
+                        <div class="accordion-body">
+                            <p>Understand DNA methylation, histone modification, and chromatin accessibility analysis.</p>
+                            <ul>
+                                <li>Introduction to epigenetic marks</li>
+                                <li>DNA methylation analysis tools</li>
+                                <li>Chromatin accessibility assays</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Microbiomics -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="microbiomicsHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#microbiomicsContent" aria-expanded="false" aria-controls="microbiomicsContent">
+                            Microbiomics
+                        </button>
+                    </h2>
+                    <div id="microbiomicsContent" class="accordion-collapse collapse" aria-labelledby="microbiomicsHeading" data-bs-parent="#eLearningAccordion">
+                        <div class="accordion-body">
+                            <p>Dive into metagenomics, microbial diversity analysis, and functional profiling.</p>
+                            <ul>
+                                <li>Microbial community composition</li>
+                                <li>Alpha and beta diversity metrics</li>
+                                <li>Functional annotation in microbiomes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 행정 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="administrativeHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#administrativeContent" aria-expanded="false" aria-controls="administrativeContent">
+                            행정
+                        </button>
+                    </h2>
+                    <div id="administrativeContent" class="accordion-collapse collapse" aria-labelledby="administrativeHeading" data-bs-parent="#eLearningAccordion">
+                        <div class="accordion-body">
+                            <p>Access administrative resources including documentation, workflow templates, and meeting schedules.</p>
+                            <ul>
+                                <li>Documentation guidelines</li>
+                                <li>Standard operating procedures</li>
+                                <li>Administrative forms and templates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 </body>
 </html>
