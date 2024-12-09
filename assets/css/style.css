@@ -44,3 +44,34 @@ section h3 {
     background-color: #007bff;
     border-color: #0056b3;
 }
+/* About Page Styles */
+h1 {
+    color: #007bff;
+    font-weight: bold;
+}
+
+img.rounded-circle {
+    border: 5px solid #007bff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+h4 {
+    margin-top: 20px;
+    color: #0056b3;
+}
+
+ul {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+ul li {
+    line-height: 1.8;
+}
+
+p {
+    line-height: 1.8;
+    color: #333;
+}
+
+
