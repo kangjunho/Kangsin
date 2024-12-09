@@ -6,7 +6,6 @@
     <title>Kang's Bioinformatics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 <body>
     <!-- Section 1: Navigation -->
@@ -40,16 +39,26 @@
         </div>
     </header>
 
-    <!-- Section 3: Main Image Carousel -->
-    <section id="main-carousel" class="text-center py-5">
-        <div class="container-fluid p-0">
-            <img src="assets/images/image1.jpg" alt="Bioinformatics Image 1" class="carousel-image full-width-image">
+    <!-- Section 3: Main Images -->
+    <section id="main-images" class="text-center py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <img src="assets/images/image1.jpg" alt="Bioinformatics Image 1" class="main-image">
+                </div>
+                <div class="col-md-4">
+                    <img src="assets/images/image2.jpg" alt="Bioinformatics Image 2" class="main-image">
+                </div>
+                <div class="col-md-4">
+                    <img src="assets/images/image3.jpg" alt="Bioinformatics Image 3" class="main-image">
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Section 4: About, Members, Contact -->
     <section class="text-center py-5">
-        <div class="container mt-5">
+        <div class="container">
             <div class="row">
                 <div class="col-md-4">
                     <h3>About</h3>
@@ -69,23 +78,5 @@
             </div>
         </div>
     </section>
-
-    <script>
-        // JavaScript for Main Image Carousel
-        const images = [
-            "assets/images/image1.jpg",
-            "assets/images/image2.jpg",
-            "assets/images/image3.jpg"
-        ];
-
-        let currentImageIndex = 0;
-
-        function changeImage() {
-            currentImageIndex = (currentImageIndex + 1) % images.length;
-            document.querySelector(".carousel-image").src = images[currentImageIndex];
-        }
-
-        setInterval(changeImage, 5000); // Change image every 5 seconds
-    </script>
 </body>
 </html>
