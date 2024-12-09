@@ -6,9 +6,10 @@
     <title>Kang's Bioinformatics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Section 1: Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.html">
@@ -31,7 +32,7 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Section 2: Hero Section -->
     <header class="bg-primary text-white text-center py-5">
         <div class="container">
             <h1>Kang's Bioinformatics</h1>
@@ -39,14 +40,14 @@
         </div>
     </header>
 
-    <!-- Main Image Section -->
-    <section class="text-center">
+    <!-- Section 3: Main Image Carousel -->
+    <section id="main-carousel" class="text-center py-5">
         <div class="container-fluid p-0">
-            <img src="assets/images/main-image.png" alt="Main Bioinformatics Image" class="full-width-image">
+            <img src="assets/images/image1.jpg" alt="Bioinformatics Image 1" class="carousel-image full-width-image">
         </div>
     </section>
 
-    <!-- Main Content -->
+    <!-- Section 4: About, Members, Contact -->
     <section class="text-center py-5">
         <div class="container mt-5">
             <div class="row">
@@ -68,5 +69,23 @@
             </div>
         </div>
     </section>
+
+    <script>
+        // JavaScript for Main Image Carousel
+        const images = [
+            "assets/images/image1.jpg",
+            "assets/images/image2.jpg",
+            "assets/images/image3.jpg"
+        ];
+
+        let currentImageIndex = 0;
+
+        function changeImage() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            document.querySelector(".carousel-image").src = images[currentImageIndex];
+        }
+
+        setInterval(changeImage, 5000); // Change image every 5 seconds
+    </script>
 </body>
 </html>
