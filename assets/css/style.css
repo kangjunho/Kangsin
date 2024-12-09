@@ -1,13 +1,44 @@
+/* 기본 폰트 스타일 */
 body {
     font-family: Arial, sans-serif;
 }
 
+/* 헤더 스타일 */
 header {
     background: linear-gradient(90deg, #007bff, #0056b3);
     color: white;
     padding: 50px 0;
 }
 
+/* 네비게이션 로고 이미지 스타일 */
 .navbar-brand img {
     margin-right: 10px;
+    width: 80px; /* 로고 너비 설정 */
+    height: auto; /* 비율 유지 */
+}
+
+/* 화면 가로를 가득 채우는 메인 이미지 */
+.full-width-image {
+    width: 100%; /* 화면 가로를 가득 채움 */
+    height: auto; /* 비율을 유지하며 높이를 조정 */
+    display: block; /* 불필요한 여백 제거 */
+    object-fit: cover; /* 이미지가 잘리더라도 화면을 채움 */
+}
+
+/* About, Members, Contact 섹션 타이틀 스타일 */
+section h3 {
+    font-size: 1.5rem;
+    margin-top: 20px;
+    color: #007bff;
+}
+
+/* 버튼 스타일 */
+.btn-primary {
+    background-color: #0056b3;
+    border-color: #004494;
+}
+
+.btn-primary:hover {
+    background-color: #007bff;
+    border-color: #0056b3;
 }
