@@ -17,12 +17,14 @@ header {
     height: auto; /* 비율 유지 */
 }
 
-/* 메인 이미지 */
-.full-width-image {
-    width: 100%; /* 화면 가로를 가득 채움 */
+/* 메인 이미지 스타일 */
+.main-image {
+    width: 100%; /* 이미지가 칸을 채움 */
     height: auto; /* 비율 유지 */
-    display: block;
-    object-fit: cover;
+    border: 5px solid #007bff; /* 테두리 추가 */
+    border-radius: 10px; /* 테두리 둥글게 */
+    margin-bottom: 15px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
 }
 
 /* About, Members, Contact 섹션 타이틀 */
