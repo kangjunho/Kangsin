@@ -1,1 +1,93 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - Kang's Bioinformatics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Map container */
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+
+        /* Contact Info Section */
+        .contact-info {
+            background-color: #0056b3;
+            color: white;
+            padding: 20px;
+        }
+
+        .contact-info h5, .contact-info p {
+            margin: 5px 0;
+        }
+
+        .contact-info p {
+            font-size: 0.9rem;
+        }
+
+        .contact-info a {
+            color: #ffd700;
+        }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBywte5-MoOZUeQq_h2nv9mvht3lpclV7o"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
+                Kang's Bioinformatics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
+                    <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
+                    <li class="nav-item"><a class="nav-link" href="e-learning.html">E-learning</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Section -->
+    <section class="py-5">
+        <div class="container">
+            <h1 class="text-center mb-4">Contact</h1>
+            <div id="map"></div>
+            <div class="contact-info mt-4 text-center">
+                <h5>계명대학교 의과대학</h5>
+                <p>1095 Dalgubeol-daero, Dalseo-gu, Daegu 42601, Republic of Korea</p>
+                <p><strong>Office:</strong> +82-53-258-6749</p>
+                <p><strong>Mobile:</strong> +82-10-6740-6399</p>
+                <p><strong>Email:</strong> <a href="mailto:kang.bioinformatics@dsmc.or.kr">kang.bioinformatics@dsmc.or.kr</a></p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function initMap() {
+            const location = { lat: 35.856171, lng: 128.491489 }; // 계명대학교 의과대학 좌표
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 16,
+                center: location,
+            });
+            const marker = new google.maps.Marker({
+                position: location,
+                map: map,
+            });
+        }
+
+        // Initialize the map
+        window.onload = initMap;
+    </script>
+</body>
+</html>
