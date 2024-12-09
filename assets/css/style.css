@@ -17,15 +17,15 @@ header {
     height: auto; /* 비율 유지 */
 }
 
-/* 화면 가로를 가득 채우는 메인 이미지 */
+/* 메인 이미지 */
 .full-width-image {
     width: 100%; /* 화면 가로를 가득 채움 */
-    height: auto; /* 비율을 유지하며 높이를 조정 */
-    display: block; /* 불필요한 여백 제거 */
-    object-fit: cover; /* 이미지가 잘리더라도 화면을 채움 */
+    height: auto; /* 비율 유지 */
+    display: block;
+    object-fit: cover;
 }
 
-/* About, Members, Contact 섹션 타이틀 스타일 */
+/* About, Members, Contact 섹션 타이틀 */
 section h3 {
     font-size: 1.5rem;
     margin-top: 20px;
