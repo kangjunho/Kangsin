@@ -106,3 +106,24 @@ table {
 .table-hover tbody tr:hover {
     background-color: #f1f1f1;
 }
+
+/* E-learning Section Styles */
+.accordion-button {
+    font-weight: bold;
+    color: #0056b3;
+    background-color: #f8f9fa;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #0056b3;
+    color: white;
+}
+
+.accordion-body ul {
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+.accordion-body li {
+    margin-bottom: 10px;
+}
