@@ -6,9 +6,49 @@
     <title>Kang's Bioinformatics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* 메인 이미지 카드 스타일 */
+        .main-card {
+            margin: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-card img {
+            object-fit: cover;
+            height: 200px;
+            width: 100%;
+        }
+
+        .main-card .card-body {
+            text-align: center;
+        }
+
+        .main-card .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0056b3;
+        }
+
+        .main-card .card-text {
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        /* 메인 헤더 텍스트 수정 */
+        header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #e0e0e0;
+        }
+    </style>
 </head>
 <body>
-    <!-- Section 1: Navigation -->
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.html">
@@ -39,41 +79,39 @@
         </div>
     </header>
 
-    <!-- Section 3: Main Images -->
-    <section id="main-images" class="text-center py-5">
+    <!-- Section 3: Main Image Cards -->
+    <section id="main-images" class="py-5">
         <div class="container">
             <div class="row">
+                <!-- Card 1: 연구클리닉 -->
                 <div class="col-md-4">
-                    <img src="assets/images/image1.jpg" alt="Bioinformatics Image 1" class="main-image">
+                    <div class="card main-card">
+                        <img src="assets/images/research_clinic.jpg" class="card-img-top" alt="Research Clinic">
+                        <div class="card-body">
+                            <h5 class="card-title">연구클리닉</h5>
+                            <p class="card-text">Explore research clinics focusing on multi-disciplinary approaches to medical science.</p>
+                        </div>
+                    </div>
                 </div>
+                <!-- Card 2: E-learning -->
                 <div class="col-md-4">
-                    <img src="assets/images/image2.jpg" alt="Bioinformatics Image 2" class="main-image">
+                    <div class="card main-card">
+                        <img src="assets/images/e_learning.jpg" class="card-img-top" alt="E-learning">
+                        <div class="card-body">
+                            <h5 class="card-title">E-learning</h5>
+                            <p class="card-text">Access online resources for bioinformatics, genomics, and computational biology.</p>
+                        </div>
+                    </div>
                 </div>
+                <!-- Card 3: Bioinformatics analysis -->
                 <div class="col-md-4">
-                    <img src="assets/images/image3.jpg" alt="Bioinformatics Image 3" class="main-image">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 4: About, Members, Contact -->
-    <section class="text-center py-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h3>About</h3>
-                    <p>Learn about our goals and research topics.</p>
-                    <a href="about.html" class="btn btn-primary">Learn More</a>
-                </div>
-                <div class="col-md-4">
-                    <h3>Members</h3>
-                    <p>Meet our lab members.</p>
-                    <a href="members.html" class="btn btn-primary">View Members</a>
-                </div>
-                <div class="col-md-4">
-                    <h3>Contact</h3>
-                    <p>Get in touch with us.</p>
-                    <a href="contact.html" class="btn btn-primary">Contact Us</a>
+                    <div class="card main-card">
+                        <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
+                        <div class="card-body">
+                            <h5 class="card-title">Bioinformatics Analysis</h5>
+                            <p class="card-text">Leverage cutting-edge bioinformatics tools for genomics and transcriptomics analysis.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
