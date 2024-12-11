@@ -11,6 +11,7 @@
         .main-card {
             margin: 20px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
         }
 
         .main-card img {
@@ -44,6 +45,16 @@
         header p {
             font-size: 1.2rem;
             color: #e0e0e0;
+        }
+
+        /* Footer 스타일 */
+        footer {
+            border-top: 2px solid #333;
+            margin-top: 50px;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #777;
         }
     </style>
 </head>
@@ -85,25 +96,29 @@
             <div class="row">
                 <!-- Card 1: 연구클리닉 -->
                 <div class="col-md-4">
-                    <div class="card main-card">
-                        <img src="assets/images/research_clinic.jpg" class="card-img-top" alt="Research Clinic">
-                        <div class="card-body">
-                            <h5 class="card-title">연구클리닉</h5>
-                            <p class="card-text">Explore research clinics focusing on multi-disciplinary approaches to medical science.</p>
+                    <a href="https://www.dsmc.or.kr:49848/content/01dsmc/14_0103.php" target="_blank">
+                        <div class="card main-card">
+                            <img src="assets/images/research_clinic.jpg" class="card-img-top" alt="Research Clinic">
+                            <div class="card-body">
+                                <h5 class="card-title">연구클리닉</h5>
+                                <p class="card-text">Explore research clinics focusing on multi-disciplinary approaches to medical science.</p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <!-- Card 2: E-learning -->
                 <div class="col-md-4">
-                    <div class="card main-card">
-                        <img src="assets/images/e_learning.jpg" class="card-img-top" alt="E-learning">
-                        <div class="card-body">
-                            <h5 class="card-title">E-learning</h5>
-                            <p class="card-text">Access online resources for bioinformatics, genomics, and computational biology.</p>
+                    <a href="e-learning.html">
+                        <div class="card main-card">
+                            <img src="assets/images/e_learning.jpg" class="card-img-top" alt="E-learning">
+                            <div class="card-body">
+                                <h5 class="card-title">E-learning</h5>
+                                <p class="card-text">Access online resources for bioinformatics, genomics, and computational biology.</p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
-                <!-- Card 3: Bioinformatics analysis -->
+                <!-- Card 3: Bioinformatics Analysis -->
                 <div class="col-md-4">
                     <div class="card main-card">
                         <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
@@ -116,5 +131,10 @@
             </div>
         </div>
     </section>
+
+    <!-- Footer Section -->
+    <footer>
+        &copy; 2024 Kang's Bioinformatics Lab. All rights reserved.
+    </footer>
 </body>
 </html>
