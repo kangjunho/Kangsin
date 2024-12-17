@@ -22,8 +22,15 @@
             object-fit: cover;
         }
 
+        /* 탭 버튼 수정: 파란색 배경에서도 글자가 잘 보이도록 */
+        .nav-pills .nav-link {
+            color: #0056b3; /* 글자 색상 */
+            font-weight: bold;
+        }
+
         .nav-pills .nav-link.active {
-            background-color: #0056b3;
+            background-color: #0056b3; /* 파란색 배경 */
+            color: white; /* 글자를 흰색으로 설정 */
         }
     </style>
 </head>
@@ -72,7 +79,7 @@
                         <!-- 이론 -->
                         <div class="col-md-6">
                             <div class="card">
-                                <img src="assets/images/genomics_theory.jpg" class="card-img-top" alt="Genomics Theory">
+                                <img src="https://clpmag.com/wp-content/uploads/2018/07/photo-genome-dreamstime_m_107904160-1280x640.jpg" class="card-img-top" alt="Genomics Theory">
                                 <div class="card-body">
                                     <h5 class="card-title">Genomics Theory</h5>
                                     <p class="card-text">Explore sequencing technologies, genome assembly, and annotation methods.</p>
@@ -83,7 +90,7 @@
                         <!-- 데이터 분석 -->
                         <div class="col-md-6">
                             <div class="card">
-                                <img src="assets/images/genomics_analysis.jpg" class="card-img-top" alt="Genomics Analysis">
+                                <img src="https://i0.wp.com/acecloud.ai/wp-content/uploads/2024/04/image-1.png?resize=850%2C627&ssl=1" class="card-img-top" alt="Genomics Analysis">
                                 <div class="card-body">
                                     <h5 class="card-title">Genomics Data Analysis</h5>
                                     <p class="card-text">Learn to analyze NGS data, genome assembly tools, and pipelines.</p>
@@ -96,40 +103,17 @@
 
                 <!-- Transcriptomics -->
                 <div class="tab-pane fade" id="transcriptomics" role="tabpanel">
-                    <div class="row">
-                        <!-- 이론 -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <img src="assets/images/transcriptomics_theory.jpg" class="card-img-top" alt="Transcriptomics Theory">
-                                <div class="card-body">
-                                    <h5 class="card-title">Transcriptomics Theory</h5>
-                                    <p class="card-text">Understand RNA-seq, transcriptome reconstruction, and differential expression analysis.</p>
-                                    <a href="transcriptomics_theory.html" class="btn btn-primary">Learn More</a>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- 데이터 분석 -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <img src="assets/images/transcriptomics_analysis.jpg" class="card-img-top" alt="Transcriptomics Analysis">
-                                <div class="card-body">
-                                    <h5 class="card-title">Transcriptomics Data Analysis</h5>
-                                    <p class="card-text">Analyze RNA-seq data, quantify gene expression, and visualize results.</p>
-                                    <a href="transcriptomics_analysis.html" class="btn btn-primary">Learn More</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <p>Transcriptomics 콘텐츠 예시...</p>
                 </div>
 
                 <!-- Epigenomics -->
                 <div class="tab-pane fade" id="epigenomics" role="tabpanel">
-                    <p>Epigenomics 콘텐츠 예시가 여기에 들어갑니다...</p>
+                    <p>Epigenomics 콘텐츠 예시...</p>
                 </div>
 
                 <!-- Microbiomics -->
                 <div class="tab-pane fade" id="microbiomics" role="tabpanel">
-                    <p>Microbiomics 콘텐츠 예시가 여기에 들어갑니다...</p>
+                    <p>Microbiomics 콘텐츠 예시...</p>
                 </div>
             </div>
         </div>
