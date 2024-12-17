@@ -6,14 +6,33 @@
     <title>E-learning - Kang's Bioinformatics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <style>
+        .tab-content .card {
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .tab-content .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tab-content .card img {
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.html">
-                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
+                <img src="assets/images/logo.png" alt="Logo" style="width: 80px;" class="d-inline-block align-text-top">
                 Kang's Bioinformatics
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -24,7 +43,6 @@
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
-                    <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
                     <li class="nav-item"><a class="nav-link active" href="e-learning.html">E-learning</a></li>
                     <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
                 </ul>
@@ -36,106 +54,87 @@
     <section class="py-5">
         <div class="container">
             <h1 class="text-center mb-4">E-learning</h1>
-            <p class="text-center">Explore resources for Genomics, Transcriptomics, Epigenomics, Microbiomics, and Administrative tasks.</p>
+            <p class="text-center">Explore resources for Genomics, Transcriptomics, Epigenomics, and Microbiomics.</p>
 
-            <!-- Accordion for E-learning topics -->
-            <div class="accordion" id="eLearningAccordion">
+            <!-- Tabs -->
+            <ul class="nav nav-pills mb-4 justify-content-center" id="eLearningTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#genomics" type="button">Genomics</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#transcriptomics" type="button">Transcriptomics</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#epigenomics" type="button">Epigenomics</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#microbiomics" type="button">Microbiomics</button></li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
                 <!-- Genomics -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="genomicsHeading">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#genomicsContent" aria-expanded="true" aria-controls="genomicsContent">
-                            Genomics
-                        </button>
-                    </h2>
-                    <div id="genomicsContent" class="accordion-collapse collapse show" aria-labelledby="genomicsHeading" data-bs-parent="#eLearningAccordion">
-                        <div class="accordion-body">
-                            <p>Learn about sequencing technologies, genome assembly, and annotation methods.</p>
-                            <ul>
-                                <li>Introduction to NGS platforms</li>
-                                <li>Genome assembly tools</li>
-                                <li>Functional annotation pipelines</li>
-                            </ul>
+                <div class="tab-pane fade show active" id="genomics" role="tabpanel">
+                    <div class="row">
+                        <!-- 이론 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <img src="assets/images/genomics_theory.jpg" class="card-img-top" alt="Genomics Theory">
+                                <div class="card-body">
+                                    <h5 class="card-title">Genomics Theory</h5>
+                                    <p class="card-text">Explore sequencing technologies, genome assembly, and annotation methods.</p>
+                                    <a href="genomics_theory.html" class="btn btn-primary">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 데이터 분석 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <img src="assets/images/genomics_analysis.jpg" class="card-img-top" alt="Genomics Analysis">
+                                <div class="card-body">
+                                    <h5 class="card-title">Genomics Data Analysis</h5>
+                                    <p class="card-text">Learn to analyze NGS data, genome assembly tools, and pipelines.</p>
+                                    <a href="genomics_analysis.html" class="btn btn-primary">Learn More</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Transcriptomics -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="transcriptomicsHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#transcriptomicsContent" aria-expanded="false" aria-controls="transcriptomicsContent">
-                            Transcriptomics
-                        </button>
-                    </h2>
-                    <div id="transcriptomicsContent" class="accordion-collapse collapse" aria-labelledby="transcriptomicsHeading" data-bs-parent="#eLearningAccordion">
-                        <div class="accordion-body">
-                            <p>Explore RNA sequencing, differential expression analysis, and transcriptome reconstruction.</p>
-                            <ul>
-                                <li>RNA-seq preprocessing</li>
-                                <li>Differential expression analysis</li>
-                                <li>Transcript assembly and quantification</li>
-                            </ul>
+                <div class="tab-pane fade" id="transcriptomics" role="tabpanel">
+                    <div class="row">
+                        <!-- 이론 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <img src="assets/images/transcriptomics_theory.jpg" class="card-img-top" alt="Transcriptomics Theory">
+                                <div class="card-body">
+                                    <h5 class="card-title">Transcriptomics Theory</h5>
+                                    <p class="card-text">Understand RNA-seq, transcriptome reconstruction, and differential expression analysis.</p>
+                                    <a href="transcriptomics_theory.html" class="btn btn-primary">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 데이터 분석 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <img src="assets/images/transcriptomics_analysis.jpg" class="card-img-top" alt="Transcriptomics Analysis">
+                                <div class="card-body">
+                                    <h5 class="card-title">Transcriptomics Data Analysis</h5>
+                                    <p class="card-text">Analyze RNA-seq data, quantify gene expression, and visualize results.</p>
+                                    <a href="transcriptomics_analysis.html" class="btn btn-primary">Learn More</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Epigenomics -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="epigenomicsHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#epigenomicsContent" aria-expanded="false" aria-controls="epigenomicsContent">
-                            Epigenomics
-                        </button>
-                    </h2>
-                    <div id="epigenomicsContent" class="accordion-collapse collapse" aria-labelledby="epigenomicsHeading" data-bs-parent="#eLearningAccordion">
-                        <div class="accordion-body">
-                            <p>Understand DNA methylation, histone modification, and chromatin accessibility analysis.</p>
-                            <ul>
-                                <li>Introduction to epigenetic marks</li>
-                                <li>DNA methylation analysis tools</li>
-                                <li>Chromatin accessibility assays</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="tab-pane fade" id="epigenomics" role="tabpanel">
+                    <p>Epigenomics 콘텐츠 예시가 여기에 들어갑니다...</p>
                 </div>
 
                 <!-- Microbiomics -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="microbiomicsHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#microbiomicsContent" aria-expanded="false" aria-controls="microbiomicsContent">
-                            Microbiomics
-                        </button>
-                    </h2>
-                    <div id="microbiomicsContent" class="accordion-collapse collapse" aria-labelledby="microbiomicsHeading" data-bs-parent="#eLearningAccordion">
-                        <div class="accordion-body">
-                            <p>Dive into metagenomics, microbial diversity analysis, and functional profiling.</p>
-                            <ul>
-                                <li>Microbial community composition</li>
-                                <li>Alpha and beta diversity metrics</li>
-                                <li>Functional annotation in microbiomes</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 행정 -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="administrativeHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#administrativeContent" aria-expanded="false" aria-controls="administrativeContent">
-                            행정
-                        </button>
-                    </h2>
-                    <div id="administrativeContent" class="accordion-collapse collapse" aria-labelledby="administrativeHeading" data-bs-parent="#eLearningAccordion">
-                        <div class="accordion-body">
-                            <p>Access administrative resources including documentation, workflow templates, and meeting schedules.</p>
-                            <ul>
-                                <li>Documentation guidelines</li>
-                                <li>Standard operating procedures</li>
-                                <li>Administrative forms and templates</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="tab-pane fade" id="microbiomics" role="tabpanel">
+                    <p>Microbiomics 콘텐츠 예시가 여기에 들어갑니다...</p>
                 </div>
             </div>
         </div>
     </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
