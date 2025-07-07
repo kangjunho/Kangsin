@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Highlighted Publications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+        }
+        ul {
+            line-height: 1.8;
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .section {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Highlighted Publications</h1>
+
+    <div class="section">
+        <h2>1. Currently Published Papers</h2>
+        <ul>
+            <li>Integrative Genomic and Transcriptomic Analysis in Acute Interstitial Pneumonia (IF = 5.31)</li>
+            <li>Periostin in Bronchiolitis Obliterans Syndrome after Lung Transplant (IF = 5.6)</li>
+            <li>Comparison of genetic and epigenetic profiles of periodontitis according to the presence of type 2 diabetes (IF = 10.7)</li>
+            <li>Uncovering NK cell sabotage in gut diseases via single cell transcriptomics (IF = 3.24)</li>
+            <li>Time-dependent reduction of somatic variants in lichen striatus as evidence for the clearance of mutated skin cells (IF = 13.8)</li>
+            <li>Association of Fc gamma-binding protein rs1464897604 polymorphism with bronchiolitis obliterans syndrome in lung transplant recipients (IF = 7.5)</li>
+            <li>Cytokine-Related Genes and Inflammatory Profiles as Potential Biomarkers in Major Depressive Disorder</li>
+            <li>Profiling Cytokines According to the Presence or Absence of Small-For-Gestational Age Using Amniotic Fluid Retrieved During Cesarean Section From Pregnant Women With Early-Onset Preeclampsia</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>2. Under Revision</h2>
+        <ul>
+            <li>Colorectal Cancer - MedComm (IF = 10.7)</li>
+            <li>Low-dose Radiation - Environment Research (IF = 7.7)</li>
+            <li>Depression - Scientific Reports (IF = 3.9)</li>
+            <li>ROP - American Journal of Ophthalmology (IF = 4.3)</li>
+            <li>Breast Cancer - Journal of Breast Cancer (IF = 2.4)</li>
+            <li>Thyroid Cancer - Thyroid (IF = 6.7)</li>
+            <li>Western Diet-induced Visceral Adipose Tissue Inflammation Promotes Alzheimer's Disease Pathology via Microglial Activation in a Mouse Model</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>3. Ongoing Projects / In Progress</h2>
+        <ul>
+            <li>Colorectal cancer RT response prediction study</li>
+            <li>Colorectal cancer microbiome analysis based on dietary patterns</li>
+            <li>Transcriptomic profiling of periodontitis</li>
+            <li>Spatial transcriptomics in colorectal cancer: CAF changes in RT-responsive regions</li>
+            <li>Ovarian cancer single-cell study</li>
+            <li>WES of COVID-19 lung transplant patients</li>
+            <li>Transcriptomic analysis in CLAD and SCT BO (Project)</li>
+            <li>구개유합에 영향을 미치는 유전인자 발굴을 통한 산전진단법 개발 (Project)</li>
+        </ul>
+    </div>
+
+</body>
+</html>
