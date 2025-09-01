@@ -10,40 +10,65 @@
     pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
     .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
     code { white-space: pre; }
+    .note { font-size: .95rem; color:#444; }
   </style>
 </head>
 <body>
   <div class="container py-5">
     <h1 class="mb-3">Step 02. Adapter Trimming (Cutadapt)</h1>
-    <p class="lead">페어드-엔드 FASTQ(`*_R1.fastq.gz`, `*_R2.fastq.gz`)를 <b>20 threads</b>로 트리밍하고,
-      결과를 <code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq</code>에 저장합니다.</p>
-
+    <p class="lead">
+      페어드엔드 FASTQ(<code>R1</code>/<code>R2</code>)에서 Illumina 어댑터 서열을 제거합니다. 기본 쓰레드는 <b>20</b>을 사용합니다.
+      자세한 사용법은 공식 문서(<a href="https://cutadapt.readthedocs.io/en/stable/" target="_blank" rel="noopener">Cutadapt User Guide</a>)를 참고하세요.
+    </p>
     <hr/>
 
-    <h3>1) Prerequisites</h3>
-    <ul>
-      <li>Conda 환경: <code>wgs_env</code> (cutadapt 설치됨)</li>
-      <li>입력 파일 규칙: <code>SAMPLE_R1.fastq.gz</code>, <code>SAMPLE_R2.fastq.gz</code></li>
-    </ul>
-
+    <h3>0) 시작하기 전에</h3>
+    <p class="note">Conda 환경을 활성화하면 터미널 프롬프트 앞에 보통 <code>(wgs_env)</code>처럼 환경명이 표시됩니다.</p>
     <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# 환경 활성화
+# Conda 환경 활성화
 conda activate wgs_env
 
-# (선택) cutadapt 버전 확인
-cutadapt --version
+# 프롬프트 예시 (환경명이 괄호로 표시됨)
+# (wgs_env) kang@host:~/path/to/fastq$
 </code></pre>
 
-    <h3 class="mt-4">2) 어댑터 서열</h3>
-    <p>일반 Illumina TruSeq 계열 기본 어댑터를 사용합니다.</p>
+    <h3 class="mt-4">1) 입력 데이터 & 어댑터 서열</h3>
+    <ul>
+      <li><b>페어드엔드(PE)</b> 샘플은 파일이 2개로 구성됩니다: <code>SAMPLE_R1.fastq.gz</code> (Forward/Read1), <code>SAMPLE_R2.fastq.gz</code> (Reverse/Read2).</li>
+      <li>일반적인 Illumina TruSeq 어댑터:
+        <ul>
+          <li>R1 어댑터(Forward): <code>AGATCGGAAGAGCACACGTCTGAACTCCAGTCA</code></li>
+          <li>R2 어댑터(Reverse): <code>AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT</code></li>
+        </ul>
+      </li>
+    </ul>
+
+    <p class="note">원한다면 압축 FASTQ에서 직접 어댑터 서열이 보이는지 간단히 확인할 수 있습니다(빠른 스폿 체크).</p>
     <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# R1에서 Forward 어댑터 검색 (gzip 압축 파일에 안전한 zgrep 사용)
+zgrep -a 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCA' sample1_1.fastq.gz | head
+
+# R2에서 Reverse 어댑터 검색
+zgrep -a 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' sample1_2.fastq.gz | head
+
+# 또는 대화형으로 보고 싶다면:
+# zless sample1_1.fastq.gz   # 열고 나서 /AGATCGG... 로 검색
+</code></pre>
+
+    <h3 class="mt-4">2) 변수 설정</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 공통 변수
+THREADS=20
+OUTDIR="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
+mkdir -p "${OUTDIR}"
+
+# 어댑터 서열
 ADAPTER_FWD="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
 ADAPTER_REV="AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
 </code></pre>
 
     <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_cutadapt.sh</code>)</h3>
-    <p>현재 디렉토리의 모든 페어를 찾아 일괄 처리합니다.</p>
-
+    <p class="note">현재 폴더의 <code>*_R1.fastq.gz</code>를 기준으로 페어(R2)를 찾아 일괄 처리합니다.</p>
     <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
 #!/usr/bin/env bash
 set -euo pipefail
@@ -55,14 +80,13 @@ mkdir -p "${OUTDIR}"
 ADAPTER_FWD="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
 ADAPTER_REV="AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
 
-# 현재 폴더의 *_R1.fastq.gz 기준으로 반복
 shopt -s nullglob
 for R1 in *_R1.fastq.gz; do
   SAMPLE="$(basename "${R1}" _R1.fastq.gz)"
   R2="${SAMPLE}_R2.fastq.gz"
 
   if [[ ! -f "${R2}" ]]; then
-    echo "[WARN] ${SAMPLE}: R2 파일을 찾을 수 없습니다. 건너뜁니다." >&2
+    echo "[WARN] ${SAMPLE}: paired R2 not found. Skip." >&2
     continue
   fi
 
@@ -83,39 +107,36 @@ echo "All trimming jobs finished. Output: ${OUTDIR}"
 # 트리밍할 FASTQ들이 있는 폴더로 이동
 cd /path/to/fastq_folder
 
-# 실행 권한 부여 및 실행
+# (wgs_env) 프롬프트 확인 후 실행
 chmod +x run_cutadapt.sh
 bash run_cutadapt.sh
 </code></pre>
 
     <h3 class="mt-4">5) 출력물</h3>
     <ul>
-      <li><code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/SAMPLE_R1.trimmed.fastq.gz</code></li>
-      <li><code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/SAMPLE_R2.trimmed.fastq.gz</code></li>
+      <li><code>${OUTDIR}/SAMPLE_R1.trimmed.fastq.gz</code></li>
+      <li><code>${OUTDIR}/SAMPLE_R2.trimmed.fastq.gz</code></li>
     </ul>
 
-    <h3 class="mt-4">6) (옵션) 로그 저장</h3>
-    <p>각 샘플별 cutadapt 리포트를 파일로 남기고 싶다면 아래처럼 리다이렉션을 추가하세요.</p>
+    <h3 class="mt-4">6) (옵션) 로그 저장 & 품질/길이 필터</h3>
     <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# cutadapt 호출부만 이렇게 바꾸기 (위 스크립트 내부)
+# 로그 저장 예시: 각 샘플의 실행 리포트를 파일로 남김
 cutadapt -j "${THREADS}" \
   -a "${ADAPTER_FWD}" -A "${ADAPTER_REV}" \
   -o "${OUTDIR}/${SAMPLE}_R1.trimmed.fastq.gz" \
   -p "${OUTDIR}/${SAMPLE}_R2.trimmed.fastq.gz" \
-  "${R1}" "${R2}" \
-  > "${OUTDIR}/${SAMPLE}.cutadapt.log" 2>&1
-</code></pre>
+  "${R1}" "${R2}" > "${OUTDIR}/${SAMPLE}.cutadapt.log" 2>&1
 
-    <h3 class="mt-4">7) Troubleshooting</h3>
-    <ul>
-      <li><b>파일명이 규칙과 다름</b> → 스크립트의 패턴(<code>*_R1.fastq.gz</code>)을 실제 이름에 맞게 수정.</li>
-      <li><b>어댑터가 다름</b> → <code>ADAPTER_FWD/REV</code>를 키트에 맞게 교체.</li>
-      <li><b>속도</b> → <code>THREADS=20</code>은 고정 권장. I/O 병목이면 SSD 경로 사용.</li>
-    </ul>
+# (선택) 추가 옵션 예시
+# -q 20 : Q20 미만의 말단 염기 트리밍
+# -m 30 : 길이 30bp 미만 리드는 버림
+# 예) cutadapt ... -q 20 -m 30 ...
+</code></pre>
 
     <div class="mt-4">
       <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
       <a class="btn btn-primary" href="03_alignment.html">Next: Alignment →</a>
+      <a class="btn btn-link" href="https://cutadapt.readthedocs.io/en/stable/" target="_blank" rel="noopener">Cutadapt User Guide ↗</a>
     </div>
   </div>
 
