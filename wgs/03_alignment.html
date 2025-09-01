@@ -3,139 +3,239 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>03. Alignment (BWA MEM) & BAM Processing</title>
+  <title>03. Alignment (BWA + Samtools)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/css/style.css" />
   <style>
-    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
-    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
+    pre { position: relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
     code { white-space: pre; }
+    .note { color:#444; }
+    .tip-card { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip-title { font-weight:700; color:#0d6efd; }
   </style>
 </head>
 <body>
-  <div class="container py-5">
-    <h1 class="mb-3">Step 03. Alignment (BWA MEM) & BAM Processing</h1>
-    <p class="lead">
-      <b>bwa mem</b>으로 정렬 후 <b>samtools</b>로 BAM 변환·정렬·인덱싱을 수행합니다. 기본 쓰레드는 <b>20</b>으로 고정합니다.
-    </p>
+<div class="container py-5">
+  <h1 class="mb-3">Step 03. Alignment (BWA + Samtools)</h1>
+  <p class="lead">
+    트리밍된 페어드엔드 FASTQ를 <b>BWA</b>로 레퍼런스에 정렬하고, <b>samtools</b>로 즉시 BAM 정렬/인덱싱까지 진행합니다.
+    기본 쓰레드는 <b>20</b>을 사용합니다.
+  </p>
+  <hr/>
 
-    <hr/>
+  <!-- 0) 개요 -->
+  <h3>0) 왜 BWA-MEME인가?</h3>
+  <div class="card tip-card mb-3">
+    <div class="card-body">
+      <div class="tip-title mb-2">BWA 계열의 현재 권장 흐름</div>
+      <ul class="mb-2">
+        <li><b>BWA-MEM</b>: 오랫동안 표준으로 쓰인 전통 구현(정확도/호환성 우수).</li>
+        <li><b>BWA-MEM2</b>: MEM의 드롭인 교체. 같은 결과를 더 빠르게(보통 1.5–2×, 데이터/환경에 따라 차이).</li>
+        <li><b>BWA-MEME</b>: 최근 최적화된 MEM 계열. 대규모 WGS에서 처리량 향상을 목표로 하며 MEM/MEM2와 유사한 사용 감각.</li>
+      </ul>
+      <p class="mb-0">
+        실무에선 <b>속도와 호환성</b>을 모두 고려해 <b>MEM2 또는 MEME</b>를 우선 고려하고,
+        환경에 없는 경우 <b>MEM</b>을 사용합니다. (동일 옵션/동일 RG를 쓰면 파이프라인 호환성이 좋습니다.)
+      </p>
+    </div>
+  </div>
 
-    <h3>1) Prerequisites</h3>
-    <ul>
-      <li>Conda 환경 <code>wgs_env</code> 활성화 (bwa, samtools 포함)</li>
-      <li>트리밍 결과: <code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/*_R1.trimmed.fastq.gz</code></li>
-      <li>레퍼런스: <code>/home/kang/raw_data/gatk_bundle/Homo_sapiens_assembly38.fasta</code> (+ <code>.fai</code>, <code>.dict</code> 완료)</li>
-      <li>출력 폴더: <code>/media/kang/easystore1/denti/sam</code></li>
-    </ul>
+  <!-- 1) BWA 변종 비교 -->
+  <h3>1) BWA 변종/옵션 간단 비교</h3>
+  <div class="table-responsive mb-3">
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>이름</th><th>명령 예</th><th>특징</th><th>권장 용도</th><th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>BWA-aln/samse/sampe</b></td>
+          <td><code>bwa aln / sampe</code></td>
+          <td>구세대 알고리즘(짧은 리드에 최적). 최신 WGS에는 비권장.</td>
+          <td>매우 짧은 리드(≤50bp)나 레거시 데이터</td>
+          <td>현대 WGS에서는 사용 드묾</td>
+        </tr>
+        <tr>
+          <td><b>BWA-MEM</b></td>
+          <td><code>bwa mem</code></td>
+          <td>가장 널리 쓰인 표준. 정확·안정.</td>
+          <td>범용 WGS/WES</td>
+          <td>속도가 아쉬우면 MEM2/MEME 고려</td>
+        </tr>
+        <tr>
+          <td><b>BWA-MEM2</b></td>
+          <td><code>bwa-mem2 mem</code></td>
+          <td>MEM의 빠른 구현. 동일한 사용법/결과에 근접.</td>
+          <td>대부분의 최신 WGS</td>
+          <td>드롭인 대체로 널리 사용</td>
+        </tr>
+        <tr>
+          <td><b>BWA-MEME</b></td>
+          <td><code>bwa-meme</code> 또는 <code>bwa meme</code> 계열</td>
+          <td>MEM 계열 최신 최적화. 대용량 WGS 처리량 향상 목표.</td>
+          <td>대규모·고속 처리 환경</td>
+          <td>배포/설치 형태는 환경마다 다름</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    ※ 위 비교는 실무 체감 기반의 요약입니다(실제 속도/정확도는 데이터·하드웨어에 따라 달라질 수 있음).
+  </p>
 
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# 환경 활성화 및 버전 확인 (선택)
-conda activate wgs_env
-bwa 2>&1 | head -n 1
-samtools --version | head -n 1
+  <!-- 2) 파일 형식 설명 -->
+  <h3 class="mt-4">2) 파일 형식 한눈에 보기</h3>
+  <ul>
+    <li><b>FASTQ</b>: 원시 리드(염기서열 + 품질). 압축(<code>.fastq.gz</code>) 형태로 저장.</li>
+    <li><b>SAM</b>: 텍스트 정렬 포맷(아주 큼). 사람이 읽기 쉬우나 디스크 사용량↑.</li>
+    <li><b>BAM</b>: SAM의 바이너리 압축 버전(정렬/색인 가능). 실무 표준.</li>
+    <li><b>CRAM</b> (선택): 레퍼런스 기반 더 높은 압축. 저장공간 절약에 유리(툴 호환성 확인 필요).</li>
+  </ul>
+
+  <!-- 3) SAM을 저장하지 않고 바로 처리하는 이유 -->
+  <h3 class="mt-4">3) 왜 <code>bwa | samtools</code> 스트리밍으로 처리하나?</h3>
+  <div class="card tip-card mb-3">
+    <div class="card-body">
+      <div class="tip-title mb-2">WGS에서는 SAM이 너무 큽니다</div>
+      <p class="mb-2">
+        WGS 한 샘플의 <b>SAM</b>은 수백 GB까지 커질 수 있습니다. 따라서 <b>bwa 출력(SAM)을 디스크에 쓰지 않고</b>
+        <b>파이프(|)</b>로 바로 <code>samtools view</code>와 <code>samtools sort</code>에 연결하여 <b>정렬된 BAM</b>을 바로 만드는 게 일반적입니다.
+      </p>
+      <p class="mb-0">디스크 절약 + I/O 감소 + 단계 단순화의 장점이 있습니다.</p>
+    </div>
+  </div>
+
+  <!-- 4) 사전 체크 -->
+  <h3>4) 사전 체크</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# (선택) 레퍼런스 인덱스/딕셔너리 확인
+REF="/home/kang/raw_data/gatk_bundle/v0/Homo_sapiens_assembly38.fasta"
+ls -1 ${REF} ${REF}.fai ${REF%.fasta}.dict
+
+# (선택) 정렬기 확인 (있으면 그걸 사용)
+command -v bwa-meme   >/dev/null && echo "Use: bwa-meme"
+command -v bwa-mem2   >/dev/null && echo "Use: bwa-mem2 mem"
+command -v bwa        >/dev/null && echo "Use: bwa mem"
 </code></pre>
 
-    <h3 class="mt-4">2) 변수 설정</h3>
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+  <!-- 5) 단일 샘플 예제 -->
+  <h3 class="mt-4">5) 단일 샘플 정렬 예제 (스트리밍 → 정렬 BAM + 인덱스)</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
 THREADS=20
-REF_DIR="/home/kang/raw_data/gatk_bundle"
-REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
-TRIM_DIR="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
-SAM_DIR="/media/kang/easystore1/denti/sam"
+REF="/home/kang/raw_data/gatk_bundle/v0/Homo_sapiens_assembly38.fasta"
+R1="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/NP-21_R1.trimmed.fastq.gz"
+R2="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/NP-21_R2.trimmed.fastq.gz"
+OUT="/home/kang/God_Nas/WGS_2nd/aln"
+SAMPLE="NP-21"
+mkdir -p "${OUT}"
 
-mkdir -p "${SAM_DIR}"
+# Read Group(RG) — 나중 GATK 단계에 필수
+RG="@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:ILLUMINA"
+
+# 정렬기 선택: bwa-meme > bwa-mem2 > bwa
+if command -v bwa-meme >/dev/null 2>&1; then
+  ALIGNER="bwa-meme"
+  CMD="${ALIGNER} -t ${THREADS} -R \"${RG}\" ${REF} ${R1} ${R2}"
+elif command -v bwa-mem2 >/dev/null 2>&1; then
+  ALIGNER="bwa-mem2 mem"
+  CMD="${ALIGNER} -t ${THREADS} -R \"${RG}\" ${REF} ${R1} ${R2}"
+else
+  ALIGNER="bwa mem"
+  CMD="${ALIGNER} -t ${THREADS} -R \"${RG}\" ${REF} ${R1} ${R2}"
+fi
+
+# SAM을 만들지 않고 바로 BAM 정렬/인덱스까지
+eval ${CMD} \
+  | samtools view  -@ ${THREADS} -bS - \
+  | samtools sort  -@ ${THREADS} -o ${OUT}/${SAMPLE}.sorted.bam
+
+samtools index -@ ${THREADS} ${OUT}/${SAMPLE}.sorted.bam
+
+# (선택) QC 요약
+samtools flagstat -@ ${THREADS} ${OUT}/${SAMPLE}.sorted.bam > ${OUT}/${SAMPLE}.flagstat.txt
+samtools idxstats ${OUT}/${SAMPLE}.sorted.bam > ${OUT}/${SAMPLE}.idxstats.txt
 </code></pre>
 
-    <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_alignment.sh</code>)</h3>
-    <p>트리밍된 페어를 모두 순회하며 SAM → BAM → Sorted BAM → Index까지 일괄 처리합니다.</p>
-
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+  <!-- 6) 다중 샘플 배치 -->
+  <h3 class="mt-4">6) 배치 실행 스크립트 (<code>run_alignment.sh</code>)</h3>
+  <p class="note">트리밍 폴더의 <code>*_R1.trimmed.fastq.gz</code>를 기준으로 페어를 찾아 일괄 정렬합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
 #!/usr/bin/env bash
 set -euo pipefail
 
 THREADS=20
-REF_DIR="/home/kang/raw_data/gatk_bundle"
-REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
-TRIM_DIR="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
-SAM_DIR="/media/kang/easystore1/denti/sam"
+REF="/home/kang/raw_data/gatk_bundle/v0/Homo_sapiens_assembly38.fasta"
+IN="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
+OUT="/home/kang/God_Nas/WGS_2nd/aln"
+mkdir -p "${OUT}"
 
-mkdir -p "${SAM_DIR}"
 shopt -s nullglob
-
-for R1 in "${TRIM_DIR}"/*_R1.trimmed.fastq.gz; do
+for R1 in "${IN}"/*_R1.trimmed.fastq.gz; do
   SAMPLE="$(basename "${R1}" _R1.trimmed.fastq.gz)"
-  R2="${TRIM_DIR}/${SAMPLE}_R2.trimmed.fastq.gz"
+  R2="${IN}/${SAMPLE}_R2.trimmed.fastq.gz"
+  [[ -f "${R2}" ]] || { echo "[WARN] ${SAMPLE}: R2 not found — skip"; continue; }
 
-  if [[ ! -f "${R2}" ]]; then
-    echo "[WARN] ${SAMPLE}: paired R2 not found. Skip." >&2
-    continue
+  RG="@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:ILLUMINA"
+
+  if command -v bwa-meme >/dev/null 2>&1; then
+    ALIGNER="bwa-meme"; CMD="${ALIGNER} -t ${THREADS} -R \"${RG}\" ${REF} ${R1} ${R2}"
+  elif command -v bwa-mem2 >/dev/null 2>&1; then
+    ALIGNER="bwa-mem2 mem"; CMD="${ALIGNER} -t ${THREADS} -R \"${RG}\" ${REF} ${R1} ${R2}"
+  else
+    ALIGNER="bwa mem"; CMD="${ALIGNER} -t ${THREADS} -R \"${RG}\" ${REF} ${R1} ${R2}"
   fi
 
-  echo "[BWA] ${SAMPLE}"
-  bwa mem -M -t "${THREADS}" \
-    -R "@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:ILLUMINA" \
-    "${REF}" "${R1}" "${R2}" > "${SAM_DIR}/${SAMPLE}.sam"
+  echo "[ALIGN] ${SAMPLE} using ${ALIGNER}"
+  eval ${CMD} \
+    | samtools view -@ ${THREADS} -bS - \
+    | samtools sort -@ ${THREADS} -o ${OUT}/${SAMPLE}.sorted.bam
 
-  echo "[Samtools view] ${SAMPLE}"
-  samtools view -@ "${THREADS}" -bS "${SAM_DIR}/${SAMPLE}.sam" -o "${SAM_DIR}/${SAMPLE}.bam"
-  rm -f "${SAM_DIR}/${SAMPLE}.sam"
-
-  echo "[Samtools sort] ${SAMPLE}"
-  samtools sort -@ "${THREADS}" -o "${SAM_DIR}/${SAMPLE}.sorted.bam" "${SAM_DIR}/${SAMPLE}.bam"
-  rm -f "${SAM_DIR}/${SAMPLE}.bam"
-
-  echo "[Samtools index] ${SAMPLE}"
-  samtools index "${SAM_DIR}/${SAMPLE}.sorted.bam"
+  samtools index -@ ${THREADS} ${OUT}/${SAMPLE}.sorted.bam
+  samtools flagstat -@ ${THREADS} ${OUT}/${SAMPLE}.sorted.bam > ${OUT}/${SAMPLE}.flagstat.txt
 done
 
-echo "Alignment completed. Outputs: ${SAM_DIR}/*.sorted.bam + .bai"
+echo "All done. BAMs in: ${OUT}"
 </code></pre>
 
-    <h3 class="mt-4">4) 실행</h3>
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-chmod +x run_alignment.sh
-bash run_alignment.sh
+  <!-- 7) Samtools 한줄 요약 -->
+  <h3 class="mt-4">7) Samtools는 무엇을 하나요?</h3>
+  <ul>
+    <li><code>samtools view</code>: SAM⇄BAM 변환, 서브셋 추출, 태그 필터 등.</li>
+    <li><code>samtools sort</code>: 좌표/이름 기준 정렬(대부분 좌표 정렬 사용).</li>
+    <li><code>samtools index</code>: <code>.bai</code> 색인 생성(리전 접근 가속).</li>
+    <li><code>samtools flagstat</code>: 매핑 통계 요약(QC).</li>
+    <li><code>samtools idxstats</code>: 컨티그별 매핑 요약.</li>
+    <li class="text-muted">(선택) <code>samtools view -C -T REF</code>로 CRAM 저장 가능(디스크 절약; 호환성 확인).</li>
+  </ul>
+
+  <!-- 8) 참고: RG 설정 가이드 -->
+  <h3 class="mt-4">8) Read Group(RG) 필드 가이드</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 예시: '@RG\tID:NP-21\tSM:NP-21\tLB:NP-21\tPL:ILLUMINA'
+# ID : Read group ID (고유 식별자)
+# SM : Sample name  (샘플명; GATK에서 중요한 key)
+# LB : Library      (라이브러리/배치 식별)
+# PL : Platform     (ILLUMINA 등)
+# PU : Platform unit(선택; lane+barcode 등 더 세밀한 단위)
 </code></pre>
 
-    <h3 class="mt-4">5) 출력물</h3>
-    <ul>
-      <li><code>${SAM_DIR}/SAMPLE.sorted.bam</code></li>
-      <li><code>${SAM_DIR}/SAMPLE.sorted.bam.bai</code></li>
-    </ul>
-
-    <h3 class="mt-4">6) (옵션) 로그 저장</h3>
-    <p><code>bwa mem</code> 표준 에러를 로그 파일로 남기고 싶다면 아래처럼 리다이렉션을 추가하세요.</p>
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# bwa mem 호출부만 수정 (스크립트 내부)
-bwa mem -M -t "${THREADS}" \
-  -R "@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:ILLUMINA" \
-  "${REF}" "${R1}" "${R2}" \
-  1> "${SAM_DIR}/${SAMPLE}.sam" \
-  2> "${SAM_DIR}/${SAMPLE}.bwa.log"
-</code></pre>
-
-    <h3 class="mt-4">7) Troubleshooting</h3>
-    <ul>
-      <li><b>레퍼런스 인덱스 부족</b> → <code>bwa index</code>, <code>samtools faidx</code>, <code>CreateSequenceDictionary</code>가 완료되었는지 확인.</li>
-      <li><b>파일 이름 규칙 불일치</b> → 패턴 <code>*_R1.trimmed.fastq.gz</code>를 실제 이름에 맞게 수정.</li>
-      <li><b>속도/메모리</b> → <code>THREADS=20</code> 유지 권장. I/O 병목 시 SSD 사용 또는 <code>samtools sort -m</code> 메모리 튜닝.</li>
-    </ul>
-
-    <div class="mt-4">
-      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
-      <a class="btn btn-primary" href="04_variant_calling.html">Next: Variant Calling →</a>
-    </div>
+  <div class="mt-4 d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="02_trimming.html">← Back: Trimming</a>
+    <a class="btn btn-primary" href="04_postproc.html">Next: Post-processing (Duplicates/BQSR) →</a>
   </div>
+</div>
 
-  <script>
-    function copyCode(btn){
-      const code = btn.nextElementSibling.innerText;
-      navigator.clipboard.writeText(code).then(()=>{
-        const old = btn.innerText; btn.innerText = "Copied!";
-        setTimeout(()=>{ btn.innerText = old; }, 1800);
-      });
-    }
-  </script>
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const old = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=>{ btn.innerText = old; }, 1800);
+    });
+  }
+</script>
 </body>
 </html>
