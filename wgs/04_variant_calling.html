@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>04. Variant Calling (GATK Mutect2 & Filter)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
+    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
+    code { white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-3">Step 04. Variant Calling (GATK Mutect2 & Filter)</h1>
+    <p class="lead">
+      정렬된 BAM(<code>*.sorted.bam</code>)을 입력으로 <b>MarkDuplicatesSpark → BaseRecalibrator → ApplyBQSR → Mutect2 → FilterMutectCalls</b> 순서로 수행합니다.
+      CPU는 기본 <b>20 threads</b>를 사용합니다.
+    </p>
+
+    <hr/>
+
+    <h3>1) Prerequisites</h3>
+    <ul>
+      <li>Conda 환경 <code>wgs_env</code> (gatk4, samtools 포함)</li>
+      <li>입력: <code>/media/kang/easystore1/denti/sam/*.sorted.bam</code></li>
+      <li>레퍼런스 및 리소스 (hg38):</li>
+      <ul>
+        <li><code>Homo_sapiens_assembly38.fasta</code> (+ <code>.fai</code>, <code>.dict</code>)</li>
+        <li><code>dbsnp_146.hg38.vcf.gz</code>, <code>hapmap_3.3_grch38_pop_stratified_af.vcf.gz</code>, <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz</code></li>
+        <li><code>af-only-gnomad.hg38.vcf.gz</code> (Mutect2의 germline-resource)</li>
+      </ul>
+    </ul>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 환경 활성화 (선택)
+conda activate wgs_env
+gatk --version
+samtools --version | head -n 1
+</code></pre>
+
+    <h3 class="mt-4">2) 변수 설정</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+THREADS=20
+
+REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+
+DBSNP="${REF_DIR}/dbsnp_146.hg38.vcf.gz"
+HAPMAP="${REF_DIR}/hapmap_3.3_grch38_pop_stratified_af.vcf.gz"
+MILLS="${REF_DIR}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+
+GERM="${REF_DIR}/af-only-gnomad.hg38.vcf.gz"
+
+SAM_DIR="/media/kang/easystore1/denti/sam"
+</code></pre>
+
+    <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_mutect2.sh</code>)</h3>
+    <p>각 샘플에 대해 중복 표시 → BQSR → Mutect2 → FilterMutectCalls 를 일괄 수행합니다.</p>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+#!/usr/bin/env bash
+set -euo pipefail
+
+THREADS=20
+
+REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+
+DBSNP="${REF_DIR}/dbsnp_146.hg38.vcf.gz"
+HAPMAP="${REF_DIR}/hapmap_3.3_grch38_pop_stratified_af.vcf.gz"
+MILLS="${REF_DIR}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+
+GERM="${REF_DIR}/af-only-gnomad.hg38.vcf.gz"
+
+SAM_DIR="/media/kang/easystore1/denti/sam"
+
+shopt -s nullglob
+for BAM in "${SAM_DIR}"/*.sorted.bam; do
+  SAMPLE="$(basename "${BAM}" .sorted.bam)"
+  echo "============================"
+  echo "Processing: ${SAMPLE}"
+  echo "============================"
+
+  # 1) MarkDuplicatesSpark
+  echo "[MarkDuplicatesSpark] ${SAMPLE}"
+  gatk MarkDuplicatesSpark \
+    -I "${BAM}" \
+    -O "${SAM_DIR}/${SAMPLE}.duplicates.bam" \
+    --duplicate-tagging-policy OpticalOnly \
+    --spark-master "local[${THREADS}]"
+
+  # 2) BaseRecalibrator
+  echo "[BaseRecalibrator] ${SAMPLE}"
+  gatk BaseRecalibrator \
+    -R "${REF}" \
+    -I "${SAM_DIR}/${SAMPLE}.duplicates.bam" \
+    --known-sites "${DBSNP}" \
+    --known-sites "${HAPMAP}" \
+    --known-sites "${MILLS}" \
+    -O "${SAM_DIR}/${SAMPLE}.recal.table"
+
+  # 3) ApplyBQSR
+  echo "[ApplyBQSR] ${SAMPLE}"
+  gatk ApplyBQSR \
+    -R "${REF}" \
+    -I "${SAM_DIR}/${SAMPLE}.duplicates.bam" \
+    --bqsr-recal-file "${SAM_DIR}/${SAMPLE}.recal.table" \
+    -O "${SAM_DIR}/${SAMPLE}.final.bam"
+
+  samtools index "${SAM_DIR}/${SAMPLE}.final.bam"
+
+  # 4) Mutect2 (Tumor-only)
+  echo "[Mutect2] ${SAMPLE}"
+  gatk Mutect2 \
+    -R "${REF}" \
+    -I "${SAM_DIR}/${SAMPLE}.final.bam" \
+    -tumor "${SAMPLE}" \
+    --germline-resource "${GERM}" \
+    -O "${SAM_DIR}/${SAMPLE}.vcf.gz"
+
+  # 5) FilterMutectCalls
+  echo "[FilterMutectCalls] ${SAMPLE}"
+  gatk FilterMutectCalls \
+    -R "${REF}" \
+    -V "${SAM_DIR}/${SAMPLE}.vcf.gz" \
+    -O "${SAM_DIR}/${SAMPLE}.filtered.vcf.gz"
+
+  echo "[Done] ${SAMPLE}"
+done
+
+echo "All Mutect2 pipelines finished. Outputs in ${SAM_DIR}"
+</code></pre>
+
+    <h3 class="mt-4">4) 실행</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+chmod +x run_mutect2.sh
+bash run_mutect2.sh
+</code></pre>
+
+    <h3 class="mt-4">5) 출력물</h3>
+    <ul>
+      <li><code>${SAM_DIR}/SAMPLE.duplicates.bam</code></li>
+      <li><code>${SAM_DIR}/SAMPLE.recal.table</code></li>
+      <li><code>${SAM_DIR}/SAMPLE.final.bam</code> (+ <code>.bai</code>)</li>
+      <li><code>${SAM_DIR}/SAMPLE.vcf.gz</code> (raw Mutect2)</li>
+      <li><code>${SAM_DIR}/SAMPLE.filtered.vcf.gz</code> (filtered calls)</li>
+    </ul>
+
+    <h3 class="mt-4">6) (옵션) 로그 저장</h3>
+    <p>각 단계의 로그를 파일로 남기고 싶다면 아래처럼 리다이렉션을 추가하세요.</p>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 예: Mutect2 단계만 로그 파일 저장
+gatk Mutect2 \
+  -R "${REF}" \
+  -I "${SAM_DIR}/${SAMPLE}.final.bam" \
+  -tumor "${SAMPLE}" \
+  --germline-resource "${GERM}" \
+  -O "${SAM_DIR}/${SAMPLE}.vcf.gz" \
+  > "${SAM_DIR}/${SAMPLE}.mutect2.log" 2>&1
+</code></pre>
+
+    <h3 class="mt-4">7) Troubleshooting</h3>
+    <ul>
+      <li><b>FASTA 인덱스/딕셔너리 누락</b> → <code>samtools faidx</code>, <code>gatk CreateSequenceDictionary</code>로 생성했는지 확인.</li>
+      <li><b>리소스 VCF가 참조와 불일치</b> → hg38(서픽스 및 contig명) 일치 여부 확인.</li>
+      <li><b>SAMPLE 이름</b> → <code>-R "@RG\tSM:${SAMPLE}"</code>로 정렬 단계에서 넣은 SM과 Mutect2 <code>-tumor</code> 인자가 동일해야 함.</li>
+      <li><b>속도/자원</b> → Spark 도구는 <code>--spark-master local[20]</code>로 CPU 제한. 디스크 I/O 병목 시 고속 디스크 사용 권장.</li>
+    </ul>
+
+    <div class="mt-4">
+      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
+      <a class="btn btn-primary" href="05_annotation.html">Next: Annotation →</a>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn){
+      const code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(()=>{
+        const old = btn.innerText; btn.innerText = "Copied!";
+        setTimeout(()=>{ btn.innerText = old; }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
