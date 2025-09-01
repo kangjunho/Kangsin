@@ -1,39 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WGS Tutorial – Index</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WGS Analysis - Hands-on Tutorial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    .card { transition: transform 0.3s ease; }
+    .card:hover { transform: translateY(-5px); }
+    .card img { height: 160px; object-fit: cover; }
+  </style>
 </head>
 <body>
   <div class="container py-5">
-    <h1 class="mb-4">Whole Genome Sequencing (WGS) Tutorial</h1>
-    <p class="lead">이 강의는 리눅스 환경에서 CPU <b>20 threads</b> 기준으로 WGS 데이터를 분석하는 전체 과정을 다룹니다.</p>
-    <p>분석 순서는 다음과 같습니다:</p>
+    <h1 class="text-center mb-4">WGS Analysis Hands-on Tutorial</h1>
+    <p class="text-center lead">각 단계를 차례대로 클릭하여 실습을 진행하세요.</p>
 
-    <ol class="list-group list-group-numbered">
-      <li class="list-group-item">
-        <a href="01_setup.html">01. 환경 세팅 (conda / tools / reference index)</a>
-      </li>
-      <li class="list-group-item">
-        <a href="02_trimming.html">02. Adapter Trimming (Cutadapt)</a>
-      </li>
-      <li class="list-group-item">
-        <a href="03_alignment.html">03. Alignment (BWA MEM) & BAM 처리 (Samtools)</a>
-      </li>
-      <li class="list-group-item">
-        <a href="04_variant_calling.html">04. Variant Calling (GATK Mutect2 & Filter)</a>
-      </li>
-      <li class="list-group-item">
-        <a href="05_annotation.html">05. Annotation & Filtering (Funcotator)</a>
-      </li>
-    </ol>
+    <div class="row g-4">
+      <!-- Step 01 -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <img src="../assets/images/setup.jpg" class="card-img-top" alt="Setup">
+          <div class="card-body">
+            <h5 class="card-title">Step 01. Environment Setup</h5>
+            <p class="card-text">Conda 환경 생성, 필요한 패키지(bwa, samtools, gatk, cutadapt) 설치.</p>
+            <a href="01_setup.html" class="btn btn-primary">Go</a>
+          </div>
+        </div>
+      </div>
 
-    <div class="mt-4">
-      <a class="btn btn-outline-secondary" href="../e-learning.html">← Back to E-learning</a>
+      <!-- Step 02 -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <img src="../assets/images/trimming.jpg" class="card-img-top" alt="Trimming">
+          <div class="card-body">
+            <h5 class="card-title">Step 02. Adapter Trimming</h5>
+            <p class="card-text">Cutadapt를 사용해 어댑터 서열 제거 및 클린 FASTQ 생성.</p>
+            <a href="02_trimming.html" class="btn btn-primary">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 03 -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <img src="../assets/images/alignment.jpg" class="card-img-top" alt="Alignment">
+          <div class="card-body">
+            <h5 class="card-title">Step 03. Alignment</h5>
+            <p class="card-text">BWA MEM으로 정렬 후 Samtools로 BAM 변환, 정렬, 인덱싱.</p>
+            <a href="03_alignment.html" class="btn btn-primary">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 04 -->
+      <div class="col-md-6">
+        <div class="card h-100">
+          <img src="../assets/images/variant_calling.jpg" class="card-img-top" alt="Variant Calling">
+          <div class="card-body">
+            <h5 class="card-title">Step 04. Variant Calling</h5>
+            <p class="card-text">GATK Mutect2 및 FilterMutectCalls로 변이 탐지 및 필터링.</p>
+            <a href="04_variant_calling.html" class="btn btn-primary">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 05 -->
+      <div class="col-md-6">
+        <div class="card h-100">
+          <img src="../assets/images/annotation.jpg" class="card-img-top" alt="Annotation">
+          <div class="card-body">
+            <h5 class="card-title">Step 05. Annotation</h5>
+            <p class="card-text">Funcotator로 주석(Annotation) 추가 및 후처리 필터링.</p>
+            <a href="05_annotation.html" class="btn btn-primary">Go</a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
