@@ -22,15 +22,15 @@
             object-fit: cover;
         }
 
-        /* 탭 버튼 수정: 파란색 배경에서도 글자가 잘 보이도록 */
+        /* 탭 버튼 수정 */
         .nav-pills .nav-link {
-            color: #0056b3; /* 글자 색상 */
+            color: #0056b3;
             font-weight: bold;
         }
 
         .nav-pills .nav-link.active {
-            background-color: #0056b3; /* 파란색 배경 */
-            color: white; /* 글자를 흰색으로 설정 */
+            background-color: #0056b3;
+            color: white;
         }
     </style>
 </head>
@@ -77,7 +77,7 @@
                 <div class="tab-pane fade show active" id="genomics" role="tabpanel">
                     <div class="row">
                         <!-- 이론 -->
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card">
                                 <img src="https://clpmag.com/wp-content/uploads/2018/07/photo-genome-dreamstime_m_107904160-1280x640.jpg" class="card-img-top" alt="Genomics Theory">
                                 <div class="card-body">
@@ -88,13 +88,24 @@
                             </div>
                         </div>
                         <!-- 데이터 분석 -->
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card">
                                 <img src="https://i0.wp.com/acecloud.ai/wp-content/uploads/2024/04/image-1.png?resize=850%2C627&ssl=1" class="card-img-top" alt="Genomics Analysis">
                                 <div class="card-body">
                                     <h5 class="card-title">Genomics Data Analysis</h5>
                                     <p class="card-text">Learn to analyze NGS data, genome assembly tools, and pipelines.</p>
                                     <a href="genomics_analysis.html" class="btn btn-primary">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- WGS 실습 튜토리얼 -->
+                        <div class="col-md-4">
+                            <div class="card">
+                                <img src="https://images.unsplash.com/photo-1581594549595-35f6ed5b15cc?q=80&w=1280" class="card-img-top" alt="WGS Tutorial">
+                                <div class="card-body">
+                                    <h5 class="card-title">WGS Analysis (Hands-on)</h5>
+                                    <p class="card-text">FASTQ → Trimming → Alignment → Variant Calling → Annotation 실습 강의.</p>
+                                    <a href="wgs/index.html" class="btn btn-primary">Start Course</a>
                                 </div>
                             </div>
                         </div>
