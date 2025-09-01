@@ -21,7 +21,7 @@
       <!-- Step 01 -->
       <div class="col-md-4">
         <div class="card h-100">
-          <img src="https://images.unsplash.com/photo-1581090700227-4c4e6f7e6b9d?auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Setup">
+          <img src="../assets/images/setup.png" class="card-img-top" alt="Setup">
           <div class="card-body">
             <h5 class="card-title">Step 01. Environment Setup</h5>
             <p class="card-text">Conda 환경 생성, 필요한 패키지(bwa, samtools, gatk, cutadapt) 설치.</p>
@@ -33,7 +33,7 @@
       <!-- Step 02 -->
       <div class="col-md-4">
         <div class="card h-100">
-          <img src="https://images.unsplash.com/photo-1620912189865-1b8d11d36ad0?auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Trimming">
+          <img src="../assets/images/adaptor.jpg" class="card-img-top" alt="Adapter Trimming">
           <div class="card-body">
             <h5 class="card-title">Step 02. Adapter Trimming</h5>
             <p class="card-text">Cutadapt를 사용해 어댑터 서열 제거 및 클린 FASTQ 생성.</p>
@@ -45,7 +45,7 @@
       <!-- Step 03 -->
       <div class="col-md-4">
         <div class="card h-100">
-          <img src="https://images.unsplash.com/photo-1631557760236-d03a5b2f9b12?auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Alignment">
+          <img src="../assets/images/Alignment.png" class="card-img-top" alt="Alignment">
           <div class="card-body">
             <h5 class="card-title">Step 03. Alignment</h5>
             <p class="card-text">BWA MEM으로 정렬 후 Samtools로 BAM 변환, 정렬, 인덱싱.</p>
@@ -57,7 +57,7 @@
       <!-- Step 04 -->
       <div class="col-md-6">
         <div class="card h-100">
-          <img src="https://images.unsplash.com/photo-1603126857599-5cc3f7d36a0a?auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Variant Calling">
+          <img src="../assets/images/variant_calling.png" class="card-img-top" alt="Variant Calling">
           <div class="card-body">
             <h5 class="card-title">Step 04. Variant Calling</h5>
             <p class="card-text">GATK Mutect2 및 FilterMutectCalls로 변이 탐지 및 필터링.</p>
@@ -69,7 +69,7 @@
       <!-- Step 05 -->
       <div class="col-md-6">
         <div class="card h-100">
-          <img src="https://images.unsplash.com/photo-1581091215367-59ab4c1a4b58?auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Annotation">
+          <img src="../assets/images/annotation.png" class="card-img-top" alt="Annotation">
           <div class="card-body">
             <h5 class="card-title">Step 05. Annotation</h5>
             <p class="card-text">Funcotator로 주석(Annotation) 추가 및 후처리 필터링.</p>
@@ -77,6 +77,13 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center mt-5">
+      <a href="../e-learning.html" class="btn btn-outline-secondary">
+        ← Back to E-learning
+      </a>
     </div>
   </div>
 
