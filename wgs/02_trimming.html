@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>02. Adapter Trimming (Cutadapt)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
+    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
+    code { white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-3">Step 02. Adapter Trimming (Cutadapt)</h1>
+    <p class="lead">페어드-엔드 FASTQ(`*_R1.fastq.gz`, `*_R2.fastq.gz`)를 <b>20 threads</b>로 트리밍하고,
+      결과를 <code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq</code>에 저장합니다.</p>
+
+    <hr/>
+
+    <h3>1) Prerequisites</h3>
+    <ul>
+      <li>Conda 환경: <code>wgs_env</code> (cutadapt 설치됨)</li>
+      <li>입력 파일 규칙: <code>SAMPLE_R1.fastq.gz</code>, <code>SAMPLE_R2.fastq.gz</code></li>
+    </ul>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 환경 활성화
+conda activate wgs_env
+
+# (선택) cutadapt 버전 확인
+cutadapt --version
+</code></pre>
+
+    <h3 class="mt-4">2) 어댑터 서열</h3>
+    <p>일반 Illumina TruSeq 계열 기본 어댑터를 사용합니다.</p>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+ADAPTER_FWD="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
+ADAPTER_REV="AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+</code></pre>
+
+    <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_cutadapt.sh</code>)</h3>
+    <p>현재 디렉토리의 모든 페어를 찾아 일괄 처리합니다.</p>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+#!/usr/bin/env bash
+set -euo pipefail
+
+THREADS=20
+OUTDIR="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
+mkdir -p "${OUTDIR}"
+
+ADAPTER_FWD="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
+ADAPTER_REV="AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+
+# 현재 폴더의 *_R1.fastq.gz 기준으로 반복
+shopt -s nullglob
+for R1 in *_R1.fastq.gz; do
+  SAMPLE="$(basename "${R1}" _R1.fastq.gz)"
+  R2="${SAMPLE}_R2.fastq.gz"
+
+  if [[ ! -f "${R2}" ]]; then
+    echo "[WARN] ${SAMPLE}: R2 파일을 찾을 수 없습니다. 건너뜁니다." >&2
+    continue
+  fi
+
+  echo "[Cutadapt] ${SAMPLE}"
+  cutadapt -j "${THREADS}" \
+    -a "${ADAPTER_FWD}" \
+    -A "${ADAPTER_REV}" \
+    -o "${OUTDIR}/${SAMPLE}_R1.trimmed.fastq.gz" \
+    -p "${OUTDIR}/${SAMPLE}_R2.trimmed.fastq.gz" \
+    "${R1}" "${R2}"
+done
+
+echo "All trimming jobs finished. Output: ${OUTDIR}"
+</code></pre>
+
+    <h3 class="mt-4">4) 실행</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 트리밍할 FASTQ들이 있는 폴더로 이동
+cd /path/to/fastq_folder
+
+# 실행 권한 부여 및 실행
+chmod +x run_cutadapt.sh
+bash run_cutadapt.sh
+</code></pre>
+
+    <h3 class="mt-4">5) 출력물</h3>
+    <ul>
+      <li><code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/SAMPLE_R1.trimmed.fastq.gz</code></li>
+      <li><code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/SAMPLE_R2.trimmed.fastq.gz</code></li>
+    </ul>
+
+    <h3 class="mt-4">6) (옵션) 로그 저장</h3>
+    <p>각 샘플별 cutadapt 리포트를 파일로 남기고 싶다면 아래처럼 리다이렉션을 추가하세요.</p>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# cutadapt 호출부만 이렇게 바꾸기 (위 스크립트 내부)
+cutadapt -j "${THREADS}" \
+  -a "${ADAPTER_FWD}" -A "${ADAPTER_REV}" \
+  -o "${OUTDIR}/${SAMPLE}_R1.trimmed.fastq.gz" \
+  -p "${OUTDIR}/${SAMPLE}_R2.trimmed.fastq.gz" \
+  "${R1}" "${R2}" \
+  > "${OUTDIR}/${SAMPLE}.cutadapt.log" 2>&1
+</code></pre>
+
+    <h3 class="mt-4">7) Troubleshooting</h3>
+    <ul>
+      <li><b>파일명이 규칙과 다름</b> → 스크립트의 패턴(<code>*_R1.fastq.gz</code>)을 실제 이름에 맞게 수정.</li>
+      <li><b>어댑터가 다름</b> → <code>ADAPTER_FWD/REV</code>를 키트에 맞게 교체.</li>
+      <li><b>속도</b> → <code>THREADS=20</code>은 고정 권장. I/O 병목이면 SSD 경로 사용.</li>
+    </ul>
+
+    <div class="mt-4">
+      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
+      <a class="btn btn-primary" href="03_alignment.html">Next: Alignment →</a>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn){
+      const code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(()=>{
+        const old = btn.innerText; btn.innerText = "Copied!";
+        setTimeout(()=>{ btn.innerText = old; }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
