@@ -11,6 +11,7 @@
     .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
     code { white-space: pre; }
     .note { font-size: .95rem; color:#444; }
+    .qc-img { width:100%; max-width:720px; border:1px solid #e5e7eb; border-radius:6px; }
   </style>
 </head>
 <body>
@@ -34,7 +35,8 @@ conda activate wgs_env
 
     <h3 class="mt-4">1) 입력 데이터 & 어댑터 서열</h3>
     <ul>
-      <li><b>페어드엔드(PE)</b> 샘플은 파일이 2개로 구성됩니다: <code>SAMPLE_R1.fastq.gz</code> (Forward/Read1), <code>SAMPLE_R2.fastq.gz</code> (Reverse/Read2).</li>
+      <li><b>페어드엔드(PE)</b> 샘플은 파일이 2개로 구성됩니다:
+        <code>SAMPLE_R1.fastq.gz</code> (Forward/Read1), <code>SAMPLE_R2.fastq.gz</code> (Reverse/Read2)</li>
       <li>일반적인 Illumina TruSeq 어댑터:
         <ul>
           <li>R1 어댑터(Forward): <code>AGATCGGAAGAGCACACGTCTGAACTCCAGTCA</code></li>
@@ -43,16 +45,16 @@ conda activate wgs_env
       </li>
     </ul>
 
-    <p class="note">원한다면 압축 FASTQ에서 직접 어댑터 서열이 보이는지 간단히 확인할 수 있습니다(빠른 스폿 체크).</p>
+    <p class="note">원한다면 압축 FASTQ에서 어댑터 서열이 보이는지 간단히 확인할 수 있습니다(빠른 스폿 체크).</p>
     <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# R1에서 Forward 어댑터 검색 (gzip 압축 파일에 안전한 zgrep 사용)
+# R1에서 Forward 어댑터 검색 (gzip 압축 파일에는 zgrep 권장)
 zgrep -a 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCA' sample1_1.fastq.gz | head
 
 # R2에서 Reverse 어댑터 검색
 zgrep -a 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' sample1_2.fastq.gz | head
 
-# 또는 대화형으로 보고 싶다면:
-# zless sample1_1.fastq.gz   # 열고 나서 /AGATCGG... 로 검색
+# 대화형으로 보고 싶다면:
+# zless sample1_1.fastq.gz   # 연 후에 /AGATCGG... 로 검색
 </code></pre>
 
     <h3 class="mt-4">2) 변수 설정</h3>
@@ -133,10 +135,70 @@ cutadapt -j "${THREADS}" \
 # 예) cutadapt ... -q 20 -m 30 ...
 </code></pre>
 
+    <h3 class="mt-4">7) 품질 확인 (FastQC 전/후 비교)</h3>
+    <p>
+      트리밍 전/후로 <b>FastQC</b>를 실행해 품질 변화를 확인합니다.
+      여러 샘플의 리포트를 한 번에 모아보려면 <b>MultiQC</b>를 사용합니다.
+      FastQC 문서: <a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/" target="_blank" rel="noopener">FastQC Home</a>
+    </p>
+
+    <h5 class="mt-3">실행 명령</h5>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# (전) 원본 FASTQ
+mkdir -p qc_raw
+fastqc -t 20 *.fastq.gz -o qc_raw
+
+# (후) 트리밍 FASTQ
+mkdir -p qc_trimmed
+fastqc -t 20 "${OUTDIR}"/*trimmed.fastq.gz -o qc_trimmed
+
+# (요약) MultiQC로 한 페이지에 모으기
+mkdir -p qc_multiqc
+multiqc qc_raw qc_trimmed -o qc_multiqc
+</code></pre>
+
+    <h5 class="mt-3">Per base sequence quality (전/후 예시)</h5>
+    <p class="note">
+      아래 그래프는 각 Read position별 <b>Phred 품질 점수</b> 분포입니다. 배경색은 FastQC 권고 구간이며,
+      <span class="text-success">초록</span>(좋음), <span class="text-warning">노랑</span>(보통), <span class="text-danger">빨강</span>(나쁨)을 의미합니다.
+      트리밍 전에는 말단에서 급격히 품질이 떨어지거나(특히 R2) 어댑터 영향으로 품질이 낮게 나오지만,
+      트리밍 후에는 전체적으로 초록 구간으로 개선되는 것이 정상적입니다.
+    </p>
+    <div class="mb-3">
+      <img src="../assets/images/fastqc_before.png" class="qc-img" alt="FastQC before trimming (Per base quality)">
+    </div>
+    <div class="mb-3">
+      <img src="../assets/images/fastqc_after.png" class="qc-img" alt="FastQC after trimming (Per base quality)">
+    </div>
+
+    <h5 class="mt-3">Adapter Content 확인</h5>
+    <p class="note">
+      FastQC의 <b>Adapter Content</b> 모듈에서 위치별 어댑터 잔존 비율을 확인할 수 있습니다.
+      <b>트리밍 전</b>에는 특정 위치 이후에 어댑터 비율이 상승하는 경향이 보이고,
+      <b>트리밍 후</b>에는 거의 0에 가까워지는 것이 이상적입니다.
+    </p>
+    <div class="mb-3">
+      <img src="../assets/images/adapter_content_before.png" class="qc-img" alt="Adapter content before trimming">
+    </div>
+    <div class="mb-4">
+      <img src="../assets/images/adapter_content_after.jpg" class="qc-img" alt="Adapter content after trimming">
+    </div>
+
+    <h5 class="mt-3">Phred 점수란?</h5>
+    <p class="note">
+      Phred 품질 점수 <code>Q</code>는 염기 판독 오류확률 <code>p</code>와의 관계가
+      <code>Q = -10 · log10(p)</code> 입니다.
+    </p>
+    <ul class="note">
+      <li><b>Q20</b> → 오류확률 1% (정확도 99%)</li>
+      <li><b>Q30</b> → 오류확률 0.1% (정확도 99.9%) — 일반적으로 좋은 품질로 간주</li>
+    </ul>
+
     <div class="mt-4">
       <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
       <a class="btn btn-primary" href="03_alignment.html">Next: Alignment →</a>
       <a class="btn btn-link" href="https://cutadapt.readthedocs.io/en/stable/" target="_blank" rel="noopener">Cutadapt User Guide ↗</a>
+      <a class="btn btn-link" href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/" target="_blank" rel="noopener">FastQC ↗</a>
     </div>
   </div>
 
