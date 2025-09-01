@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>03. Alignment (BWA MEM) & BAM Processing</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
+    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
+    code { white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-3">Step 03. Alignment (BWA MEM) & BAM Processing</h1>
+    <p class="lead">
+      <b>bwa mem</b>으로 정렬 후 <b>samtools</b>로 BAM 변환·정렬·인덱싱을 수행합니다. 기본 쓰레드는 <b>20</b>으로 고정합니다.
+    </p>
+
+    <hr/>
+
+    <h3>1) Prerequisites</h3>
+    <ul>
+      <li>Conda 환경 <code>wgs_env</code> 활성화 (bwa, samtools 포함)</li>
+      <li>트리밍 결과: <code>/home/kang/God_Nas/WGS_2nd/Trimmed_fastq/*_R1.trimmed.fastq.gz</code></li>
+      <li>레퍼런스: <code>/home/kang/raw_data/gatk_bundle/Homo_sapiens_assembly38.fasta</code> (+ <code>.fai</code>, <code>.dict</code> 완료)</li>
+      <li>출력 폴더: <code>/media/kang/easystore1/denti/sam</code></li>
+    </ul>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 환경 활성화 및 버전 확인 (선택)
+conda activate wgs_env
+bwa 2>&1 | head -n 1
+samtools --version | head -n 1
+</code></pre>
+
+    <h3 class="mt-4">2) 변수 설정</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+THREADS=20
+REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+TRIM_DIR="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
+SAM_DIR="/media/kang/easystore1/denti/sam"
+
+mkdir -p "${SAM_DIR}"
+</code></pre>
+
+    <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_alignment.sh</code>)</h3>
+    <p>트리밍된 페어를 모두 순회하며 SAM → BAM → Sorted BAM → Index까지 일괄 처리합니다.</p>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+#!/usr/bin/env bash
+set -euo pipefail
+
+THREADS=20
+REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+TRIM_DIR="/home/kang/God_Nas/WGS_2nd/Trimmed_fastq"
+SAM_DIR="/media/kang/easystore1/denti/sam"
+
+mkdir -p "${SAM_DIR}"
+shopt -s nullglob
+
+for R1 in "${TRIM_DIR}"/*_R1.trimmed.fastq.gz; do
+  SAMPLE="$(basename "${R1}" _R1.trimmed.fastq.gz)"
+  R2="${TRIM_DIR}/${SAMPLE}_R2.trimmed.fastq.gz"
+
+  if [[ ! -f "${R2}" ]]; then
+    echo "[WARN] ${SAMPLE}: paired R2 not found. Skip." >&2
+    continue
+  fi
+
+  echo "[BWA] ${SAMPLE}"
+  bwa mem -M -t "${THREADS}" \
+    -R "@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:ILLUMINA" \
+    "${REF}" "${R1}" "${R2}" > "${SAM_DIR}/${SAMPLE}.sam"
+
+  echo "[Samtools view] ${SAMPLE}"
+  samtools view -@ "${THREADS}" -bS "${SAM_DIR}/${SAMPLE}.sam" -o "${SAM_DIR}/${SAMPLE}.bam"
+  rm -f "${SAM_DIR}/${SAMPLE}.sam"
+
+  echo "[Samtools sort] ${SAMPLE}"
+  samtools sort -@ "${THREADS}" -o "${SAM_DIR}/${SAMPLE}.sorted.bam" "${SAM_DIR}/${SAMPLE}.bam"
+  rm -f "${SAM_DIR}/${SAMPLE}.bam"
+
+  echo "[Samtools index] ${SAMPLE}"
+  samtools index "${SAM_DIR}/${SAMPLE}.sorted.bam"
+done
+
+echo "Alignment completed. Outputs: ${SAM_DIR}/*.sorted.bam + .bai"
+</code></pre>
+
+    <h3 class="mt-4">4) 실행</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+chmod +x run_alignment.sh
+bash run_alignment.sh
+</code></pre>
+
+    <h3 class="mt-4">5) 출력물</h3>
+    <ul>
+      <li><code>${SAM_DIR}/SAMPLE.sorted.bam</code></li>
+      <li><code>${SAM_DIR}/SAMPLE.sorted.bam.bai</code></li>
+    </ul>
+
+    <h3 class="mt-4">6) (옵션) 로그 저장</h3>
+    <p><code>bwa mem</code> 표준 에러를 로그 파일로 남기고 싶다면 아래처럼 리다이렉션을 추가하세요.</p>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# bwa mem 호출부만 수정 (스크립트 내부)
+bwa mem -M -t "${THREADS}" \
+  -R "@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:ILLUMINA" \
+  "${REF}" "${R1}" "${R2}" \
+  1> "${SAM_DIR}/${SAMPLE}.sam" \
+  2> "${SAM_DIR}/${SAMPLE}.bwa.log"
+</code></pre>
+
+    <h3 class="mt-4">7) Troubleshooting</h3>
+    <ul>
+      <li><b>레퍼런스 인덱스 부족</b> → <code>bwa index</code>, <code>samtools faidx</code>, <code>CreateSequenceDictionary</code>가 완료되었는지 확인.</li>
+      <li><b>파일 이름 규칙 불일치</b> → 패턴 <code>*_R1.trimmed.fastq.gz</code>를 실제 이름에 맞게 수정.</li>
+      <li><b>속도/메모리</b> → <code>THREADS=20</code> 유지 권장. I/O 병목 시 SSD 사용 또는 <code>samtools sort -m</code> 메모리 튜닝.</li>
+    </ul>
+
+    <div class="mt-4">
+      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
+      <a class="btn btn-primary" href="04_variant_calling.html">Next: Variant Calling →</a>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn){
+      const code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(()=>{
+        const old = btn.innerText; btn.innerText = "Copied!";
+        setTimeout(()=>{ btn.innerText = old; }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
