@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>05. Annotation (GATK Funcotator)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
+    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
+    code { white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-3">Step 05. Annotation (GATK Funcotator)</h1>
+    <p class="lead">
+      Mutect2로 얻은 <code>*.filtered.vcf.gz</code> 파일에 대해 <b>Funcotator</b>로 주석을 붙이고, 
+      추가로 <code>awk</code>를 이용해 원하는 필드를 추출 및 필터링합니다.
+    </p>
+
+    <hr/>
+
+    <h3>1) Prerequisites</h3>
+    <ul>
+      <li>Conda 환경 <code>wgs_env</code> (gatk4 포함)</li>
+      <li>입력: <code>/media/kang/easystore1/denti/sam/*.filtered.vcf.gz</code></li>
+      <li>레퍼런스: <code>/home/kang/raw_data/gatk_bundle/Homo_sapiens_assembly38.fasta</code></li>
+      <li>Funcotator data sources: <code>/home/kang/raw_data/gatk_bundle/dataSourcesFolder/funcotator_dataSources.v1.7.20200521s/</code></li>
+    </ul>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 환경 활성화
+conda activate wgs_env
+gatk Funcotator --help | head -n 5
+</code></pre>
+
+    <h3 class="mt-4">2) 변수 설정</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+THREADS=20
+REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+RESOURCE="/home/kang/raw_data/gatk_bundle/dataSourcesFolder/funcotator_dataSources.v1.7.20200521s/"
+SAM_DIR="/media/kang/easystore1/denti/sam"
+OUTDIR="${SAM_DIR}/annotation"
+
+mkdir -p "${OUTDIR}"
+</code></pre>
+
+    <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_funcotator.sh</code>)</h3>
+    <p>각 샘플의 <code>*.filtered.vcf.gz</code> 파일을 Funcotator로 주석화하여 <code>.maf</code> 형식으로 저장합니다.</p>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+#!/usr/bin/env bash
+set -euo pipefail
+
+THREADS=20
+REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+RESOURCE="/home/kang/raw_data/gatk_bundle/dataSourcesFolder/funcotator_dataSources.v1.7.20200521s/"
+SAM_DIR="/media/kang/easystore1/denti/sam"
+OUTDIR="${SAM_DIR}/annotation"
+
+mkdir -p "${OUTDIR}"
+shopt -s nullglob
+
+for VCF in "${SAM_DIR}"/*.filtered.vcf.gz; do
+  SAMPLE="$(basename "${VCF}" .filtered.vcf.gz)"
+  echo "============================"
+  echo "[Funcotator] ${SAMPLE}"
+  echo "============================"
+
+  gatk Funcotator \
+    -R "${REF}" \
+    -V "${VCF}" \
+    -O "${OUTDIR}/${SAMPLE}.maf" \
+    --output-file-format MAF \
+    --data-sources-path "${RESOURCE}" \
+    --ref-version hg38 \
+    --annotation-default tumor_barcode:"${SAMPLE}"
+done
+
+echo "All annotation finished. Outputs in ${OUTDIR}"
+</code></pre>
+
+    <h3 class="mt-4">4) 실행</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+chmod +x run_funcotator.sh
+bash run_funcotator.sh
+</code></pre>
+
+    <h3 class="mt-4">5) (옵션) 추가 필터링</h3>
+    <p>MAF 파일에서 주요 필드만 뽑고, VAF &lt; 0.1 필터링을 적용하는 예시입니다.</p>
+
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+for MAF in ${OUTDIR}/*.maf; do
+  SAMPLE="$(basename "${MAF}" .maf)"
+  awk -F '\t' 'BEGIN {OFS="\t"} {print $1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$16,$42,$80,$215}' "${MAF}" \
+    | awk '/Hugo_Symbol/{print}{ if ($15 < 0.1 && $1!="Unknown") print $0}' \
+    > "${OUTDIR}/${SAMPLE}.filtered.tsv"
+done
+</code></pre>
+
+    <h3 class="mt-4">6) 출력물</h3>
+    <ul>
+      <li><code>${OUTDIR}/SAMPLE.maf</code> (Funcotator 기본 출력)</li>
+      <li><code>${OUTDIR}/SAMPLE.filtered.tsv</code> (선택적 필터링 결과)</li>
+    </ul>
+
+    <h3 class="mt-4">7) Troubleshooting</h3>
+    <ul>
+      <li><b>Data sources 버전 불일치</b> → Funcotator dataSources와 레퍼런스 버전(hg38) 일치 필요.</li>
+      <li><b>VCF sample 이름 문제</b> → Mutect2 단계의 <code>-tumor ${SAMPLE}</code> 옵션과 일치해야 함.</li>
+      <li><b>성능</b> → Funcotator는 CPU보다는 I/O 의존도가 큼. SSD 사용 권장.</li>
+    </ul>
+
+    <div class="mt-4">
+      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(btn){
+      const code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(()=>{
+        const old = btn.innerText; btn.innerText = "Copied!";
+        setTimeout(()=>{ btn.innerText = old; }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
