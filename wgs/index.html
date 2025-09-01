@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WGS Tutorial – Index</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-4">Whole Genome Sequencing (WGS) Tutorial</h1>
+    <p class="lead">이 강의는 리눅스 환경에서 CPU <b>20 threads</b> 기준으로 WGS 데이터를 분석하는 전체 과정을 다룹니다.</p>
+    <p>분석 순서는 다음과 같습니다:</p>
+
+    <ol class="list-group list-group-numbered">
+      <li class="list-group-item">
+        <a href="01_setup.html">01. 환경 세팅 (conda / tools / reference index)</a>
+      </li>
+      <li class="list-group-item">
+        <a href="02_trimming.html">02. Adapter Trimming (Cutadapt)</a>
+      </li>
+      <li class="list-group-item">
+        <a href="03_alignment.html">03. Alignment (BWA MEM) & BAM 처리 (Samtools)</a>
+      </li>
+      <li class="list-group-item">
+        <a href="04_variant_calling.html">04. Variant Calling (GATK Mutect2 & Filter)</a>
+      </li>
+      <li class="list-group-item">
+        <a href="05_annotation.html">05. Annotation & Filtering (Funcotator)</a>
+      </li>
+    </ol>
+
+    <div class="mt-4">
+      <a class="btn btn-outline-secondary" href="../e-learning.html">← Back to E-learning</a>
+    </div>
+  </div>
+</body>
+</html>
