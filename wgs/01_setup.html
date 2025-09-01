@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01. Environment Setup</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    pre {
+      position: relative;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 5px;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-4">Step 01. Environment Setup</h1>
+    <p class="lead">분석을 시작하기 전에 Conda 환경과 필수 툴을 설치하고, 레퍼런스 파일을 준비합니다.  
+    앞으로 모든 분석은 <b>20 threads</b>를 기본으로 사용합니다.</p>
+
+    <hr>
+
+    <h3>1) Conda 환경 생성</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 채널 추가 (처음 한 번만 실행)
+conda config --add channels conda-forge
+conda config --add channels bioconda
+conda config --set channel_priority strict
+
+# 환경 생성
+conda create -y -n wgs_env python=3.10 \
+  cutadapt bwa samtools gatk4 bcftools bedtools fastqc multiqc \
+  openjdk=17 parallel
+
+# 환경 활성화
+conda activate wgs_env
+</code></pre>
+
+    <h3>2) 디렉토리 구조 예시</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+/home/kang/
+ ├── raw_data/               # 원본 데이터 및 reference
+ │    └── gatk_bundle/       # reference genome + vcf files
+ ├── God_Nas/WGS_2nd/        # 프로젝트 폴더
+ │    └── Trimmed_fastq/     # 트리밍된 FASTQ 저장
+ └── ...
+</code></pre>
+
+    <h3>3) Reference Genome 준비</h3>
+    <p>분석에는 <code>Homo_sapiens_assembly38.fasta</code> (hg38)를 사용합니다.</p>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 환경 변수 지정
+REF_DIR=/home/kang/raw_data/gatk_bundle
+REF=${REF_DIR}/Homo_sapiens_assembly38.fasta
+
+# 인덱스 생성
+bwa index ${REF}
+samtools faidx ${REF}
+gatk CreateSequenceDictionary -R ${REF} -O ${REF%.fasta}.dict
+</code></pre>
+
+    <h3>4) Thread 설정</h3>
+    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 앞으로 모든 스크립트 상단에 추가
+THREADS=20
+</code></pre>
+
+    <div class="mt-4">
+      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
+      <a class="btn btn-primary" href="02_trimming.html">Next: Trimming →</a>
+    </div>
+  </div>
+
+  <script>
+    function copyCode(button) {
+      const codeBlock = button.nextElementSibling.innerText;
+      navigator.clipboard.writeText(codeBlock).then(() => {
+        button.innerText = "Copied!";
+        setTimeout(() => { button.innerText = "Copy"; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
