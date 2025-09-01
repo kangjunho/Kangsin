@@ -8,27 +8,75 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
         /* 메인 이미지 카드 스타일 */
-        .main-card { margin: 20px; box-shadow: 0px 4px 8px rgba(0,0,0,.1); cursor: pointer; }
-        .main-card img { object-fit: cover; height: 200px; width: 100%; }
-        .main-card .card-body { text-align: center; }
-        .main-card .card-title { font-size: 1.2rem; font-weight: bold; color: #0056b3; }
-        .main-card .card-text { font-size: .9rem; color: #333; }
-
-        /* 메인 헤더 텍스트 */
-        header h1 { font-size: 3rem; font-weight: bold; color: #fff; }
-        header p { font-size: 1.2rem; color: #e0e0e0; }
-
-        /* 링크 버튼 */
-        .link-section { text-align: center; margin: 30px 0; }
-        .link-section a {
-            margin: 10px; text-decoration: none; font-size: 1rem; padding: 10px 20px;
-            color: #fff; background-color: #0056b3; border-radius: 5px; transition: .3s;
+        .main-card {
+            margin: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
         }
-        .link-section a:hover { background-color: #003d80; }
 
-        /* Footer */
-        footer { border-top: 2px solid #333; margin-top: 50px; padding: 20px 0;
-                 text-align: center; font-size: .9rem; color: #777; }
+        .main-card img {
+            object-fit: cover;
+            height: 200px;
+            width: 100%;
+        }
+
+        .main-card .card-body {
+            text-align: center;
+        }
+
+        .main-card .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0056b3;
+        }
+
+        .main-card .card-text {
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        /* 메인 헤더 텍스트 수정 */
+        header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #e0e0e0;
+        }
+
+        /* 링크 버튼 스타일 */
+        .link-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .link-section a {
+            margin: 10px;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px 20px;
+            color: white;
+            background-color: #0056b3;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .link-section a:hover {
+            background-color: #003d80;
+        }
+
+        /* Footer 스타일 */
+        footer {
+            border-top: 2px solid #333;
+            margin-top: 50px;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #777;
+        }
     </style>
 </head>
 <body>
@@ -36,7 +84,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.html">
-                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width:80px;height:auto" class="d-inline-block align-text-top">
+                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
                 Kang's Bioinformatics
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -56,7 +104,7 @@
         </div>
     </nav>
 
-    <!-- Hero -->
+    <!-- Section 2: Hero Section -->
     <header class="bg-primary text-white text-center py-5">
         <div class="container">
             <h1>Kang's Bioinformatics</h1>
@@ -64,11 +112,11 @@
         </div>
     </header>
 
-    <!-- Main Cards -->
+    <!-- Section 3: Main Image Cards -->
     <section id="main-images" class="py-5">
         <div class="container">
             <div class="row">
-                <!-- Card 1 -->
+                <!-- Card 1: 연구클리닉 -->
                 <div class="col-md-4">
                     <a href="https://www.dsmc.or.kr:49848/content/01dsmc/14_0103.php" target="_blank">
                         <div class="card main-card">
@@ -80,7 +128,7 @@
                         </div>
                     </a>
                 </div>
-                <!-- Card 2 -->
+                <!-- Card 2: E-learning -->
                 <div class="col-md-4">
                     <a href="e-learning.html">
                         <div class="card main-card">
@@ -92,7 +140,7 @@
                         </div>
                     </a>
                 </div>
-                <!-- Card 3 -->
+                <!-- Card 3: Bioinformatics Analysis -->
                 <div class="col-md-4">
                     <div class="card main-card">
                         <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
@@ -106,74 +154,15 @@
         </div>
     </section>
 
-    <!-- Links -->
+    <!-- Link Section -->
     <section class="link-section">
         <a href="https://www.youtube.com/@%EA%B3%84%EB%AA%85%EB%8C%80%ED%95%99%EA%B5%90%EB%8F%99%EC%82%B0%EC%9D%98-m5r" target="_blank">연구처 유튜브</a>
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSeQXVT9fJPkncWknhuIcm8KJBNkTg3ZpzNygZMpPmgwwtZTVQ/viewform" target="_blank">연구클리닉 신청</a>
     </section>
 
-    <!-- ★ Visitor Stats (오늘/누적) -->
-    <section class="py-3">
-      <div class="container">
-        <div class="row justify-content-center g-3">
-          <div class="col-6 col-md-3">
-            <div class="border rounded-3 p-3 text-center">
-              <div class="fw-bold">오늘 방문</div>
-              <div id="visits-today" class="fs-2 fw-bolder">0</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="border rounded-3 p-3 text-center">
-              <div class="fw-bold">누적 방문</div>
-              <div id="visits-total" class="fs-2 fw-bolder">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
+    <!-- Footer Section -->
     <footer>
         &copy; 2024 Kang's Bioinformatics Lab. All rights reserved.
     </footer>
-
-    <!-- Bootstrap JS (네비 토글용) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- CountAPI: 방문자 카운트 스크립트 -->
-    <script>
-      // 본인 프로젝트용 네임스페이스(중복 방지). 원하면 다른 문자열로 변경 가능.
-      const NAMESPACE = "kangjunho.kangsin";
-      const TOTAL_KEY = "home_total";
-      const TODAY_PREFIX = "home_"; // + YYYYMMDD
-
-      const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
-      const todayKey = TODAY_PREFIX + today;
-      const $today = document.getElementById("visits-today");
-      const $total = document.getElementById("visits-total");
-
-      function getJSON(url){ return fetch(url).then(r=>r.json()).catch(()=>({value:0})); }
-      function updateDisplay(){
-        Promise.all([
-          getJSON(`https://api.countapi.xyz/get/${NAMESPACE}/${TOTAL_KEY}`),
-          getJSON(`https://api.countapi.xyz/get/${NAMESPACE}/${todayKey}`)
-        ]).then(([tot, day])=>{
-          $total.textContent = (tot && typeof tot.value==='number') ? tot.value : 0;
-          $today.textContent = (day && typeof day.value==='number') ? day.value : 0;
-        });
-      }
-      function hitOncePerDay(){
-        const localKey = "visitor-last-date";
-        const last = localStorage.getItem(localKey);
-        if(last !== today){
-          fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${TOTAL_KEY}`).catch(()=>{});
-          fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${todayKey}`)
-            .then(()=>{ localStorage.setItem(localKey, today); updateDisplay(); })
-            .catch(()=>{});
-        }
-      }
-      updateDisplay();
-      hitOncePerDay();
-    </script>
 </body>
 </html>
