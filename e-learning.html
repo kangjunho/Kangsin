@@ -7,11 +7,30 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <style>
+    /* 카드 */
     .tab-content .card{margin:10px;cursor:pointer;transition:transform .3s ease}
     .tab-content .card:hover{transform:translateY(-5px)}
     .tab-content .card img{height:180px;object-fit:cover}
-    .nav-pills .nav-link{color:#0056b3;font-weight:700}
-    .nav-pills .nav-link.active{background:#0056b3;color:#fff}
+
+    /* 탭: 채우기 없는 파란 테두리 형태 */
+    .nav-pills .nav-link{
+      border:2px solid #0d6efd;
+      color:#0d6efd;
+      font-weight:700;
+      background:transparent;
+      margin:0 .35rem;
+      border-radius:.6rem;
+      padding:.45rem 1rem;
+    }
+    .nav-pills .nav-link:hover{
+      color:#0a58ca; border-color:#0a58ca; background:rgba(13,110,253,.04);
+    }
+    .nav-pills .nav-link.active{
+      color:#0d6efd;
+      background:transparent;           /* 채우기 없음 */
+      border-color:#0a58ca;
+      box-shadow:0 0 0 .15rem rgba(13,110,253,.15); /* 활성 표시 */
+    }
   </style>
 </head>
 <body>
@@ -41,13 +60,13 @@
   <section class="py-5">
     <div class="container">
       <h1 class="text-center mb-4">E-learning</h1>
-      <p class="text-center">Explore resources for Genomics, Transcriptomics, Epigenomics, and Microbiomics.</p>
+      <p class="text-center">Explore resources for Genomics, Transcriptomics, Public data analysis, and Microbiomics.</p>
 
       <!-- Tabs -->
       <ul class="nav nav-pills mb-4 justify-content-center" id="eLearningTabs" role="tablist">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#genomics" type="button">Genomics</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#transcriptomics" type="button">Transcriptomics</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#epigenomics" type="button">Epigenomics</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#public" type="button">Public data analysis</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#microbiomics" type="button">Microbiomics</button></li>
       </ul>
 
@@ -58,7 +77,7 @@
           <div class="row justify-content-center">
             <!-- Somatic Mutation Calling (Hands-on) -->
             <div class="col-md-8 col-lg-6">
-              <div class="card">
+              <div class="card h-100">
                 <img src="assets/images/variant_calling.png" class="card-img-top" alt="Somatic Mutation Calling" />
                 <div class="card-body">
                   <h5 class="card-title">Somatic Mutation Calling (Hands-on)</h5>
@@ -90,7 +109,7 @@
                 <img src="assets/images/transcriptomics_rnaseq.jpg" alt="RNA-seq" class="card-img-top" />
                 <div class="card-body">
                   <h5 class="card-title">RNA-seq (Bulk)</h5>
-                  <p class="card-text">QC/trim → 정렬/정량(STAR·Salmon) → DESeq2/edgeR → 기능분석(GSEA).</p>
+                  <p class="card-text">QC/trim → 정렬·정량(STAR/Salmon) → DESeq2/edgeR → 기능분석(GSEA).</p>
                   <a href="transcriptomics/rnaseq/index.html" class="btn btn-primary">Open</a>
                 </div>
               </div>
@@ -98,10 +117,10 @@
             <!-- Single-cell RNA-seq -->
             <div class="col-md-4">
               <div class="card h-100">
-                <img src="assets/images/transcriptomics_scrna.png" alt="Single-cell RNA-seq" class="card-img-top" />
+                <img src="assets/images/transcriptomics_scrna.jpg" alt="Single-cell RNA-seq" class="card-img-top" />
                 <div class="card-body">
                   <h5 class="card-title">Single-cell RNA-seq</h5>
-                  <p class="card-text">Seurat/Scanpy 파이프라인: QC → 정규화 → 차원축소 → 클러스터링 → 마커 탐색.</p>
+                  <p class="card-text">Seurat/Scanpy: QC → 정규화 → 차원축소 → 클러스터링 → 마커 탐색.</p>
                   <a href="transcriptomics/scrna/index.html" class="btn btn-primary">Open</a>
                 </div>
               </div>
@@ -109,16 +128,74 @@
           </div>
         </div>
 
-        <!-- Epigenomics -->
-        <div class="tab-pane fade" id="epigenomics" role="tabpanel">
-          <p>Epigenomics 콘텐츠 예시...</p>
+        <!-- Public data analysis -->
+        <div class="tab-pane fade" id="public" role="tabpanel">
+          <div class="row">
+            <!-- TCGA -->
+            <div class="col-md-4">
+              <div class="card h-100">
+                <img src="assets/images/tcga.jpg" alt="TCGA" class="card-img-top" />
+                <div class="card-body">
+                  <h5 class="card-title">TCGA</h5>
+                  <p class="card-text">GDC/TCGAbiolinks로 임상·오믹스 다운로드 → 전처리/생존분석/서브타입 분석.</p>
+                  <a href="public/tcga/index.html" class="btn btn-primary">Open</a>
+                </div>
+              </div>
+            </div>
+            <!-- GEO -->
+            <div class="col-md-4">
+              <div class="card h-100">
+                <img src="assets/images/geo.jpg" alt="GEO" class="card-img-top" />
+                <div class="card-body">
+                  <h5 class="card-title">GEO</h5>
+                  <p class="card-text">GEOquery/SRAtools로 데이터 획득 → 재현 분석 파이프라인(마이크로어레이·RNA-seq).</p>
+                  <a href="public/geo/index.html" class="btn btn-primary">Open</a>
+                </div>
+              </div>
+            </div>
+            <!-- ADNI -->
+            <div class="col-md-4">
+              <div class="card h-100">
+                <img src="assets/images/adni.jpg" alt="ADNI" class="card-img-top" />
+                <div class="card-body">
+                  <h5 class="card-title">ADNI</h5>
+                  <p class="card-text">MRI·임상 지표 처리 → 통계/머신러닝 워크플로우(예: 진단/예후 모델).</p>
+                  <a href="public/adni/index.html" class="btn btn-primary">Open</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Microbiomics -->
         <div class="tab-pane fade" id="microbiomics" role="tabpanel">
-          <p>Microbiomics 콘텐츠 예시...</p>
+          <div class="row">
+            <!-- 16S rRNA -->
+            <div class="col-md-6">
+              <div class="card h-100">
+                <img src="assets/images/micro_16s.jpg" alt="16S rRNA" class="card-img-top" />
+                <div class="card-body">
+                  <h5 class="card-title">16S rRNA</h5>
+                  <p class="card-text">QIIME2/DADA2: ASV 생성 → 다양성 지표 → 차등 풍부도 분석.</p>
+                  <a href="microbiome/16s/index.html" class="btn btn-primary">Open</a>
+                </div>
+              </div>
+            </div>
+            <!-- Whole genome shotgun -->
+            <div class="col-md-6">
+              <div class="card h-100">
+                <img src="assets/images/micro_wgs.jpg" alt="Metagenomic WGS" class="card-img-top" />
+                <div class="card-body">
+                  <h5 class="card-title">Whole genome shotgun</h5>
+                  <p class="card-text">메타지놈 정렬/분류(Kraken/MetaPhlAn) → 기능·경로 분석(HUMAnN 등).</p>
+                  <a href="microbiome/wgs/index.html" class="btn btn-primary">Open</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+
+      </div><!-- /.tab-content -->
     </div>
   </section>
 
