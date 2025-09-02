@@ -3,187 +3,252 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>04. Variant Calling (GATK Mutect2 & Filter)</title>
+  <title>05. Somatic Variant Calling (Mutect2)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/css/style.css" />
   <style>
-    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; }
-    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 0.8rem; }
+    pre { position: relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
     code { white-space: pre; }
+    .note { color:#444; }
+    .tip-card { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip-title { font-weight:700; color:#0d6efd; }
+    .mini { font-size:.95rem; color:#555; }
+    .tbl-sm td, .tbl-sm th { padding:.5rem .6rem; }
   </style>
 </head>
 <body>
-  <div class="container py-5">
-    <h1 class="mb-3">Step 04. Variant Calling (GATK Mutect2 & Filter)</h1>
-    <p class="lead">
-      정렬된 BAM(<code>*.sorted.bam</code>)을 입력으로 <b>MarkDuplicatesSpark → BaseRecalibrator → ApplyBQSR → Mutect2 → FilterMutectCalls</b> 순서로 수행합니다.
-      CPU는 기본 <b>20 threads</b>를 사용합니다.
-    </p>
+<div class="container py-5">
+  <h1 class="mb-3">Step 05. Somatic Variant Calling (Mutect2)</h1>
+  <p class="lead">
+    종양(±정상)에서 발생한 <b>체세포 변이</b>를 <b>Mutect2</b>로 호출합니다. 입력은 <code>*.final.bam</code>(MarkDuplicates + BQSR)이며 기본 쓰레드는 <b>20</b>입니다.
+    (참고: <i>Germline</i> 변이는 <b>HaplotypeCaller</b> 페이지에서 별도 설명)
+  </p>
+  <hr/>
 
-    <hr/>
+  <!-- A) Overview -->
+  <h3>A) 개요</h3>
+  <ul>
+    <li><b>Matched-normal</b>: 동일 환자의 정상 샘플을 함께 사용 → <b>germline/배경</b>을 직접 관찰하여 <b>특이도↑, 위양성↓</b>.</li>
+    <li><b>Tumor-only</b>: 정상 샘플 없음 → <b>gnomAD AF</b>(<code>--germline-resource</code>), <b>Panel-of-Normals</b>(PoN) 의존도↑. 위양성 관리가 중요.</li>
+    <li>공통적으로 <b>오염 추정</b>(<code>GetPileupSummaries → CalculateContamination</code>)과 <b>FFPE 방향성 바이어스</b> 모델(<code>LearnReadOrientationModel</code>)을 사용해 필터를 강화합니다.</li>
+  </ul>
 
-    <h3>1) Prerequisites</h3>
-    <ul>
-      <li>Conda 환경 <code>wgs_env</code> (gatk4, samtools 포함)</li>
-      <li>입력: <code>/media/kang/easystore1/denti/sam/*.sorted.bam</code></li>
-      <li>레퍼런스 및 리소스 (hg38):</li>
-      <ul>
-        <li><code>Homo_sapiens_assembly38.fasta</code> (+ <code>.fai</code>, <code>.dict</code>)</li>
-        <li><code>dbsnp_146.hg38.vcf.gz</code>, <code>hapmap_3.3_grch38_pop_stratified_af.vcf.gz</code>, <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz</code></li>
-        <li><code>af-only-gnomad.hg38.vcf.gz</code> (Mutect2의 germline-resource)</li>
-      </ul>
-    </ul>
+  <!-- B) How Mutect2 works -->
+  <h3 class="mt-4">B) Mutect2는 어떻게 변이를 찾을까? (알고리즘 개요)</h3>
+  <ol class="note">
+    <li><b>활성 구간 탐지</b>: 의심 구간에서만 계산(속도↑).</li>
+    <li><b>로컬 어셈블리</b>: 해당 구간 리드로 <b>de&nbsp;Bruijn 그래프</b>를 만들고 후보 <b>haplotype</b>을 구성(복잡 인델/클립에 강함).
+    </li>
+    <li><b>Pair-HMM</b>으로 리드-haplotype <b>가능도(우도)</b> 계산.</li>
+    <li><b>소마틱 유전형 추론</b>: 종양/정상 리드 분리, <b>TLOD/NLOD</b>(tumor/normal log odds) 산출.</li>
+    <li><b>사전/사후 확률</b>: <code>--germline-resource</code> AF, PoN, 오염률, 방향성 바이어스 등을 반영해 <b>사후확률</b> 계산.</li>
+    <li><b>FilterMutectCalls</b>: 위 신호(오염/strand/맵품질/클립 등)를 결합해 PASS/FAIL 판정.</li>
+  </ol>
+  <div class="mini">
+    비교: 예전 <u>pileup 기반</u> 콜러(VarScan2, SomaticSniper 등)는 한 지점의 카운트/통계만으로 판정 → <b>저 VAF</b>·<b>인델</b>·<b>복잡 이벤트</b>에서 위양성↑/민감도↓.
+    Mutect2(및 Strelka2 등)는 <b>어셈블리+HMM</b>로 문맥을 반영하여 훨씬 견고합니다.
+  </div>
 
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# 환경 활성화 (선택)
-conda activate wgs_env
-gatk --version
-samtools --version | head -n 1
-</code></pre>
-
-    <h3 class="mt-4">2) 변수 설정</h3>
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+  <!-- C) 공통 경로/자원 -->
+  <h3 class="mt-4">C) 공통 경로 & 자원</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 쓰레드 & 경로
 THREADS=20
-
-REF_DIR="/home/kang/raw_data/gatk_bundle"
+REF_DIR="/home/kang/raw_data/gatk_bundle/v0"
 REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
 
-DBSNP="${REF_DIR}/dbsnp_146.hg38.vcf.gz"
-HAPMAP="${REF_DIR}/hapmap_3.3_grch38_pop_stratified_af.vcf.gz"
-MILLS="${REF_DIR}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+IN="/home/kang/God_Nas/WGS_2nd/postproc"     # *.final.bam 위치
+OUT="/home/kang/God_Nas/WGS_2nd/variant"
+mkdir -p "${OUT}"
 
-GERM="${REF_DIR}/af-only-gnomad.hg38.vcf.gz"
+# 리소스
+GERM_AF="${REF_DIR}/af-only-gnomad.hg38.vcf.gz"   # --germline-resource
+PON_VCF="/path/to/pon.vcf.gz"                     # --panel-of-normals (있으면 강력 권장)
 
-SAM_DIR="/media/kang/easystore1/denti/sam"
+# 오염 추정에 사용할 "공통 변이 사이트" VCF(작은 사이즈 권장; .tbi 필요)
+COMMON_SITES_VCF="${REF_DIR}/small_common_biallelic.vcf.gz"
 </code></pre>
 
-    <h3 class="mt-4">3) 배치 실행 스크립트 (<code>run_mutect2.sh</code>)</h3>
-    <p>각 샘플에 대해 중복 표시 → BQSR → Mutect2 → FilterMutectCalls 를 일괄 수행합니다.</p>
+  <!-- D) Matched Normal 파이프라인 -->
+  <h3 class="mt-4">D) Matched-normal 파이프라인 (권장)</h3>
+  <p class="note">정상 샘플이 있으면 germline/배경을 직접 관찰하므로 <b>정확도</b>가 가장 좋습니다.</p>
 
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-#!/usr/bin/env bash
-set -euo pipefail
+  <h5>D-1) Mutect2 호출</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+TUMOR="Case01_T";  TBAM="${IN}/${TUMOR}.final.bam"
+NORMAL="Case01_N"; NBAM="${IN}/${NORMAL}.final.bam"
 
-THREADS=20
-
-REF_DIR="/home/kang/raw_data/gatk_bundle"
-REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
-
-DBSNP="${REF_DIR}/dbsnp_146.hg38.vcf.gz"
-HAPMAP="${REF_DIR}/hapmap_3.3_grch38_pop_stratified_af.vcf.gz"
-MILLS="${REF_DIR}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
-
-GERM="${REF_DIR}/af-only-gnomad.hg38.vcf.gz"
-
-SAM_DIR="/media/kang/easystore1/denti/sam"
-
-shopt -s nullglob
-for BAM in "${SAM_DIR}"/*.sorted.bam; do
-  SAMPLE="$(basename "${BAM}" .sorted.bam)"
-  echo "============================"
-  echo "Processing: ${SAMPLE}"
-  echo "============================"
-
-  # 1) MarkDuplicatesSpark
-  echo "[MarkDuplicatesSpark] ${SAMPLE}"
-  gatk MarkDuplicatesSpark \
-    -I "${BAM}" \
-    -O "${SAM_DIR}/${SAMPLE}.duplicates.bam" \
-    --duplicate-tagging-policy OpticalOnly \
-    --spark-master "local[${THREADS}]"
-
-  # 2) BaseRecalibrator
-  echo "[BaseRecalibrator] ${SAMPLE}"
-  gatk BaseRecalibrator \
-    -R "${REF}" \
-    -I "${SAM_DIR}/${SAMPLE}.duplicates.bam" \
-    --known-sites "${DBSNP}" \
-    --known-sites "${HAPMAP}" \
-    --known-sites "${MILLS}" \
-    -O "${SAM_DIR}/${SAMPLE}.recal.table"
-
-  # 3) ApplyBQSR
-  echo "[ApplyBQSR] ${SAMPLE}"
-  gatk ApplyBQSR \
-    -R "${REF}" \
-    -I "${SAM_DIR}/${SAMPLE}.duplicates.bam" \
-    --bqsr-recal-file "${SAM_DIR}/${SAMPLE}.recal.table" \
-    -O "${SAM_DIR}/${SAMPLE}.final.bam"
-
-  samtools index "${SAM_DIR}/${SAMPLE}.final.bam"
-
-  # 4) Mutect2 (Tumor-only)
-  echo "[Mutect2] ${SAMPLE}"
-  gatk Mutect2 \
-    -R "${REF}" \
-    -I "${SAM_DIR}/${SAMPLE}.final.bam" \
-    -tumor "${SAMPLE}" \
-    --germline-resource "${GERM}" \
-    -O "${SAM_DIR}/${SAMPLE}.vcf.gz"
-
-  # 5) FilterMutectCalls
-  echo "[FilterMutectCalls] ${SAMPLE}"
-  gatk FilterMutectCalls \
-    -R "${REF}" \
-    -V "${SAM_DIR}/${SAMPLE}.vcf.gz" \
-    -O "${SAM_DIR}/${SAMPLE}.filtered.vcf.gz"
-
-  echo "[Done] ${SAMPLE}"
-done
-
-echo "All Mutect2 pipelines finished. Outputs in ${SAM_DIR}"
-</code></pre>
-
-    <h3 class="mt-4">4) 실행</h3>
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-chmod +x run_mutect2.sh
-bash run_mutect2.sh
-</code></pre>
-
-    <h3 class="mt-4">5) 출력물</h3>
-    <ul>
-      <li><code>${SAM_DIR}/SAMPLE.duplicates.bam</code></li>
-      <li><code>${SAM_DIR}/SAMPLE.recal.table</code></li>
-      <li><code>${SAM_DIR}/SAMPLE.final.bam</code> (+ <code>.bai</code>)</li>
-      <li><code>${SAM_DIR}/SAMPLE.vcf.gz</code> (raw Mutect2)</li>
-      <li><code>${SAM_DIR}/SAMPLE.filtered.vcf.gz</code> (filtered calls)</li>
-    </ul>
-
-    <h3 class="mt-4">6) (옵션) 로그 저장</h3>
-    <p>각 단계의 로그를 파일로 남기고 싶다면 아래처럼 리다이렉션을 추가하세요.</p>
-    <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# 예: Mutect2 단계만 로그 파일 저장
 gatk Mutect2 \
   -R "${REF}" \
-  -I "${SAM_DIR}/${SAMPLE}.final.bam" \
-  -tumor "${SAMPLE}" \
-  --germline-resource "${GERM}" \
-  -O "${SAM_DIR}/${SAMPLE}.vcf.gz" \
-  > "${SAM_DIR}/${SAMPLE}.mutect2.log" 2>&1
+  -I "${TBAM}" -tumor "${TUMOR}" \
+  -I "${NBAM}" -normal "${NORMAL}" \
+  --germline-resource "${GERM_AF}" \
+  $( [[ -f "${PON_VCF}" ]] && echo "--panel-of-normals ${PON_VCF}" ) \
+  --f1r2-tar-gz "${OUT}/${TUMOR}.f1r2.tar.gz" \
+  -O "${OUT}/${TUMOR}.unfiltered.vcf.gz" \
+  --native-pair-hmm-threads ${THREADS}
+
+# (옵션) 로컬 재정렬된 BAM을 보고 싶으면 -bamout 사용:
+#  -bamout "${OUT}/${TUMOR}.bamout.bam"
 </code></pre>
 
-    <h3 class="mt-4">7) Troubleshooting</h3>
-    <ul>
-      <li><b>FASTA 인덱스/딕셔너리 누락</b> → <code>samtools faidx</code>, <code>gatk CreateSequenceDictionary</code>로 생성했는지 확인.</li>
-      <li><b>리소스 VCF가 참조와 불일치</b> → hg38(서픽스 및 contig명) 일치 여부 확인.</li>
-      <li><b>SAMPLE 이름</b> → <code>-R "@RG\tSM:${SAMPLE}"</code>로 정렬 단계에서 넣은 SM과 Mutect2 <code>-tumor</code> 인자가 동일해야 함.</li>
-      <li><b>속도/자원</b> → Spark 도구는 <code>--spark-master local[20]</code>로 CPU 제한. 디스크 I/O 병목 시 고속 디스크 사용 권장.</li>
-    </ul>
+  <h5 class="mt-3">D-2) 오염 추정 · 방향성 바이어스 학습 · 필터</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 1) Pileup 요약 (종양/정상 모두 수행)
+gatk GetPileupSummaries -R "${REF}" -I "${TBAM}" -V "${COMMON_SITES_VCF}" -O "${OUT}/${TUMOR}.pileups.table"
+gatk GetPileupSummaries -R "${REF}" -I "${NBAM}" -V "${COMMON_SITES_VCF}" -O "${OUT}/${NORMAL}.pileups.table"
 
-    <div class="mt-4">
-      <a class="btn btn-outline-secondary" href="index.html">← Back to WGS Tutorial</a>
-      <a class="btn btn-primary" href="05_annotation.html">Next: Annotation →</a>
+# 2) 오염도 추정
+gatk CalculateContamination \
+  -I "${OUT}/${TUMOR}.pileups.table" \
+  -matched "${OUT}/${NORMAL}.pileups.table" \
+  -O "${OUT}/${TUMOR}.contamination.table" \
+  --segment-output "${OUT}/${TUMOR}.segments.table"
+
+# 3) 방향성 바이어스(FFPE 등) 학습
+gatk LearnReadOrientationModel \
+  -I "${OUT}/${TUMOR}.f1r2.tar.gz" \
+  -O "${OUT}/${TUMOR}.artifact-priors.tar.gz"
+
+# 4) 최종 필터
+gatk FilterMutectCalls \
+  -R "${REF}" \
+  -V "${OUT}/${TUMOR}.unfiltered.vcf.gz" \
+  --contamination-table "${OUT}/${TUMOR}.contamination.table" \
+  --tumor-segmentation "${OUT}/${TUMOR}.segments.table" \
+  --ob-priors "${OUT}/${TUMOR}.artifact-priors.tar.gz" \
+  -O "${OUT}/${TUMOR}.filtered.vcf.gz"
+</code></pre>
+
+  <!-- E) Tumor-only 파이프라인 -->
+  <h3 class="mt-4">E) Tumor-only 파이프라인 (정상 샘플 없음)</h3>
+  <div class="card tip-card mb-3">
+    <div class="card-body">
+      <div class="tip-title mb-2">포인트</div>
+      <ul class="mb-0">
+        <li><b>gnomAD AF</b>(<code>--germline-resource</code>)와 <b>PoN</b> 의존도가 큽니다(위양성 억제).</li>
+        <li>오염 추정이 특히 중요하며, 필터가 더 보수적으로 작동할 수 있어 <b>저 VAF</b> 변이의 민감도는 떨어질 수 있습니다.</li>
+      </ul>
     </div>
   </div>
 
-  <script>
-    function copyCode(btn){
-      const code = btn.nextElementSibling.innerText;
-      navigator.clipboard.writeText(code).then(()=>{
-        const old = btn.innerText; btn.innerText = "Copied!";
-        setTimeout(()=>{ btn.innerText = old; }, 1800);
-      });
-    }
-  </script>
+  <h5>E-1) Mutect2 호출</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+TUMOR="NP-21"; TBAM="${IN}/${TUMOR}.final.bam"
+
+gatk Mutect2 \
+  -R "${REF}" \
+  -I "${TBAM}" -tumor "${TUMOR}" \
+  --germline-resource "${GERM_AF}" \
+  $( [[ -f "${PON_VCF}" ]] && echo "--panel-of-normals ${PON_VCF}" ) \
+  --f1r2-tar-gz "${OUT}/${TUMOR}.f1r2.tar.gz" \
+  -O "${OUT}/${TUMOR}.unfiltered.vcf.gz" \
+  --native-pair-hmm-threads ${THREADS}
+</code></pre>
+
+  <h5 class="mt-3">E-2) 오염 추정 · 방향성 바이어스 학습 · 필터</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+gatk GetPileupSummaries -R "${REF}" -I "${TBAM}" -V "${COMMON_SITES_VCF}" -O "${OUT}/${TUMOR}.pileups.table"
+
+gatk CalculateContamination \
+  -I "${OUT}/${TUMOR}.pileups.table" \
+  -O "${OUT}/${TUMOR}.contamination.table" \
+  --segment-output "${OUT}/${TUMOR}.segments.table"
+
+gatk LearnReadOrientationModel \
+  -I "${OUT}/${TUMOR}.f1r2.tar.gz" \
+  -O "${OUT}/${TUMOR}.artifact-priors.tar.gz"
+
+gatk FilterMutectCalls \
+  -R "${REF}" \
+  -V "${OUT}/${TUMOR}.unfiltered.vcf.gz" \
+  --contamination-table "${OUT}/${TUMOR}.contamination.table" \
+  --tumor-segmentation "${OUT}/${TUMOR}.segments.table" \
+  --ob-priors "${OUT}/${TUMOR}.artifact-priors.tar.gz" \
+  -O "${OUT}/${TUMOR}.filtered.vcf.gz"
+</code></pre>
+
+  <!-- F) Matched vs Tumor-only 비교 -->
+  <h3 class="mt-4">F) Matched-normal vs Tumor-only 비교</h3>
+  <div class="table-responsive">
+    <table class="table table-bordered tbl-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>항목</th><th>Matched-normal</th><th>Tumor-only</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>특이도/위양성</td>
+          <td><b>우수</b> (정상으로 germline/배경 직접 제거)</td>
+          <td>상대적으로 낮음(gnomAD/PoN 의존, 필터 보수적)</td>
+        </tr>
+        <tr>
+          <td>저 VAF 변이</td>
+          <td>검출력↑</td>
+          <td>검출력↓(필터 강도↑)</td>
+        </tr>
+        <tr>
+          <td>리소스 의존</td>
+          <td>보조적(germline-resource/PoN 필요성↓)</td>
+          <td><b>높음</b>(gnomAD AF, PoN 필수적 권장)</td>
+        </tr>
+        <tr>
+          <td>권장 사용</td>
+          <td>가능하면 항상 채택</td>
+          <td>정상 확보 불가·예산/윤리 제한 등</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- G) (선택) 어노테이션 -->
+  <h3 class="mt-4">G) (선택) 변이 어노테이션: Funcotator</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+RESOURCE="/home/kang/raw_data/gatk_bundle/dataSourcesFolder/funcotator_dataSources.v1.7.20200521s/"
+SAMPLE="NP-21"
+
+gatk Funcotator \
+  -R "${REF}" \
+  -V "${OUT}/${SAMPLE}.filtered.vcf.gz" \
+  -O "${OUT}/${SAMPLE}.funcotated.maf.gz" \
+  --output-file-format MAF \
+  --data-sources-path "${RESOURCE}" \
+  --ref-version hg38 \
+  --annotation-default tumor_barcode:${SAMPLE}
+</code></pre>
+
+  <!-- H) 요약 -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li><b>Mutect2</b>는 <b>로컬 어셈블리 + Pair-HMM</b> 기반으로 TLOD/NLOD와 사전정보를 결합해 소마틱 변이를 판정합니다.</li>
+          <li><b>Matched-normal</b>이 최선이며, <b>Tumor-only</b>는 gnomAD AF/PoN/오염·방향성 모델에 크게 의존합니다.</li>
+          <li>표준 필터 체인: <code>GetPileupSummaries → CalculateContamination → LearnReadOrientationModel → FilterMutectCalls</code>.</li>
+          <li>구식 pileup 콜러 대비 인델/저 VAF·복잡 이벤트에서 <b>민감도/특이도</b>가 우수합니다.</li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="04_postproc.html">← Back: Post-processing</a>
+          <a class="btn btn-primary" href="06_qc_reporting.html">Next: QC & Reporting →</a>
+          <a class="btn btn-link" href="https://gatk.broadinstitute.org/hc/en-us/articles/360037593851-Mutect2" target="_blank" rel="noopener">Mutect2 Docs ↗</a>
+          <a class="btn btn-link" href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890811-Resource-bundle" target="_blank" rel="noopener">GATK Resource Bundle ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const old = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=>{ btn.innerText = old; }, 1800);
+    });
+  }
+</script>
 </body>
 </html>
