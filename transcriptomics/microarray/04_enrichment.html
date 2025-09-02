@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 04. Functional Enrichment — GO/KEGG ORA & GSEA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .step-badge{display:inline-block;padding:.25rem .6rem;border:1px solid #0d6efd;border-radius:999px;color:#0d6efd;font-weight:600;font-size:.9rem;}
+    .small-muted{font-size:.92rem;color:#666;}
+  </style>
+</head>
+<body>
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h1 class="mb-0">Functional Enrichment</h1>
+    <span class="step-badge">Step 04 / 05</span>
+  </div>
+  <p class="lead mb-3">
+    <b>ORA</b>(과대표집 분석)와 <b>GSEA</b>(순위기반)를 이용해 <b>GO/KEGG/MSigDB</b> 경로를 해석합니다.
+    (DEG 결과 또는 전체 유전자 순위를 입력)
+  </p>
+  <hr/>
+
+  <!-- A) 패키지 설치 -->
+  <h3>A) 준비물 (패키지 설치)</h3>
+  <p class="note">처음 한 번만 설치.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager")
+BiocManager::install(c(
+  "clusterProfiler", "org.Hs.eg.db", "enrichplot",
+  "DOSE", "msigdbr", "fgsea", "pathview"
+))
+# 시각화
+install.packages(c("ggplot2", "dplyr", "tibble", "readr"))
+</code></pre>
+
+  <!-- B) 입력(맵핑) -->
+  <h3 class="mt-4">B) 입력 데이터 준비 (ID 매핑)</h3>
+  <p class="note">
+    ORA는 <b>DEG 목록</b>(예: adj.P&lt;0.05 &amp; |logFC|≥1)과 <b>배경(universe)</b>이 필요합니다.
+    GSEA는 <b>전체 유전자 순위</b>(예: t 통계량 또는 logFC×-log10P)가 필요합니다.
+  </p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(dplyr); library(tibble); library(AnnotationDbi); library(org.Hs.eg.db)
+
+# 1) DEG 테이블 불러오기 (Step 03 출력)
+deg <- read.csv("DEG_with_annotation.csv")   # 열: PROBEID, SYMBOL, logFC, adj.P.Val 등
+
+# 2) DEG 필터
+deg_sig <- deg %>% filter(adj.P.Val < 0.05, abs(logFC) >= 1)
+
+# 3) SYMBOL → ENTREZ (clusterProfiler는 ENTREZ 사용 권장)
+map <- AnnotationDbi::select(org.Hs.eg.db,
+                             keys = unique(deg$SYMBOL),
+                             columns = c("ENTREZID","SYMBOL"),
+                             keytype = "SYMBOL") %>% distinct(SYMBOL, .keep_all = TRUE)
+
+deg_sig_entrez <- map$ENTREZID[match(deg_sig$SYMBOL, map$SYMBOL)] %>% na.omit()
+universe_entrez <- map$ENTREZID[match(deg$SYMBOL, map$SYMBOL)] %>% na.omit()
+
+length(deg_sig_entrez); length(universe_entrez)
+</code></pre>
+
+  <!-- C) ORA -->
+  <h3 class="mt-4">C) ORA — GO/KEGG</h3>
+  <p class="note">과대표집 검정. <b>DEG set</b>과 <b>universe</b>를 명확히 지정하는 것이 중요합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(clusterProfiler); library(enrichplot); library(org.Hs.eg.db)
+library(ggplot2)
+
+# GO Biological Process
+ego <- enrichGO(gene          = deg_sig_entrez,
+                universe      = universe_entrez,
+                OrgDb         = org.Hs.eg.db,
+                keyType       = "ENTREZID",
+                ont           = "BP",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05)
+
+# KEGG
+ekegg <- enrichKEGG(gene         = deg_sig_entrez,
+                    universe     = universe_entrez,
+                    organism     = "hsa",
+                    pvalueCutoff = 0.05)
+
+# 결과 저장
+write.csv(as.data.frame(ego),   "ORA_GO_BP.csv", row.names=FALSE)
+write.csv(as.data.frame(ekegg), "ORA_KEGG.csv",  row.names=FALSE)
+
+# 시각화 예시
+dotplot(ego, showCategory=15) + ggtitle("GO BP ORA")
+barplot(ekegg, showCategory=15) + ggtitle("KEGG ORA")
+
+# 네트워크/개념도 예시(복수 유전자 연결)
+cnetplot(ego, categorySize="pvalue", showCategory=8)
+</code></pre>
+
+  <!-- D) MSigDB (ORA 또는 GSEA 세트 소스) -->
+  <h3 class="mt-4">D) MSigDB gene sets 가져오기</h3>
+  <p class="note">
+    <code>msigdbr</code>로 <b>H(Hallmark)</b>, <b>C2(Canonical pathways)</b> 등 선택 가능(인간: <code>species = "Homo sapiens"</code>).
+  </p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(msigdbr); library(dplyr)
+
+m_df <- msigdbr(species = "Homo sapiens", category = "H")  # Hallmark
+msig_h <- m_df %>% select(gs_name, entrez_gene)
+
+# ORA용 리스트로 변환
+msig_list <- split(msig_h$entrez_gene, msig_h$gs_name)
+length(msig_list); head(names(msig_list))
+</code></pre>
+
+  <!-- E) GSEA (전체 순위 기반) -->
+  <h3 class="mt-4">E) GSEA — fgsea (pre-ranked)</h3>
+  <p class="note">
+    전체 유전자 순위 벡터(<em>named numeric</em>) 필요. 이름=ENTREZ, 값=순위점수(예: limma t 통계).
+  </p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(fgsea); library(dplyr)
+
+# 1) 전체 순위 만들기 (limma 결과 'tt' 사용 예시)
+tt <- read.csv("DEG_limma_results.csv")  # coef 1 결과 등
+# SYMBOL→ENTREZ 매핑
+map <- AnnotationDbi::select(org.Hs.eg.db, keys=tt$PROBEID,
+                             columns=c("ENTREZID","SYMBOL"), keytype="PROBEID")
+tt2 <- tt %>% mutate(PROBEID = rownames(tt)) %>% left_join(map, by="PROBEID")
+
+# 순위점수: t 또는 logFC * -log10(P.Value) 등
+tt2 <- tt2 %>% filter(!is.na(ENTREZID)) %>% distinct(ENTREZID, .keep_all=TRUE)
+ranks <- tt2$t; names(ranks) <- tt2$ENTREZID
+ranks <- sort(ranks, decreasing=TRUE)
+
+# 2) fgsea 실행 (MSigDB Hallmark 예)
+fg <- fgsea(pathways = msig_list, stats = ranks, nperm = 10000)
+fg <- fg %>% arrange(padj)
+write.csv(fg, "GSEA_fgsea_Hallmark.csv", row.names=FALSE)
+
+# 3) 시각화
+plotEnrichment(msig_list[["HALLMARK_INTERFERON_GAMMA_RESPONSE"]], ranks)
+fgsea::plotGseaTable(msig_list[head(fg$pathway, 5)], ranks, fg, gseaParam=1)
+</code></pre>
+
+  <!-- F) 경로 도식 (선택) -->
+  <h3 class="mt-4">F) (선택) KEGG pathway 도식</h3>
+  <p class="note"><code>pathview</code>로 KEGG 경로에 발현 변화를 색으로 표시.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(pathview)
+
+# fold change 이름=ENTREZ
+fc <- tt2$logFC; names(fc) <- tt2$ENTREZID
+# 예: hsa04630 (JAK-STAT)
+pathview(gene.data = fc, pathway.id = "hsa04630", species = "hsa", out.suffix="example")
+</code></pre>
+
+  <!-- G) 팁/주의 -->
+  <h3 class="mt-4">G) 팁 & 주의</h3>
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실무 포인트</h6>
+      <ul class="mb-0">
+        <li><b>Universe</b>를 명확히: 동일 플랫폼/필터링 후 분석에 실제 사용 가능한 유전자 집합을 배경으로 사용.</li>
+        <li><b>ORA</b>: DEG 컷오프에 민감. 컷이 너무 빡세면 경로 검출력이 줄어듭니다.</li>
+        <li><b>GSEA</b>: 컷오프 없이 순위 전체를 쓰므로, 미세 변화가 집단적으로 쌓인 경로 탐지에 유리.</li>
+        <li>MSigDB는 컬렉션별 해석이 다릅니다. <b>H(Hallmark)</b>는 요약형, <b>C2</b>는 canonical pathway 위주.</li>
+        <li>ID 타입 혼용 주의(SYMBOL/ENTREZ/ENSEMBL). 하나를 기준으로 통일하고 매핑 로그를 남기세요.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 요약 + 네비 -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>ORA는 <b>DEG set + universe</b>, GSEA는 <b>전체 순위</b>로 접근 — 두 방법은 상호보완적입니다.</li>
+          <li>clusterProfiler/enrichplot로 <b>GO·KEGG</b>를, msigdbr/fgsea로 <b>MSigDB·GSEA</b>를 빠르게 수행할 수 있습니다.</li>
+          <li>결과는 <b>padj(FDR)</b> 기준으로 해석하며, 상위 항목을 시각화(dotplot, cnetplot, enrichment plot)로 요약하세요.</li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="03_deg.html">← Back: DEG analysis</a>
+          <a class="btn btn-primary" href="05_advanced.html">Next: Advanced analysis →</a>
+          <a class="btn btn-link" href="https://yulab-smu.top/biomedical-knowledge-mining-book/" target="_blank" rel="noopener">clusterProfiler book ↗</a>
+          <a class="btn btn-link" href="https://www.gsea-msigdb.org/gsea/msigdb" target="_blank" rel="noopener">MSigDB ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const t = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=> btn.innerText = t, 1600);
+    });
+  }
+</script>
+</body>
+</html>
