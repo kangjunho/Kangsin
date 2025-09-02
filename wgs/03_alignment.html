@@ -37,8 +37,8 @@
   <!-- B) BWA 소개 -->
   <h3 class="mt-4">B) BWA란?</h3>
   <p class="note">
-    <b>BWA(Burrows–Wheeler Aligner)</b>는 FM-index를 활용하는 빠른 단일/페어드엔드 리드 매퍼입니다.
-    로우에러의 짧은~중간 길이 리드(일반적인 Illumina)에 최적화되어 있으며, 변이콜링 파이프라인(예: GATK)과의 호환성이 매우 좋습니다.
+    <b>BWA (Burrows–Wheeler Aligner)</b>는 BWT/FMI를 활용하는 빠른 리드 매퍼입니다.
+    로우에러의 짧은~중간 길이 리드(일반적 Illumina)에 최적화되어 있으며, 변이콜링 파이프라인(예: GATK)과 호환성이 매우 좋습니다.
   </p>
 
   <!-- C) BWA 알고리즘 비교 -->
@@ -61,13 +61,13 @@
           <td><code>bwa aln</code> → <code>bwa samse/sampe</code></td>
           <td>초기 세대 알고리즘. 짧은 리드에 최적화, 메모리 적음.</td>
           <td>~50–70 bp 이하</td>
-          <td>주로 글로벌에 가까운 정렬</td>
+          <td>글로벌에 가까운 정렬</td>
           <td>레거시 데이터용. 현대 WGS에는 보통 비권장.</td>
         </tr>
         <tr>
           <td><b>BWA-SW</b></td>
           <td><code>bwa sw</code></td>
-          <td>더 긴 리드(초창기 454/장문 리드) 대응. 스플릿/갭 허용.</td>
+          <td>더 긴 리드(초창기 장문 리드) 대응. 스플릿/갭 허용.</td>
           <td>수백 bp 이상</td>
           <td>로컬 정렬(스미스-워터만 기반)</td>
           <td>역사적 이유로 존재. 현재는 사용 드묾.</td>
@@ -78,7 +78,7 @@
           <td>현대 표준. seed로 <i>Maximal Exact Match</i> 사용, 스플릿/소프트클리핑 지원, 정확도/속도 균형 우수.</td>
           <td>~70 bp – 1 Mb</td>
           <td>로컬 정렬 + 스플릿 정렬</td>
-          <td><b>일반적인 WGS/WES에 권장</b>. GATK 등과 호환성 매우 좋음.</td>
+          <td><b>일반적인 Illumina WGS/WES에 권장</b>. GATK 등과 호환성 우수.</td>
         </tr>
       </tbody>
     </table>
@@ -96,8 +96,8 @@
     <li><code>samtools flagstat</code>/<code>idxstats</code>: 매핑 요약 통계(QC) 확인.</li>
   </ul>
   <p class="note">
-    우리가 쓰는 주요 옵션: <code>-@ &lt;threads&gt;</code>(스레드 병렬), <code>view -bS</code>(BAM 출력),
-    <code>sort -o</code>(출력 파일 지정). 필요하면 <code>view -C -T REF</code>로 CRAM 저장도 가능해요(호환성 확인).
+    우리가 쓰는 주요 옵션: <code>-@ &lt;threads&gt;</code>(병렬), <code>view -bS</code>(BAM 출력),
+    <code>sort -o</code>(출력 지정). 필요하면 <code>view -C -T REF</code>로 CRAM 저장도 가능(호환성 확인).
   </p>
 
   <!-- E) 왜 SAM을 저장하지 않나 -->
@@ -144,6 +144,36 @@ samtools flagstat -@ ${THREADS} "${OUT}/${SAMPLE}.sorted.bam" > "${OUT}/${SAMPLE
 samtools idxstats "${OUT}/${SAMPLE}.sorted.bam" > "${OUT}/${SAMPLE}.idxstats.txt"
 </code></pre>
 
+  <!-- ▶ RG 설명 박스 -->
+  <div class="card tip-card mb-4">
+    <div class="card-body">
+      <div class="tip-title mb-2">Read Group (RG)란? 왜 중요할까</div>
+      <p class="mb-2">
+        <b>RG</b>는 동일한 조건(플랫폼/플로셀/레인/바코드/라이브러리 등)에서 만들어진 리드 묶음에 붙이는
+        <b>메타데이터</b>입니다. GATK·samtools 등 거의 모든 도구가 RG 정보를 활용합니다.
+      </p>
+      <ul class="mb-2">
+        <li><b>SM</b>(Sample): <u>샘플 이름</u>. 변이콜링에서 샘플 식별에 사용. <b>샘플마다 유일</b>해야 함.</li>
+        <li><b>ID</b>(Read group ID): 각 RG의 고유 ID. 보통 <i>FLOWCELL.LANE</i> 조합 등으로 유일하게.</li>
+        <li><b>LB</b>(Library): 라이브러리(시료 준비 단위). 중복 마킹/통계가 라이브러리 단위로 집계됨.</li>
+        <li><b>PL</b>(Platform): <code>ILLUMINA</code> 등.</li>
+        <li><b>PU</b>(Platform unit, 선택): <i>FLOWCELL.LANE.BARCODE</i> 같이 더 세밀한 단위.</li>
+      </ul>
+      <div class="alert alert-warning mb-2">
+        <b>주의:</b> RG/SM 라벨링이 잘못되면 <u>Variant calling 시 모든 샘플이 하나의 샘플로 인식</u>되거나
+        BQSR 모델링이 왜곡될 수 있습니다. 각 샘플은 <b>서로 다른 SM</b>을 가져야 하며, 같은 샘플의 여러 레인/러는
+        <b>동일 SM + 서로 다른 ID/PU</b>를 사용하세요.
+      </div>
+      <p class="mb-1"><b>RG 확인</b></p>
+      <pre class="mb-2"><code>samtools view -H /path/to/sample.sorted.bam | grep '^@RG'</code></pre>
+      <p class="mb-1"><b>RG 수정(예: 잘못된 RG를 교체)</b></p>
+      <pre class="mb-0"><code>gatk AddOrReplaceReadGroups \
+  -I in.bam -O out.bam \
+  -ID FLOWCELL1.L1 -SM SAMPLE1 -LB LIB1 -PL ILLUMINA -PU FLOWCELL1.L1.BC01
+samtools index out.bam</code></pre>
+    </div>
+  </div>
+
   <!-- G) 다중 샘플 배치 -->
   <h3 class="mt-4">G) 배치 실행 스크립트 (<code>run_alignment.sh</code>)</h3>
   <p class="note">트리밍 디렉토리의 <code>*_R1.trimmed.fastq.gz</code>를 기준으로 페어를 찾아 일괄 정렬합니다.</p>
@@ -186,10 +216,27 @@ echo "All done. BAMs in: ${OUT}"
     <li><b>CRAM</b>(선택): 레퍼런스 기반 압축으로 디스크 절약. 뷰어/툴 호환성 확인 필요.</li>
   </ul>
 
-  <div class="mt-4 d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="02_trimming.html">← Back: Trimming</a>
-    <a class="btn btn-primary" href="04_postproc.html">Next: Post-processing (Duplicates/BQSR) →</a>
-  </div>
+  <!-- Summary (Alignment) -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li><b>Alignment</b>는 리드를 레퍼런스에 배치하는 과정으로, BWA는 BWT/FMI 기반의 빠른 매퍼입니다.</li>
+          <li><b>BWA-MEM</b>이 현대 Illumina WGS/WES의 사실상 표준입니다. (backtrack/SW는 레거시/특수 케이스)</li>
+          <li><b>Read Group(RG)</b>는 필수 메타데이터. <b>샘플마다 SM이 고유</b>해야 하며, 잘못 라벨링하면 변이콜링에서 <u>모든 샘플이 1개로 합쳐져</u> 인식될 수 있습니다.</li>
+          <li><b>스트리밍 처리</b>: <code>bwa mem</code> → <code>samtools view -bS</code> → <code>samtools sort</code> 를 파이프(|)로 연결해 <b>SAM을 디스크에 남기지 않고</b> 바로 <b>sorted BAM</b> 생성.</li>
+          <li>산출물: <code>sample.sorted.bam</code> + <code>.bai</code>. 정합성은 <code>flagstat</code>, <code>idxstats</code>로 점검.</li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="02_trimming.html">← Back: Trimming</a>
+          <a class="btn btn-primary" href="04_postproc.html">Next: Post-processing (Duplicates/BQSR) →</a>
+          <a class="btn btn-link" href="http://bio-bwa.sourceforge.net/bwa.shtml" target="_blank" rel="noopener">BWA Manual ↗</a>
+          <a class="btn btn-link" href="http://www.htslib.org/doc/samtools.html" target="_blank" rel="noopener">Samtools Manual ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
