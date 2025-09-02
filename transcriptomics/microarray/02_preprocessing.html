@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 02. Microarray Preprocessing — RMA / neqc / Agilent pipeline</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .step-badge{display:inline-block;padding:.25rem .6rem;border:1px solid #0d6efd;border-radius:999px;color:#0d6efd;font-weight:600;font-size:.9rem;}
+    .small-muted{font-size:.92rem;color:#666;}
+  </style>
+</head>
+<body>
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h1 class="mb-0">Microarray Preprocessing</h1>
+    <span class="step-badge">Step 02 / 05</span>
+  </div>
+  <p class="lead mb-3">
+    플랫폼별 권장 파이프라인으로 <b>정규화</b>와 <b>품질검사(QC)</b>를 수행하고, 분석에 사용할 표현행렬을 저장합니다.
+  </p>
+  <hr/>
+
+  <!-- A) 준비물 -->
+  <h3>A) 준비물 (패키지 설치)</h3>
+  <p class="note">처음 한 번만 설치하세요.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager")
+BiocManager::install(c(
+  "oligo",           # Affymetrix CEL → RMA
+  "affy",            # (구형 Affy용) 선택
+  "limma",           # Agilent / Illumina / DEG / QC
+  "illuminaio",      # Illumina IDAT/요약
+  "arrayQualityMetrics",  # 종합 QC 리포트(선택)
+  "annotate"
+))
+</code></pre>
+
+  <!-- B) 데이터 배치 -->
+  <h3 class="mt-4">B) 데이터 배치 & targets 파일</h3>
+  <ul class="note">
+    <li>원시 파일(CEL / Agilent TXT / Illumina 요약 TXT 또는 IDAT)을 한 폴더에 모읍니다.</li>
+    <li><b>targets.txt</b> (또는 2색은 <b>targets_2color.txt</b>)로 샘플 메타데이터를 제공합니다.</li>
+  </ul>
+  <div class="row">
+    <div class="col-md-6">
+      <h6>예) targets.txt (one-color)</h6>
+      <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+FileName\tSample\tGroup
+GSM0001.txt\tS1\tControl
+GSM0002.txt\tS2\tControl
+GSM0003.txt\tS3\tCase
+GSM0004.txt\tS4\tCase
+</code></pre>
+      <p class="small-muted">열 이름은 자유롭게 쓰되, 코드에서 동일 이름을 참조하세요.</p>
+    </div>
+    <div class="col-md-6">
+      <h6>예) targets_2color.txt (two-color)</h6>
+      <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+FileName\tCy3\tCy5
+array1.txt\tControl\tCase
+array2.txt\tControl\tCase
+</code></pre>
+    </div>
+  </div>
+
+  <!-- C) Affymetrix -->
+  <h3 class="mt-4">C) Affymetrix — CEL → <span class="text-primary">RMA</span></h3>
+  <p class="note">배경보정 + quantile 정규화 + probeset 요약을 한 번에 수행합니다. 출력은 <b>log2</b> 스케일.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(oligo); library(limma)
+
+setwd("/path/to/CEL_dir")
+raw  <- read.celfiles(list.celfiles(full.names=TRUE))   # CEL 읽기
+eset <- rma(raw)                                        # RMA
+expr <- exprs(eset)                                     # (probeset × sample) log2
+
+# 간단 QC
+boxplot(expr, las=2, main="Affy RMA boxplot")
+plotDensities(expr, main="Affy RMA density")
+
+# 저장
+write.csv(expr, file="affy_rma_log2.csv")
+saveRDS(expr, file="affy_rma_log2.rds")
+</code></pre>
+
+  <!-- D) Agilent one-color -->
+  <h3 class="mt-4">D) Agilent — one-color</h3>
+  <p class="note">권장: <code>normexp</code> 배경보정 → <code>normalizeBetweenArrays(method="quantile")</code>.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+
+setwd("/path/to/agilent_onecolor")
+targets <- read.delim("targets.txt", check.names=FALSE)
+RG  <- read.maimages(targets$FileName, source="agilent", green.only=TRUE)
+RGb <- backgroundCorrect(RG, method="normexp", offset=50)
+E   <- normalizeBetweenArrays(RGb, method="quantile")   # log2
+expr <- E$E
+
+# QC
+boxplot(expr, las=2, main="Agilent one-color (quantile)")
+plotDensities(expr, main="Agilent one-color density")
+
+# 저장
+write.csv(expr, file="agilent_onecolor_log2.csv")
+saveRDS(expr, file="agilent_onecolor_log2.rds")
+</code></pre>
+
+  <!-- E) Agilent two-color -->
+  <h3 class="mt-4">E) Agilent — two-color</h3>
+  <p class="note">two-color는 <b>M = log2(R/G)</b> 값이 분석의 주 대상입니다(표현값이 아닌 비교값).</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+
+setwd("/path/to/agilent_twocolor")
+targets <- read.delim("targets_2color.txt", check.names=FALSE)
+RG  <- read.maimages(targets$FileName, source="agilent")
+RGb <- backgroundCorrect(RG, method="normexp", offset=50)
+MA  <- normalizeWithinArrays(RGb, method="loess")       # within-array
+MA  <- normalizeBetweenArrays(MA, method="Aquantile")   # between-array
+
+M <- MA$M   # 분석용
+A <- MA$A   # 평균 강도
+
+# QC
+maPlot(MA, array=1, main="MA-plot (array1)")            # 한 어레이 예시
+boxplot(M, las=2, main="Agilent two-color (M values)")
+
+# 저장
+write.csv(M, file="agilent_twocolor_M.csv")
+saveRDS(M, file="agilent_twocolor_M.rds")
+</code></pre>
+
+  <!-- F) Illumina -->
+  <h3 class="mt-4">F) Illumina — <span class="text-primary">neqc</span> (control 활용)</h3>
+  <p class="note">
+    <code>neqc</code>는 control probe를 이용한 <b>normexp+quantile+log2</b> 절차를 자동으로 수행합니다.
+    제공되는 <b>detection p-value</b>로 저신뢰 probe를 필터링하세요.
+  </p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma); library(illuminaio)
+
+setwd("/path/to/illumina_summary")
+y  <- read.ilmn(files="summary.txt", expr="AVG_Signal",
+                other.columns="Detection")   # 제조사 요약 TXT 형식
+y2 <- neqc(y)                                # 정규화 + log2
+expr <- y2$E
+detP <- y$other$Detection
+
+# 필터링: 절반 이상 시료에서 검출 p < 0.01
+keep <- rowMeans(detP < 0.01) > 0.5
+expr <- expr[keep, ]
+
+# QC
+boxplot(expr, las=2, main="Illumina neqc (filtered)")
+plotDensities(expr, main="Illumina density")
+
+# 저장
+write.csv(expr, file="illumina_neqc_log2.csv")
+saveRDS(expr, file="illumina_neqc_log2.rds")
+</code></pre>
+
+  <!-- G) 종합 QC 리포트 -->
+  <h3 class="mt-4">G) (선택) 종합 QC 리포트 — arrayQualityMetrics</h3>
+  <p class="note">여러 지표(거리 행렬, outlier 검출 등)를 한 번에 HTML로 생성합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# expr_mat: 정규화 완료된 (features × samples) log2 행렬
+library(arrayQualityMetrics)
+expr_eset <- Biobase::ExpressionSet(assayData = as.matrix(expr_mat))
+arrayQualityMetrics(expressionset = expr_eset, outdir = "AQM_report", force = TRUE)
+</code></pre>
+
+  <!-- H) 결과물 정리 -->
+  <h3 class="mt-4">H) 결과물 정리</h3>
+  <ul class="note">
+    <li><b>Affymetrix/Agilent one-color/Illumina</b>: log2 표현행렬 <code>expr</code> 사용</li>
+    <li><b>Agilent two-color</b>: <b>M</b> 행렬 사용(대조-처리 비교값). 이후 limma에서 디자인/대비를 M 기준으로 구성</li>
+    <li>다음 단계(DEG)에서 gene 심볼 기준 통합이 필요하면
