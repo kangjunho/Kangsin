@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 05. Advanced analysis — Batch/Meta/GSVA/WGCNA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip  { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .step-badge{display:inline-block;padding:.25rem .6rem;border:1px solid #0d6efd;border-radius:999px;color:#0d6efd;font-weight:600;font-size:.9rem;}
+    .small-muted{font-size:.92rem;color:#666;}
+  </style>
+</head>
+<body>
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h1 class="mb-0">Advanced analysis</h1>
+    <span class="step-badge">Step 05 / 05</span>
+  </div>
+  <p class="lead mb-3">
+    마이크로어레이 분석의 확장: <b>배치 효과 보정</b>, <b>교차 플랫폼 통합</b>, <b>메타분석</b>,
+    <b>GSVA/ssGSEA</b>, <b>WGCNA</b>를 위한 실전 템플릿을 제공합니다.
+  </p>
+  <hr/>
+
+  <!-- A) Batch effect -->
+  <h3>A) 배치 효과 보정 (ComBat / removeBatchEffect / SVA)</h3>
+  <p class="note">정규화(log2) 후, 생물학적 설계(<code>group</code>)를 보존하면서 <b>batch</b>를 보정합니다.</p>
+
+  <h6 class="mt-3">A-1) 배치 확인 (PCA)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# expr: (gene × sample) log2 행렬, meta: data.frame(sample, group, batch)
+mat <- expr
+pc  <- prcomp(t(mat), scale.=TRUE)
+plot(pc$x[,1], pc$x[,2], pch=19, col=as.integer(meta$batch)+1,
+     xlab="PC1", ylab="PC2"); legend("topright", legend=levels(meta$batch),
+     col=2:(length(levels(meta$batch))+1), pch=19)
+</code></pre>
+
+  <h6 class="mt-3">A-2) ComBat (sva 패키지)</h6>
+  <p class="small-muted">생물학적 변수(<code>group</code>)는 모델로 포함하여 보존합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("sva", quietly=TRUE)) BiocManager::install("sva")
+library(sva)
+
+batch  <- factor(meta$batch)
+group  <- factor(meta$group)
+mod    <- model.matrix(~ group)          # 생물학적 효과 유지
+expr_cb <- ComBat(dat=as.matrix(expr), batch=batch, mod=mod, par.prior=TRUE)
+
+# PCA 다시 확인
+pc2 <- prcomp(t(expr_cb), scale.=TRUE)
+plot(pc2$x[,1], pc2$x[,2], pch=19, col=as.integer(group)+1,
+     xlab="PC1", ylab="PC2")
+</code></pre>
+
+  <h6 class="mt-3">A-3) removeBatchEffect (시각화용 간단 보정)</h6>
+  <p class="small-muted">분석 모델 적합은 원본 expr + 디자인에 batch 포함을 권장. <code>removeBatchEffect</code>는 주로 <b>시각화</b> 용도.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+expr_vis <- removeBatchEffect(expr, batch = batch, design = model.matrix(~ group))
+# 히트맵/PCA 등 시각화에 expr_vis 사용
+</code></pre>
+
+  <h6 class="mt-3">A-4) SVA (숨은 요인)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(sva); library(limma)
+design <- model.matrix(~ group)
+# null 모델(생물학 효과 제외)과 full 모델 지정
+design0 <- model.matrix(~ 1)
+svobj <- sva(as.matrix(expr), mod=design, mod0=design0)   # sv: surrogate variables
+design_sv <- cbind(design, svobj$sv)
+fit  <- lmFit(expr, design_sv)
+# ... 평소대로 contrasts.fit/eBayes 진행
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>배치 처리 팁</h6>
+      <ul class="mb-0">
+        <li>가능하면 <b>실험 설계 단계</b>에서 배치를 균형화하세요.</li>
+        <li><b>ComBat</b>은 분석용 행렬 자체를 변경, <b>removeBatchEffect</b>는 시각화에 적합.</li>
+        <li><b>SVA</b>는 숨은 요인을 디자인에 추가해 <b>과/저보정</b> 위험을 줄여줍니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- B) Cross-platform integration -->
+  <h3 class="mt-4">B) 교차 플랫폼 통합 (Affy/Agilent/Illumina)</h3>
+  <p class="note">플랫폼별 표현행렬을 <b>gene symbol</b> 기준으로 정렬 후 병합하고, <b>study</b>를 배치로 처리합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# expr_list: 리스트 형태로 각 스터디(혹은 플랫폼) 표현행렬(log2, gene × sample)
+# 공통 유전자 교집합을 취해 column-bind
+genes <- Reduce(intersect, lapply(expr_list, rownames))
+mats  <- lapply(expr_list, function(x) x[genes, , drop=FALSE])
+X     <- do.call(cbind, mats)
+
+# 간단한 스케일링/정렬(선택)
+Xn <- limma::normalizeBetweenArrays(X, method="quantile")
+
+# 메타 정보
+study <- factor(unlist(mapply(function(m, nm) rep(nm, ncol(m)),
+                              expr_list, names(expr_list))))
+group <- factor(meta$group[colnames(Xn)])  # 미리 준비된 그룹 라벨
+
+# 배치 포함한 limma 모델
+design <- model.matrix(~ 0 + group + study)
+colnames(design)[1:length(levels(group))] <- levels(group)
+fit <- lmFit(Xn, design)
+# 이후 contrasts.fit/eBayes ...
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>교차 플랫폼 주의</h6>
+      <ul class="mb-0">
+        <li><b>two-color</b>(Agilent)는 M값(상대 변화) 구조라 one-color와 단순 병합하기보다 <b>별도 분석 후 메타</b>를 권장.</li>
+        <li>probe→gene 매핑은 플랫폼별 규칙을 문서화하고, <b>중복 처리</b>(평균/최대|logFC| 등)를 일관성 있게 적용.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- C) Meta-analysis -->
+  <h3 class="mt-4">C) 메타분석 (metafor: 효과크기 결합, 랜덤효과)</h3>
+  <p class="note">각 스터디에서 limma로 효과크기(<code>logFC</code>)와 <code>t</code> 통계를 구한 뒤, <b>SE = |logFC / t|</b>로 근사해 결합합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("metafor", quietly=TRUE)) install.packages("metafor")
+library(metafor); library(dplyr); library(purrr)
+
+# studies: 리스트(각각 topTable 결과 with rownames=gene, logFC, t, P.Value 등)
+combine_gene <- function(gene){
+  per <- lapply(studies, function(tt){
+    if (!gene %in% rownames(tt)) return(NULL)
+    lf <- tt[gene, "logFC"]; tval <- tt[gene, "t"]
+    if (is.na(lf) || is.na(tval) || tval==0) return(NULL)
+    se <- abs(lf / tval)
+    data.frame(yi=lf, sei=se)
+  }) %>% bind_rows()
+  if (nrow(per) < 2) return(NULL)
+  r <- rma(yi=per$yi, sei=per$sei, method="REML")
+  data.frame(gene=gene, eff=r$b[[1]], se=sqrt(r$tau2 + mean(per$sei^2)),
+             z=r$zval, p=r$pval)
+}
+
+genes_all <- Reduce(union, lapply(studies, rownames))
+meta_res <- map_dfr(genes_all, combine_gene)
+meta_res$padj <- p.adjust(meta_res$p, method="BH")
+meta_res <- meta_res[order(meta_res$padj), ]
+head(meta_res)
+write.csv(meta_res, "meta_random_effects.csv", row.names=FALSE)
+</code></pre>
+
+  <!-- D) GSVA/ssGSEA -->
+  <h3 class="mt-4">D) GSVA / ssGSEA (샘플별 경로 점수)</h3>
+  <p class="note">발현행렬과 유전자집합(리스트)을 입력하여 샘플별 경로 스코어를 계산합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("GSVA", quietly=TRUE)) BiocManager::install("GSVA")
+if (!requireNamespace("msigdbr", quietly=TRUE)) install.packages("msigdbr")
+library(GSVA); library(msigdbr); library(dplyr)
+
+# expr: (gene × sample) log2
+msig <- msigdbr(species="Homo sapiens", category="H") %>%
+        dplyr::select(gs_name, gene_symbol)
+gsets <- split(msig$gene_symbol, msig$gs_name)
+
+# GSVA (기본) 또는 ssGSEA(method="ssgsea")
+gsva_mat <- gsva(as.matrix(expr), gsets, method="gsva", kcdf="Gaussian", parallel.sz=1)
+# ssGSEA: gsva(..., method="ssgsea")
+
+write.csv(gsva_mat, "GSVA_scores.csv")
+</code></pre>
+
+  <!-- E) WGCNA -->
+  <h3 class="mt-4">E) WGCNA (공발현 모듈)</h3>
+  <p class="note">유전자 간 상관 기반 네트워크로 모듈을 정의하고, 모듈-표현형 상관을 확인합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("WGCNA", quietly=TRUE)) install.packages("WGCNA")
+library(WGCNA)
+options(stringsAsFactors=FALSE); allowWGCNAThreads()
+
+datExpr <- t(expr)                   # WGCNA는 sample × gene 형태 권장
+gsg <- goodSamplesGenes(datExpr, verbose=3); if (!gsg$allOK) datExpr <- datExpr[gsg$goodSamples, gsg$goodGenes]
+
+# 소프트 임계치 선택
+powers <- c(1:20)
+sft <- pickSoftThreshold(datExpr, powerVector=powers, verbose=5)
+power <- sft$powerEstimate %||% 6      # 추정 실패 시 기본값 6
+
+# 모듈 탐색
+net <- blockwiseModules(datExpr, power=power,
+                        TOMType="unsigned", minModuleSize=30,
+                        reassignThreshold=0, mergeCutHeight=0.25,
+                        numericLabels=TRUE, pamRespectsDendro=FALSE,
+                        saveTOMs=FALSE, verbose=3)
+moduleColors <- labels2colors(net$colors)
+MEs <- net$MEs
+
+# 모듈-표현형 상관
+trait <- model.matrix(~ 0 + meta$group); colnames(trait) <- levels(meta$group)
+modTraitCor <- cor(MEs, trait, use="p"); modTraitP <- corPvalueStudent(modTraitCor, nrow(datExpr))
+write.csv(modTraitCor, "WGCNA_module_trait_cor.csv")
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>WGCNA 팁</h6>
+      <ul class="mb-0">
+        <li>샘플 수가 충분할수록 안정적(권장 20~30 samples 이상).</li>
+        <li>이상치 샘플 제거, 배치/공변량 보정 후 적용을 권장.</li>
+        <li>관심 모듈의 hub gene 탐색 → 기능 해석/후속 검증으로 연결.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- F) 재현성 -->
+  <h3 class="mt-4">F) 재현성 & 세션 정보</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+set.seed(123)
+sessionInfo()
+</code></pre>
+
+  <!-- 요약 + 네비 -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li><b>배치</b>는 ComBat/SVA로 처리하고, 시각화에는 removeBatchEffect 사용.</li>
+          <li><b>교차 플랫폼</b>은 gene 기준 병합 + study를 배치로 모델링(2-color는 별도 분석 권장).</li>
+          <li><b>메타분석</b>은 스터디별 효과/SE를 구해 랜덤효과로 결합(metafor).</li>
+          <li><b>GSVA/ssGSEA</b>로 샘플별 경로 활성도를 정량화, <b>WGCNA</b>로 공발현 모듈을 탐색.</li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="04_enrichment.html">← Back: Functional Enrichment</a>
+          <a class="btn btn-primary" href="index.html">Finish: Back to Microarray Tutorial</a>
+          <a class="btn btn-link" href="../../e-learning.html">E-learning Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const t = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=> btn.innerText = t, 1600);
+    });
+  }
+</script>
+</body>
+</html>
