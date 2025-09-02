@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>04. Post-processing (MarkDuplicates & BQSR)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    pre { position: relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space: pre; }
+    .note { color:#444; }
+    .tip-card { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip-title { font-weight:700; color:#0d6efd; }
+    .mini { font-size:.95rem; color:#555; }
+  </style>
+</head>
+<body>
+<div class="container py-5">
+  <h1 class="mb-3">Step 04. Post-processing (MarkDuplicates & BQSR)</h1>
+  <p class="lead">
+    정렬된 BAM에서 <b>중복 리드</b>를 마킹하고(<b>MarkDuplicates</b>), 알려진 변이 사이트를 이용해
+    <b>BQSR(Base Quality Score Recalibration)</b>을 수행합니다. 기본 쓰레드는 <b>20</b>을 사용합니다.
+  </p>
+  <hr/>
+
+  <!-- A) 개요 -->
+  <h3>A) 왜 이 단계가 필요할까?</h3>
+  <ul>
+    <li><b>중복 마킹</b>: PCR/광학적 중복은 같은 분자에서 유래한 리드로, 변이 콜링에 편향을 줍니다.
+      <b>MarkDuplicates</b>는 이를 식별해 <code>FLAG</code>로 표시(제거 X)하고, 이후 분석에서 자동으로 제외되도록 합니다.</li>
+    <li><b>BQSR</b>: 염기 품질(Q)은 기기/배치/염기 맥락에 따라 체계적인 오차가 납니다. 
+      <b>BaseRecalibrator → ApplyBQSR</b>로 품질 점수를 보정하여 변이 콜 품질을 향상시킵니다.</li>
+  </ul>
+
+  <!-- B) 입력/전제 -->
+  <h3 class="mt-4">B) 입력 & 전제</h3>
+  <ul class="note">
+    <li>이전 단계 산출물: <code>aln/SAMPLE.sorted.bam</code> (+ <code>.bai</code>).</li>
+    <li>레퍼런스: <code>Homo_sapiens_assembly38.fasta</code> (+ <code>.fai</code>, <code>.dict</code>).</li>
+    <li>Known sites(예, hg38): <code>dbsnp_146.hg38.vcf.gz</code>, <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz</code>, 
+      <code>1000G_phase1.snps.high_confidence.hg38.vcf.gz</code> (각각 <code>.tbi</code> 인덱스 필요).</li>
+  </ul>
+
+  <!-- C) 경로/변수 -->
+  <h3 class="mt-4">C) 공통 변수 설정</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 스레드 & 경로
+THREADS=20
+REF_DIR="/home/kang/raw_data/gatk_bundle/v0"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+
+IN="/home/kang/God_Nas/WGS_2nd/aln"          # 03단계 출력 위치
+OUT="/home/kang/God_Nas/WGS_2nd/postproc"    # 04단계 출력 위치
+mkdir -p "${OUT}"
+
+# Known sites (gzip + .tbi 필요)
+DBSNP="${REF_DIR}/dbsnp_146.hg38.vcf.gz"
+MILLS="${REF_DIR}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+G1KHC="${REF_DIR}/1000G_phase1.snps.high_confidence.hg38.vcf.gz"
+</code></pre>
+
+  <!-- D) 단일 샘플 예제 -->
+  <h3 class="mt-4">D) 단일 샘플 예제</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+SAMPLE="NP-21"
+
+# 1) MarkDuplicates (Spark 버전: 빠름)
+gatk MarkDuplicatesSpark \
+  -I "${IN}/${SAMPLE}.sorted.bam" \
+  -O "${OUT}/${SAMPLE}.dup.bam" \
+  --metrics-file "${OUT}/${SAMPLE}.dup.metrics.txt" \
+  --conf 'spark.executor.cores='"${THREADS}" \
+  --conf 'spark.local.dir=/tmp' \
+  --create-output-bam-index true
+
+# (대안) Picard MarkDuplicates (단일 스레드/호환성 높음)
+# gatk MarkDuplicates \
+#   -I "${IN}/${SAMPLE}.sorted.bam" \
+#   -O "${OUT}/${SAMPLE}.dup.bam" \
+#   -M "${OUT}/${SAMPLE}.dup.metrics.txt" \
+#   --CREATE_INDEX true
+
+# 2) BaseRecalibrator (리포트 생성)
+gatk BaseRecalibrator \
+  -R "${REF}" \
+  -I "${OUT}/${SAMPLE}.dup.bam" \
+  --known-sites "${DBSNP}" \
+  --known-sites "${MILLS}" \
+  --known-sites "${G1KHC}" \
+  -O "${OUT}/${SAMPLE}.recal.table"
+
+# 3) ApplyBQSR (보정 적용 → 최종 BAM)
+gatk ApplyBQSR \
+  -R "${REF}" \
+  -I "${OUT}/${SAMPLE}.dup.bam" \
+  --bqsr-recal-file "${OUT}/${SAMPLE}.recal.table" \
+  -O "${OUT}/${SAMPLE}.final.bam"
+
+# 인덱스 & QC
+samtools index -@ ${THREADS} "${OUT}/${SAMPLE}.final.bam"
+samtools flagstat -@ ${THREADS} "${OUT}/${SAMPLE}.final.bam" > "${OUT}/${SAMPLE}.final.flagstat.txt"
+</code></pre>
+
+  <!-- E) 옵션 설명 -->
+  <h3 class="mt-4">E) 주요 옵션 설명</h3>
+  <ul>
+    <li><b>MarkDuplicatesSpark</b>: Spark 로컬 모드로 병렬 수행.
+      <code>--metrics-file</code>에 중복 통계가 기록되며, <code>--create-output-bam-index</code>로 자동 색인 생성.</li>
+    <li><b>BaseRecalibrator</b>: 알려진 변이 사이트에서 <i>실제 변이는 오류로 학습하지 않도록</i> 제외하고
+      시스템적 오차 모델을 학습해 <code>recal.table</code> 생성.</li>
+    <li><b>ApplyBQSR</b>: 학습된 보정 테이블을 적용하여 염기 품질(Q) 재계산.</li>
+    <li><b>Known-sites</b>: dbSNP(다양한 SNP), Mills(인델), 1000G high-conf snps(고신뢰 SNP) 등을 사용합니다
+      (레퍼런스 빌드와 일치하는 버전이어야 함).</li>
+  </ul>
+
+  <!-- F) 배치 실행 -->
+  <h3 class="mt-4">F) 배치 실행 스크립트 (<code>run_postproc.sh</code>)</h3>
+  <p class="note">03단계에서 생성한 <code>aln/*.sorted.bam</code>을 모두 찾아 일괄 처리합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+#!/usr/bin/env bash
+set -euo pipefail
+
+THREADS=20
+REF_DIR="/home/kang/raw_data/gatk_bundle/v0"
+REF="${REF_DIR}/Homo_sapiens_assembly38.fasta"
+
+IN="/home/kang/God_Nas/WGS_2nd/aln"
+OUT="/home/kang/God_Nas/WGS_2nd/postproc"
+mkdir -p "${OUT}"
+
+DBSNP="${REF_DIR}/dbsnp_146.hg38.vcf.gz"
+MILLS="${REF_DIR}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+G1KHC="${REF_DIR}/1000G_phase1.snps.high_confidence.hg38.vcf.gz"
+
+shopt -s nullglob
+for BAM in "${IN}"/*.sorted.bam; do
+  SAMPLE="$(basename "${BAM}" .sorted.bam)"
+  echo "[POSTPROC] ${SAMPLE}"
+
+  gatk MarkDuplicatesSpark \
+    -I "${BAM}" \
+    -O "${OUT}/${SAMPLE}.dup.bam" \
+    --metrics-file "${OUT}/${SAMPLE}.dup.metrics.txt" \
+    --conf 'spark.executor.cores='"${THREADS}" \
+    --conf 'spark.local.dir=/tmp' \
+    --create-output-bam-index true
+
+  gatk BaseRecalibrator \
+    -R "${REF}" \
+    -I "${OUT}/${SAMPLE}.dup.bam" \
+    --known-sites "${DBSNP}" \
+    --known-sites "${MILLS}" \
+    --known-sites "${G1KHC}" \
+    -O "${OUT}/${SAMPLE}.recal.table"
+
+  gatk ApplyBQSR \
+    -R "${REF}" \
+    -I "${OUT}/${SAMPLE}.dup.bam" \
+    --bqsr-recal-file "${OUT}/${SAMPLE}.recal.table" \
+    -O "${OUT}/${SAMPLE}.final.bam"
+
+  samtools index -@ ${THREADS} "${OUT}/${SAMPLE}.final.bam"
+  samtools flagstat -@ ${THREADS} "${OUT}/${SAMPLE}.final.bam" > "${OUT}/${SAMPLE}.final.flagstat.txt"
+done
+
+echo "All done. Final BAMs in: ${OUT}"
+</code></pre>
+
+  <!-- G) 자주 하는 질문/팁 -->
+  <h3 class="mt-4">G) 자주 하는 질문 & 팁</h3>
+  <div class="card tip-card mb-3">
+    <div class="card-body">
+      <div class="tip-title mb-2">MarkDuplicates: 제거가 아니라 “마킹”입니다</div>
+      <p class="mb-0">
+        중복 리드는 기본적으로 <b>버리지 않고</b> <code>FLAG</code>에 표시만 합니다(후속 도구가 자동 제외).
+        원한다면 <code>--REMOVE_DUPLICATES true</code>(Picard 버전)로 실제 제거도 가능하지만,
+        재현성/추적성 때문에 마킹이 일반적입니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- H) 요약 카드 -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li><b>MarkDuplicates</b>로 PCR/광학적 중복을 마킹하고, <b>BQSR</b>로 체계적 품질 오차를 보정합니다.</li>
+          <li>입력은 <code>sorted.bam</code>, 출력은 <code>dup.bam</code> → <code>final.bam</code>(+<code>.bai</code>).</li>
+          <li>Known-sites는 레퍼런스와 동일 빌드(hg38 등)로 준비하고, <code>.tbi</code> 인덱스가 필요합니다.</li>
+          <li>스파크 버전은 빠르고(PICARD 버전은 호환성↑), 두 방식 모두 결과는 동일하게 해석됩니다.</li>
+          <li>QC: <code>*.dup.metrics.txt</code>와 <code>flagstat</code>로 중복률/매핑 요약을 점검하세요.</li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="03_alignment.html">← Back: Alignment</a>
+          <a class="btn btn-primary" href="05_variant.html">Next: Variant Calling →</a>
+          <a class="btn btn-link" href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890811-Resource-bundle" target="_blank" rel="noopener">GATK Resource Bundle ↗</a>
+          <a class="btn btn-link" href="https://gatk.broadinstitute.org/hc/en-us/categories/360002369672-Tools-Index" target="_blank" rel="noopener">GATK Tools Docs ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const old = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=>{ btn.innerText = old; }, 1800);
+    });
+  }
+</script>
+</body>
+</html>
