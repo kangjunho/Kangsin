@@ -1,1 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Microarray Tutorial (Hands-on)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    .card-step { box-shadow:0 6px 16px rgba(0,0,0,.06); border-radius:12px; }
+    .card-step:hover { transform: translateY(-4px); transition: .25s ease; }
+    .card-step img { height:170px; object-fit:cover; border-top-left-radius:12px; border-top-right-radius:12px; }
+    .step-title { font-weight:700; font-size:1.05rem; }
+    .go-btn { min-width:56px; }
+    .grid-gap { row-gap: 1.25rem; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="text-center mb-2">Microarray Tutorial (Hands-on)</h1>
+    <p class="text-center text-muted mb-4">각 단계를 차례대로 클릭하여 실습을 진행하세요.</p>
+
+    <div class="row grid-gap">
+      <!-- Step 01 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/microarray_platforms.jpg" alt="Microarray platforms">
+          <div class="card-body">
+            <div class="step-title">Step 01. 플랫폼 소개</div>
+            <p class="mb-3">
+              Affymetrix · Agilent · Illumina 구조 차이, 원시 파일, 정규화 권장 레시피를 비교합니다.
+            </p>
+            <a class="btn btn-primary go-btn" href="01_platforms.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 02 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/microarray_rma.png" alt="Preprocessing (RMA/neqc)">
+          <div class="card-body">
+            <div class="step-title">Step 02. 데이터 전처리</div>
+            <p class="mb-3">
+              Affy RMA, Agilent(one/two-color), Illumina neqc 등 정규화 및 QC 파이프라인을 수행합니다.
+            </p>
+            <a class="btn btn-primary go-btn" href="02_preprocessing.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 03 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/microarray_deg.png" alt="DEG analysis">
+          <div class="card-body">
+            <div class="step-title">Step 03. DEG 분석</div>
+            <p class="mb-3">
+              limma(선형모형 + eBayes)로 차등발현 분석을 수행하고 Volcano/Heatmap을 확인합니다.
+            </p>
+            <a class="btn btn-primary go-btn" href="03_deg.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 04 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/microarray_enrichment.jpg" alt="Functional enrichment">
+          <div class="card-body">
+            <div class="step-title">Step 04. 기능 강화분석</div>
+            <p class="mb-3">
+              clusterProfiler로 GO/KEGG ORA·GSEA를 수행해 생물학적 의미를 해석합니다.
+            </p>
+            <a class="btn btn-primary go-btn" href="04_enrichment.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 05 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/microarray_advanced.jpg" alt="Advanced topics">
+          <div class="card-body">
+            <div class="step-title">Step 05. Advanced 분석</div>
+            <p class="mb-3">
+              배치 보정(ComBat), 메타분석, 플랫폼 통합, probe→gene 병합 전략 등 고급 주제를 다룹니다.
+            </p>
+            <a class="btn btn-primary go-btn" href="05_advanced.html">Go</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a class="btn btn-outline-secondary" href="../../e-learning.html">← Back to E-learning</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
