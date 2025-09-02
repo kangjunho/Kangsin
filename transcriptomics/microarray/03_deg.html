@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 03. Microarray DEG analysis — limma</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .step-badge{display:inline-block;padding:.25rem .6rem;border:1px solid #0d6efd;border-radius:999px;color:#0d6efd;font-weight:600;font-size:.9rem;}
+    .small-muted{font-size:.92rem;color:#666;}
+  </style>
+</head>
+<body>
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h1 class="mb-0">DEG analysis (limma)</h1>
+    <span class="step-badge">Step 03 / 05</span>
+  </div>
+  <p class="lead mb-3">
+    <b>limma</b>의 선형모형 + <b>empirical Bayes</b>를 사용해 차등발현 유전자를 구합니다.
+    (one-color/Illumina는 <b>log2 표현값</b>, Agilent two-color는 <b>M=log2(R/G)</b> 사용)
+  </p>
+  <hr/>
+
+  <!-- A) 데이터 불러오기 -->
+  <h3>A) 데이터 불러오기</h3>
+  <p class="note">Step 02에서 저장한 행렬을 그대로 사용합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# expr: (gene/probe × sample) log2  —— Affy / Agilent 1C / Illumina
+expr <- readRDS("affy_rma_log2.rds")  # 예시: 파일명은 환경에 맞게 변경
+
+# 또는 Agilent two-color
+# M <- readRDS("agilent_twocolor_M.rds")
+</code></pre>
+
+  <!-- B) 디자인 매트릭스(자주 쓰는 템플릿) -->
+  <h3 class="mt-4">B) 디자인 매트릭스 & 대비(Contrasts) 템플릿</h3>
+
+  <h6 class="mt-2">B-1) 2그룹 비교 (독립표본)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+
+group  <- factor(c("Control","Control","Case","Case"))
+design <- model.matrix(~0 + group)
+colnames(design) <- levels(group)
+cont   <- makeContrasts(Case_vs_Control = Case - Control, levels=design)
+</code></pre>
+
+  <h6 class="mt-3">B-2) 다그룹 (예: Control / TreatA / TreatB, 관심: TreatA vs Control, TreatB vs Control)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+group  <- factor(c("Control","Control","TreatA","TreatA","TreatB","TreatB"))
+design <- model.matrix(~0 + group); colnames(design) <- levels(group)
+cont   <- makeContrasts(
+  TreatA_vs_Control = TreatA - Control,
+  TreatB_vs_Control = TreatB - Control,
+  levels = design
+)
+</code></pre>
+
+  <h6 class="mt-3">B-3) 페어드(쌍체) 디자인 (예: 환자별 전/후)</h6>
+  <p class="small-muted">동일 피험자 반복 측정은 <code>duplicateCorrelation</code>로 상관을 모델링하거나, 블록을 넣어 처리합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# subject: 개체(factor), condition: Before/After
+subject   <- factor(c("P1","P1","P2","P2","P3","P3","P4","P4"))
+condition <- factor(c("Before","After","Before","After","Before","After","Before","After"))
+
+design <- model.matrix(~0 + condition); colnames(design) <- levels(condition)
+block  <- subject
+corfit <- duplicateCorrelation(expr, design, block=block)  # expr 또는 M 사용
+
+# contrasts
+cont <- makeContrasts(After_vs_Before = After - Before, levels=design)
+</code></pre>
+
+  <h6 class="mt-3">B-4) 배치효과 보정(공변량 포함)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# batch: 실험 배치(factor), group: 관심 그룹
+design <- model.matrix(~ 0 + group + batch)  # 배치를 공변량으로 포함
+colnames(design)[1:length(levels(group))] <- levels(group)
+cont <- makeContrasts(Case_vs_Control = groupCase - groupControl, levels=design)
+</code></pre>
+
+  <!-- C) 적합 & 결과 (one-color/Illumina) -->
+  <h3 class="mt-4">C) 적합 & 결과 — one-color / Illumina (log2 표현값)</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# expr: log2 expression matrix
+fit  <- lmFit(expr, design)
+fit2 <- contrasts.fit(fit, cont)
+fit2 <- eBayes(fit2)
+
+# 단일 대비 예시
+tt <- topTable(fit2, coef=1, number=Inf, sort.by="P", adjust.method="BH")
+head(tt)
+
+# 저장
+write.csv(tt, file="DEG_limma_results.csv", row.names=TRUE)
+</code></pre>
+
+  <!-- D) 적합 & 결과 (two-color) -->
+  <h3 class="mt-4">D) 적합 & 결과 — Agilent two-color (M 값 사용)</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# M: log2(R/G) matrix
+fit  <- lmFit(M, design)
+fit2 <- contrasts.fit(fit, cont)
+fit2 <- eBayes(fit2)
+tt   <- topTable(fit2, coef=1, number=Inf, sort.by="P", adjust.method="BH")
+write.csv(tt, file="DEG_twocolor_M_results.csv")
+</code></pre>
+
+  <!-- E) 임계치 선택(필터링) -->
+  <h3 class="mt-4">E) 임계치 선택(필터링)</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 일반적인 기준(예시): adj.P.Val < 0.05 & |logFC| >= 1
+deg <- subset(tt, adj.P.Val < 0.05 & abs(logFC) >= 1)
+nrow(deg); head(deg)
+write.csv(deg, "DEG_significant.csv")
+</code></pre>
+
+  <!-- F) 시각화 -->
+  <h3 class="mt-4">F) 시각화 (Volcano / Heatmap / PCA / MA-plot)</h3>
+
+  <h6>F-1) Volcano (ggplot2)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("ggplot2", quietly=TRUE)) install.packages("ggplot2")
+library(ggplot2)
+
+tbl <- transform(tt,
+  negLogP = -log10(P.Value),
+  sig = factor(adj.P.Val < 0.05 & abs(logFC) >= 1,
+               levels=c(TRUE,FALSE), labels=c("Sig","NS"))
+)
+
+ggplot(tbl, aes(x=logFC, y=negLogP, color=sig)) +
+  geom_point(size=1.2, alpha=.7) +
+  geom_vline(xintercept=c(-1,1), linetype="dashed") +
+  geom_hline(yintercept=-log10(0.05), linetype="dashed") +
+  scale_color_manual(values=c("Sig"="#d62728","NS"="#7f7f7f")) +
+  labs(x="log2 Fold Change", y="-log10(P)", color="") +
+  theme_minimal()
+</code></pre>
+
+  <h6 class="mt-3">F-2) Heatmap (상위 DEG만)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+if (!requireNamespace("pheatmap", quietly=TRUE)) install.packages("pheatmap")
+library(pheatmap)
+
+topGenes <- rownames(tt)[1:50]                  # 상위 50개 예시
+Xsub     <- expr[topGenes, , drop=FALSE]        # two-color면 M 사용
+pheatmap(scale(t(Xsub)), cluster_cols=TRUE, show_rownames=TRUE)
+</code></pre>
+
+  <h6 class="mt-3">F-3) PCA (표현행렬 기반)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+mat <- expr                                  # two-color면 M 사용
+pc  <- prcomp(t(mat), scale.=TRUE)
+plot(pc$x[,1], pc$x[,2], xlab="PC1", ylab="PC2",
+     pch=19, col=as.integer(group)+1)
+legend("topright", legend=levels(group), pch=19, col=2:(length(levels(group))+1))
+</code></pre>
+
+  <h6 class="mt-3">F-4) MA-plot (limma)</h6>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+plotMA(fit2, coef=1, main="MA-plot (coef 1)")
+abline(h=0, col="red", lty=2)
+</code></pre>
+
+  <!-- G) 주석(Annotation) -->
+  <h3 class="mt-4">G) 유전자 주석 달기 (probe → gene)</h3>
+  <p class="note">플랫폼별 annotation 패키지/파일을 사용해 심볼/Entrez/Ensembl을 붙입니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 예시: org.Hs.eg.db로 SYMBOL 붙이기(키 타입은 환경에 맞게 변경)
+if (!requireNamespace("org.Hs.eg.db", quietly=TRUE))
+  BiocManager::install("org.Hs.eg.db")
+library(AnnotationDbi); library(org.Hs.eg.db)
+
+keys <- rownames(tt)
+ann  <- AnnotationDbi::select(org.Hs.eg.db, keys=keys,
+                              columns=c("SYMBOL","ENTREZID"), keytype="PROBEID")
+tt2  <- cbind(PROBEID = rownames(tt), tt)
+tt2  <- merge(tt2, ann, by.x="PROBEID", by.y="PROBEID", all.x=TRUE)
+write.csv(tt2, "DEG_with_annotation.csv", row.names=FALSE)
+</code></pre>
+
+  <!-- H) 팁 -->
+  <h3 class="mt-4">H) 팁</h3>
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>해석 & 실무 포인트</h6>
+      <ul class="mb-0">
+        <li>two-color는 <b>M</b>값(상대 변화) 중심 분석 — log2 표현값을 쓰지 않습니다.</li>
+        <li>페어드/반복 측정은 <code>duplicateCorrelation</code>과 <code>block</code>을 함께 사용하는 것이 안정적입니다.</li>
+        <li>배치가 크면 <b>디자인에 공변량</b>으로 포함하거나, 사후에 <code>removeBatchEffect</code>로 시각화용 보정.</li>
+        <li>필터(예: adj.P &lt; 0.05, |logFC|≥1)는 프로젝트 표준에 맞춰 조정하세요.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 요약 + 네비 -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>limma로 <b>디자인</b>·<b>대비</b>를 명확히 정의하고, <b>eBayes</b>로 안정화된 통계를 얻습니다.</li>
+          <li>one-color/Illumina는 <b>log2 표현값</b>, two-color는 <b>M 값</b>을 사용합니다.</li>
+          <li>Volcano/Heatmap/PCA/MA-plot으로 결과를 빠르게 검증합니다.</li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="02_preprocessing.html">← Back: Preprocessing</a>
+          <a class="btn btn-primary" href="04_enrichment.html">Next: Functional Enrichment →</a>
+          <a class="btn btn-link" href="https://bioconductor.org/packages/limma/" target="_blank" rel="noopener">limma ↗</a>
+          <a class="btn btn-link" href="https://cran.r-project.org/package=pheatmap" target="_blank" rel="noopener">pheatmap ↗</a>
+          <a class="btn btn-link" href="https://ggplot2.tidyverse.org/" target="_blank" rel="noopener">ggplot2 ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const t = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=> btn.innerText = t, 1600);
+    });
+  }
+</script>
+</body>
+</html>
