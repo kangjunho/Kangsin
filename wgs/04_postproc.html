@@ -14,6 +14,7 @@
     .tip-card { border-left:4px solid #0d6efd; background:#f8fbff; }
     .tip-title { font-weight:700; color:#0d6efd; }
     .mini { font-size:.95rem; color:#555; }
+    .math { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
   </style>
 </head>
 <body>
@@ -33,6 +34,33 @@
     <li><b>BQSR</b>: 염기 품질(Q)은 기기/배치/염기 맥락에 따라 체계적인 오차가 납니다. 
       <b>BaseRecalibrator → ApplyBQSR</b>로 품질 점수를 보정하여 변이 콜 품질을 향상시킵니다.</li>
   </ul>
+
+  <!-- A-1) BQSR 작동 원리 -->
+  <h3 class="mt-3">A-1) BQSR(품질 보정)의 작동 원리</h3>
+  <div class="card tip-card mb-3">
+    <div class="card-body">
+      <div class="tip-title mb-2">알려진 변이 사이트(known sites) + 경험적 오류확률 → 새 품질 점수</div>
+      <ul class="mb-3">
+        <li><b>목적:</b> 기기/배치/염기맥락 때문에 생기는 <b>체계적 오류</b>를 보정.</li>
+        <li><b>오류 집계:</b> <code>BaseRecalibrator</code>가 리드–레퍼런스 불일치를 세는데,
+          <u>알려진 변이 위치는 “진짜 변이”로 보고 제외</u>합니다. (진짜 변이를 오류로 세면 모델이 틀어짐)</li>
+        <li><b>경험적 오류확률 추정:</b>
+          <div class="ms-3">
+            <div class="math">p_emp = (불일치 수) / (검사한 염기 수)</div>
+            <div class="math">Q_emp = -10 · log10(p_emp)</div>
+          </div>
+        </li>
+        <li><b>공변량(covariates)별 보정:</b> 리드그룹/사이클(염기 위치)/염기 맥락(k-mer)/보고된 Q 등을
+          계층적 가산 모델로 학습하여 <b>ΔQ</b>를 추정하고, <code>ApplyBQSR</code> 단계에서 새 품질로 바꿉니다.
+          <div class="mini mt-1">직관: “기계가 Q30이라 했지만 이 조건에선 경험적으로 Q27쯤이네 → 조정”.</div>
+        </li>
+      </ul>
+      <div class="alert alert-info mb-0">
+        <b>결론:</b> BQSR은 <u>경험적 빈도 → 오류확률 → Phred Q</u>로 환산하는 <b>확률적(통계적) 보정</b>이며,
+        known sites는 “<b>오류 집계에서 빼주는 마스크</b>” 역할을 합니다.
+      </div>
+    </div>
+  </div>
 
   <!-- B) 입력/전제 -->
   <h3 class="mt-4">B) 입력 & 전제</h3>
@@ -111,8 +139,7 @@ samtools flagstat -@ ${THREADS} "${OUT}/${SAMPLE}.final.bam" > "${OUT}/${SAMPLE}
     <li><b>BaseRecalibrator</b>: 알려진 변이 사이트에서 <i>실제 변이는 오류로 학습하지 않도록</i> 제외하고
       시스템적 오차 모델을 학습해 <code>recal.table</code> 생성.</li>
     <li><b>ApplyBQSR</b>: 학습된 보정 테이블을 적용하여 염기 품질(Q) 재계산.</li>
-    <li><b>Known-sites</b>: dbSNP(다양한 SNP), Mills(인델), 1000G high-conf snps(고신뢰 SNP) 등을 사용합니다
-      (레퍼런스 빌드와 일치하는 버전이어야 함).</li>
+    <li><b>Known-sites</b>: dbSNP(다양한 SNP), Mills(인델), 1000G high-conf SNP 등(레퍼런스 빌드 일치·<code>.tbi</code> 필수).</li>
   </ul>
 
   <!-- F) 배치 실행 -->
@@ -168,34 +195,21 @@ done
 echo "All done. Final BAMs in: ${OUT}"
 </code></pre>
 
-  <!-- G) 자주 하는 질문/팁 -->
-  <h3 class="mt-4">G) 자주 하는 질문 & 팁</h3>
-  <div class="card tip-card mb-3">
-    <div class="card-body">
-      <div class="tip-title mb-2">MarkDuplicates: 제거가 아니라 “마킹”입니다</div>
-      <p class="mb-0">
-        중복 리드는 기본적으로 <b>버리지 않고</b> <code>FLAG</code>에 표시만 합니다(후속 도구가 자동 제외).
-        원한다면 <code>--REMOVE_DUPLICATES true</code>(Picard 버전)로 실제 제거도 가능하지만,
-        재현성/추적성 때문에 마킹이 일반적입니다.
-      </p>
-    </div>
-  </div>
-
-  <!-- H) 요약 카드 -->
+  <!-- 요약 카드 -->
   <section class="mt-4">
     <div class="card border-primary">
       <div class="card-header bg-primary text-white fw-bold">요약</div>
       <div class="card-body">
         <ul class="mb-3">
-          <li><b>MarkDuplicates</b>로 PCR/광학적 중복을 마킹하고, <b>BQSR</b>로 체계적 품질 오차를 보정합니다.</li>
-          <li>입력은 <code>sorted.bam</code>, 출력은 <code>dup.bam</code> → <code>final.bam</code>(+<code>.bai</code>).</li>
-          <li>Known-sites는 레퍼런스와 동일 빌드(hg38 등)로 준비하고, <code>.tbi</code> 인덱스가 필요합니다.</li>
-          <li>스파크 버전은 빠르고(PICARD 버전은 호환성↑), 두 방식 모두 결과는 동일하게 해석됩니다.</li>
-          <li>QC: <code>*.dup.metrics.txt</code>와 <code>flagstat</code>로 중복률/매핑 요약을 점검하세요.</li>
+          <li><b>MarkDuplicates</b>로 PCR/광학적 중복을 마킹, <b>BQSR</b>로 체계적 품질 오차를 보정.</li>
+          <li>입력: <code>sorted.bam</code> → 출력: <code>dup.bam</code> → <code>final.bam</code>(+<code>.bai</code>).</li>
+          <li>Known-sites는 레퍼런스 빌드 일치와 <code>.tbi</code> 인덱스 필요.</li>
+          <li>BQSR은 <span class="math">p_emp, Q_emp</span> 기반의 <b>확률적 보정</b>이며 known sites는 오류 집계에서 제외하는 <b>마스크</b>.</li>
+          <li>QC: <code>*.dup.metrics.txt</code>·<code>flagstat</code>로 중복률/매핑 요약 확인.</li>
         </ul>
         <div class="d-flex flex-wrap gap-2">
           <a class="btn btn-outline-secondary" href="03_alignment.html">← Back: Alignment</a>
-          <a class="btn btn-primary" href="05_variant_calling.html">Next: Variant Calling →</a>
+          <a class="btn btn-primary" href="05_variant.html">Next: Variant Calling →</a>
           <a class="btn btn-link" href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890811-Resource-bundle" target="_blank" rel="noopener">GATK Resource Bundle ↗</a>
           <a class="btn btn-link" href="https://gatk.broadinstitute.org/hc/en-us/categories/360002369672-Tools-Index" target="_blank" rel="noopener">GATK Tools Docs ↗</a>
         </div>
@@ -206,12 +220,4 @@ echo "All done. Final BAMs in: ${OUT}"
 
 <script>
   function copyCode(btn){
-    const code = btn.nextElementSibling.innerText;
-    navigator.clipboard.writeText(code).then(()=>{
-      const old = btn.innerText; btn.innerText = "Copied!";
-      setTimeout(()=>{ btn.innerText = old; }, 1800);
-    });
-  }
-</script>
-</body>
-</html>
+    const
