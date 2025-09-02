@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 01. Microarray Platforms — Affymetrix / Agilent / Illumina</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .table thead th { background:#f3f6ff; }
+    .step-badge{display:inline-block;padding:.25rem .6rem;border:1px solid #0d6efd;border-radius:999px;color:#0d6efd;font-weight:600;font-size:.9rem;}
+  </style>
+</head>
+<body>
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h1 class="mb-0">Microarray Platforms</h1>
+    <span class="step-badge">Step 01 / 05</span>
+  </div>
+  <p class="lead mb-3">
+    <b>Affymetrix · Agilent · Illumina</b> 플랫폼의 구조 차이와 권장 정규화, 시작용 레시피를 한 곳에 정리했습니다.
+  </p>
+
+  <hr/>
+
+  <!-- A) 개요 -->
+  <h3>A) 개요</h3>
+  <ul class="note">
+    <li><b>Affymetrix</b>: 여러 probe를 <em>probeset</em>으로 요약(RMA 내부).</li>
+    <li><b>Agilent</b>: one-color와 two-color 모두 존재. two-color는 <b>M=log2(R/G)</b>를 분석에 사용.</li>
+    <li><b>Illumina</b>: BeadArray. 요약 신호와 <b>detection p-value</b> 제공(저신뢰 probe 필터링에 유용).</li>
+  </ul>
+
+  <!-- B) 비교 표 -->
+  <h3 class="mt-4">B) 플랫폼 비교</h3>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th style="width:16%">항목</th>
+          <th style="width:28%"><b>Affymetrix (GeneChip)</b></th>
+          <th style="width:28%"><b>Agilent</b></th>
+          <th style="width:28%"><b>Illumina (BeadArray)</b></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>원시 파일</td>
+          <td><code>CEL</code></td>
+          <td>스캐너 <code>TXT</code> (one-color) / <code>TXT</code> (two-color)</td>
+          <td><code>IDAT</code> (또는 요약 <code>TXT</code>)</td>
+        </tr>
+        <tr>
+          <td>채널</td>
+          <td>one-color</td>
+          <td>one-color / two-color</td>
+          <td>one-color</td>
+        </tr>
+        <tr>
+          <td>신호 구조</td>
+          <td>다수 probe → <b>probeset</b> 요약 필요</td>
+          <td>probe별 FG/BG, two-color는 R/G 분리</td>
+          <td>bead-level 요약(AvgSignal) + <b>detection p-value</b></td>
+        </tr>
+        <tr>
+          <td>대표 R 패키지</td>
+          <td><code>oligo</code>(권장), <code>affy</code></td>
+          <td><code>limma::read.maimages</code></td>
+          <td><code>limma</code> + <code>illuminaio</code>/<code>beadarray</code></td>
+        </tr>
+        <tr>
+          <td>권장 정규화</td>
+          <td><b>RMA</b> (background + quantile + summarization)</td>
+          <td>
+            one-color: <code>normalizeBetweenArrays("quantile")</code><br/>
+            two-color: <b>normexp</b> → <b>within-array loess</b> → <b>between-array</b>
+          </td>
+          <td><b>neqc</b> (control 활용 normexp+quantile) 또는 quantile</td>
+        </tr>
+        <tr>
+          <td>출력 스케일</td>
+          <td>log2 표현값</td>
+          <td>one-color: log2 표현값 / two-color: <b>M=log2(R/G)</b></td>
+          <td>log2 표현값(+ detection p)</td>
+        </tr>
+        <tr>
+          <td>주석</td>
+          <td><code>hgu***.db</code> 등 플랫폼 전용 패키지</td>
+          <td>제조사 annotation 파일/패키지</td>
+          <td><code>illuminaHumanv*.db</code> 등</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- C) 스타터 레시피 -->
+  <h3 class="mt-4">C) 스타터 레시피 (복붙용)</h3>
+
+  <h5 class="mt-3">C-1) Affymetrix (CEL → RMA)</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(oligo); library(limma)
+
+setwd("/path/to/cel")
+raw  <- read.celfiles(list.celfiles(full.names=TRUE))
+eset <- rma(raw)                 # background + quantile + summarization
+expr <- exprs(eset)              # (probeset × sample) log2
+pdata <- pData(eset)
+dim(expr); expr[1:3,1:3]
+</code></pre>
+
+  <h5 class="mt-3">C-2) Agilent — one-color</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+targets <- read.delim("targets.txt")  # FileName, Group, ...
+RG  <- read.maimages(targets$FileName, source="agilent", green.only=TRUE)
+RGb <- backgroundCorrect(RG, method="normexp", offset=50)
+E   <- normalizeBetweenArrays(RGb, method="quantile")
+expr <- E$E                         # (probe × sample) log2
+</code></pre>
+
+  <h5 class="mt-3">C-3) Agilent — two-color</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+targets <- read.delim("targets_2color.txt")
+RG  <- read.maimages(targets, source="agilent")
+RGb <- backgroundCorrect(RG, method="normexp", offset=50)
+MA  <- normalizeWithinArrays(RGb, method="loess")
+MA  <- normalizeBetweenArrays(MA, method="Aquantile")
+M <- MA$M   # 분석은 M(=log2(R/G)) 사용
+A <- MA$A
+</code></pre>
+
+  <h5 class="mt-3">C-4) Illumina — neqc</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma); library(illuminaio)
+# read.ilmn()으로 요약 TXT 읽기(AVG_Signal, Detection 등)
+y  <- read.ilmn(files="summary.txt", expr="AVG_Signal", other.columns="Detection")
+y2 <- neqc(y)                     # control 활용 normexp + quantile + log2
+expr <- y2$E
+detP <- y$other$Detection         # (선택) 검출 p값
+# 저신뢰 probe 필터: 절반 이상에서 p &lt; 0.01
+keep <- rowMeans(detP < 0.01) > 0.5
+expr <- expr[keep, ]
+</code></pre>
+
+  <!-- D) 표현값 데이터프레임 예시 -->
+  <h3 class="mt-4">D) 표현값 데이터프레임 예시 (형태 참고)</h3>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h6>Affymetrix (RMA 후)</h6>
+      <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+expr_affy <- data.frame(
+  row.names = c("202431_at","209773_s_at","215345_at"),
+  Sample1 = c(8.12, 6.44, 7.01),
+  Sample2 = c(8.45, 6.20, 6.85),
+  Sample3 = c(7.98, 6.73, 7.22)
+)
+expr_affy
+</code></pre>
+    </div>
+    <div class="col-md-6">
+      <h6>Agilent one-color</h6>
+      <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+expr_ag1 <- data.frame(
+  row.names = c("A_23_P100001","A_23_P200113","A_24_P302145"),
+  GSM1 = c(9.10, 7.85, 8.33),
+  GSM2 = c(9.25, 7.60, 8.55),
+  GSM3 = c(8.95, 7.72, 8.40)
+)
+expr_ag1
+</code></pre>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h6>Agilent two-color (M/A)</h6>
+      <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+M_ag2 <- data.frame(
+  row.names = c("A_23_P100001","A_23_P200113","A_24_P302145"),
+  Array1 = c(+0.45, -0.12, +0.30),
+  Array2 = c(+0.10, -0.25, +0.18)
+)
+M_ag2  # 분석은 M(=log2(R/G))로 진행
+</code></pre>
+    </div>
+    <div class="col-md-6">
+      <h6>Illumina (neqc 후 + detection p)</h6>
+      <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+expr_ilmn <- data.frame(
+  row.names = c("ILMN_1762337","ILMN_2055271","ILMN_1736007"),
+  S1 = c(7.55, 9.02, 8.41),
+  S2 = c(7.70, 8.90, 8.55),
+  S3 = c(7.60, 9.10, 8.33)
+)
+detP_ilmn <- data.frame(
+  row.names = rownames(expr_ilmn),
+  S1 = c(0.01, 0.20, 0.03),
+  S2 = c(0.02, 0.18, 0.05),
+  S3 = c(0.01, 0.22, 0.04)
+)
+expr_ilmn; detP_ilmn
+</code></pre>
+    </div>
+  </div>
+
+  <!-- E) 차이 포인트 -->
+  <h3 class="mt-4">E) 플랫폼별 차이 포인트</h3>
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>핵심 체크</h6>
+      <ul class="mb-0">
+        <li><b>요약</b>: Affy는 probeset 요약이 정규화의 일부(RMA). Agilent/Illumina는 파일에 요약 신호가 포함.</li>
+        <li><b>채널</b>: Agilent two-color는 <b>M=log2(R/G)</b> 분석. (one-color/Affy/Illumina는 log2 표현값)</li>
+        <li><b>정규화</b>: Affy=RMA / Agilent=normexp+loess(2C)+quantile / Illumina=neqc 권장.</li>
+        <li><b>검출 신뢰도</b>: Illumina의 detection p-value로 low/absent probe 필터링.</li>
+        <li><b>주석</b>: 플랫폼 전용 annotation 패키지 사용 권장. 동일 유전자 다중 probe는 규칙으로 병합.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- F) 공통 포맷 정렬 -->
+  <h3 class="mt-4">F) 공통 포맷(유전자×샘플 log2)으로 정렬</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 최종 표현행렬 X 선택:
+#  - Affy: exprs(rma_eset)
+#  - Agilent one-color: E$E
+#  - Illumina: y2$E (필요 시 detection p 필터 적용)
+X <- expr
+
+# probe → gene 매핑 후 중복 병합(간단 버전)
+library(AnnotationDbi); library(org.Hs.eg.db); library(dplyr); library(tibble)
+map <- AnnotationDbi::select(org.Hs.eg.db, keys=rownames(X),
+                             columns=c("SYMBOL"), keytype="PROBEID")
+ann <- map %>% distinct(PROBEID, .keep_all=TRUE) %>% column_to_rownames("PROBEID")
+X2  <- X[rownames(X) %in% rownames(ann), ]
+Xg  <- rowsum(X2, group=ann[rownames(X2),"SYMBOL"])   # 같은 gene 묶어서 합/평균 등
+dim(Xg)
+</code></pre>
+
+  <!-- G) limma 템플릿 -->
+  <h3 class="mt-4">G) limma 차등발현 템플릿</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(limma)
+group  <- factor(c("Control","Control","Case","Case"))
+design <- model.matrix(~0 + group); colnames(design) <- levels(group)
+fit  <- lmFit(Xg, design)
+cont <- makeContrasts(Case_vs_Control = Case - Control, levels=design)
+fit2 <- eBayes(contrasts.fit(fit, cont))
+res  <- topTable(fit2, coef="Case_vs_Control", number=Inf, sort.by="P")
+head(res)
+</code></pre>
+
+  <!-- 요약 -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>플랫폼에 맞는 <b>정규화</b>가 가장 중요: Affy=RMA, Agilent(2C)=loess, Illumina=neqc.</li>
+          <li>two-color는 <b>M값</b> 중심 분석. one-color/Illumina/Affy는 <b>log2 표현값</b> 분석.</li>
+          <li>Illumina의 <b>detection p</b>로 저신뢰 probe를 필터링하면 신호대잡음비 개선.</li>
+          <li>유전자 단위 통합을 위해 probe→gene 매핑 후 중복 처리 규칙을 명확히 정의.</li>
+        </ul>
+
+        <!-- 하단 네비게이션 (WGS 스타일) -->
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="index.html">← Back to Microarray Tutorial</a>
+          <a class="btn btn-primary" href="02_preprocessing.html">Next: Preprocessing →</a>
+          <a class="btn btn-link" href="https://bioconductor.org/packages/oligo/" target="_blank" rel="noopener">oligo ↗</a>
+          <a class="btn btn-link" href="https://bioconductor.org/packages/limma/" target="_blank" rel="noopener">limma ↗</a>
+          <a class="btn btn-link" href="https://bioconductor.org/packages/illuminaio/" target="_blank" rel="noopener">illuminaio ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function copyCode(btn){
+    const code = btn.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code).then(()=>{
+      const t = btn.innerText; btn.innerText = "Copied!";
+      setTimeout(()=> btn.innerText = t, 1600);
+    });
+  }
+</script>
+</body>
+</html>
