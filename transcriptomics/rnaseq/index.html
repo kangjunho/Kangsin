@@ -1,1 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bulk RNA-seq Tutorial (Hands-on)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+  <style>
+    .card-step { box-shadow:0 6px 16px rgba(0,0,0,.06); border-radius:12px; }
+    .card-step:hover { transform: translateY(-4px); transition: .25s ease; }
+    .card-step img { height:170px; object-fit:cover; border-top-left-radius:12px; border-top-right-radius:12px; }
+    .step-title { font-weight:700; font-size:1.05rem; }
+    .go-btn { min-width:56px; }
+    .grid-gap { row-gap: 1.25rem; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="text-center mb-2">Bulk RNA-seq Tutorial (Hands-on)</h1>
+    <p class="text-center text-muted mb-4">각 단계를 차례대로 클릭하여 실습을 진행하세요.</p>
+
+    <div class="row grid-gap">
+      <!-- Step 01 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/rnaseq_intro.jpg" alt="Bulk RNA-seq introduction">
+          <div class="card-body">
+            <div class="step-title">Step 01. Bulk RNA-seq 소개</div>
+            <p class="mb-3">
+              RNA-seq 개요, 실험 설계(복제수/읽기수), 라이브러리 타입(stranded, paired-end) 이해.
+            </p>
+            <a class="btn btn-primary go-btn" href="01_intro.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 02 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/rnaseq_qc.jpg" alt="FASTQ QC & preprocessing">
+          <div class="card-body">
+            <div class="step-title">Step 02. FASTQ QC & 전처리</div>
+            <p class="mb-3">
+              FastQC/MultiQC로 품질 점검, 어댑터 트리밍(cutadapt), 오염/리드 품질 처리.
+            </p>
+            <a class="btn btn-primary go-btn" href="02_qc_preprocess.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 03 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/rnaseq_quant.png" alt="Expression quantification">
+          <div class="card-body">
+            <div class="step-title">Step 03. 발현값 정량</div>
+            <p class="mb-3">
+              FPKM/TPM/Count 차이와 계산, pseudo-alignment(Salmon/Kallisto) vs STAR+featureCounts.
+            </p>
+            <a class="btn btn-primary go-btn" href="03_quantification.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 04 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/rnaseq_deg.jpg" alt="DEG analysis">
+          <div class="card-body">
+            <div class="step-title">Step 04. DEG 분석</div>
+            <p class="mb-3">
+              DESeq2/edgeR로 카운트 기반 차등발현, 정규화·분산추정·모델링과 시각화.
+            </p>
+            <a class="btn btn-primary go-btn" href="04_deg.html">Go</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 05 -->
+      <div class="col-md-4">
+        <div class="card card-step h-100">
+          <img src="../../assets/images/rnaseq_adv.jpg" alt="Advanced RNA-seq topics">
+          <div class="card-body">
+            <div class="step-title">Step 05. Advanced 분석</div>
+            <p class="mb-3">
+              배치 효과(SVA/ComBat), 통합 분석, isoform/TE 분석, QC 메트릭 심화 및 파이프라인화.
+            </p>
+            <a class="btn btn-primary go-btn" href="05_advanced.html">Go</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a class="btn btn-outline-secondary" href="../index.html">← Back to Transcriptomics</a>
+      <a class="btn btn-link" href="../../e-learning.html">E-learning Home</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
