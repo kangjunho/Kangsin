@@ -9,24 +9,41 @@
   <link rel="stylesheet" href="../../assets/css/style.css"/>
 
   <style>
-    pre { position: relative; background: #f8f9fa; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-    .copy-btn { position: absolute; top: 6px; right: 6px; font-size: .8rem; }
+    pre {
+      position: relative;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: .8rem;
+    }
     code { white-space: pre; }
-    .note { color: #444; }
-    .tip { border-left: 4px solid #0d6efd; background: #f8fbff; }
-    .tip h6 { color: #0d6efd; margin-bottom: .4rem; }
+    .note { color: #444; line-height: 1.75; }
+    .tip {
+      border-left: 4px solid #0d6efd;
+      background: #f8fbff;
+    }
+    .tip h6 {
+      color: #0d6efd;
+      margin-bottom: .4rem;
+    }
     .section-img {
       max-width: 1100px;
       width: 100%;
       border-radius: 10px;
       box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
     }
-    .step-badge{
-      border:1px solid #0d6efd;
-      border-radius:999px;
-      padding:.25rem .6rem;
-      color:#0d6efd;
-      font-weight:600;
+    .step-badge {
+      border: 1px solid #0d6efd;
+      border-radius: 999px;
+      padding: .25rem .6rem;
+      color: #0d6efd;
+      font-weight: 600;
     }
     .part-title {
       margin-top: 2.5rem;
@@ -39,7 +56,9 @@
       font-weight: 700;
       color: #0d6efd;
     }
-    .table thead th { background: #f3f6ff; }
+    .table thead th {
+      background: #f3f6ff;
+    }
   </style>
 </head>
 
@@ -64,30 +83,39 @@
   <h3>A) Transcriptomics 기술의 발전</h3>
 
   <p class="note">
-    유전자 발현 분석 기술은 지속적으로 발전해 왔으며, 각 단계는 이전 기술의 한계를 보완하는 방향으로 진화해 왔습니다.
+    유전자 발현 분석 기술은 Microarray에서 시작하여 Bulk RNA-seq,
+    그리고 Single-cell RNA-seq을 거쳐 최근에는 Spatial transcriptomics로 발전해 왔습니다.
+    이러한 발전은 분석 해상도를 점점 세포 수준, 나아가 공간 수준까지 확장시켰습니다.
   </p>
 
   <p class="note">
-    초기의 <b>Microarray</b> 기술은 미리 설계된 probe를 이용하여 유전자 발현을 측정하였고,
-    이후 <b>Bulk RNA-seq</b>은 sequencing 기반으로 더 넓고 정밀한 transcriptome 분석을 가능하게 했습니다.
-    그러나 bulk RNA-seq는 하나의 샘플을 구성하는 모든 세포의 평균 발현값을 반영하기 때문에,
-    세포 간 차이나 희귀 세포 집단을 직접 관찰하기 어렵다는 한계를 가지고 있습니다.
+    초기의 <b>Microarray</b>는 미리 설계된 probe를 이용해 유전자 발현을 측정하는 방식이었고,
+    이후 <b>Bulk RNA-seq</b>은 sequencing 기반으로 더 넓은 transcriptome을 보다 정확하게 측정할 수 있게 했습니다.
+    그러나 bulk RNA-seq는 샘플을 구성하는 모든 세포의 평균값을 반영하기 때문에,
+    세포 간 차이와 희귀 세포 집단을 직접 구분하기 어렵다는 한계를 가졌습니다.
   </p>
 
   <p class="note">
-    이러한 한계를 해결하기 위해 등장한 것이 <b>Single-cell RNA-seq (scRNA-seq)</b>입니다.
+    이러한 제한을 극복하기 위해 등장한 것이 <b>Single-cell RNA-seq (scRNA-seq)</b>입니다.
     scRNA-seq는 개별 세포 단위에서 유전자 발현을 측정할 수 있어,
-    동일한 조직 안에서도 서로 다른 세포 유형과 상태를 구분할 수 있게 해줍니다.
+    동일한 조직 안에서도 서로 다른 세포 유형과 상태를 분리하여 해석할 수 있습니다.
+    최근에는 여기에 위치 정보를 더한 <b>Spatial transcriptomics</b>가 발전하면서,
+    발현 정보와 조직 내 공간적 맥락을 함께 이해할 수 있는 방향으로 확장되고 있습니다.
   </p>
 
-  <p class="note">
-    최근에는 여기에 공간 정보를 결합한 <b>Spatial transcriptomics</b> 기술이 발전하면서,
-    유전자 발현뿐 아니라 조직 내 위치 정보까지 함께 분석할 수 있는 방향으로 확장되고 있습니다.
+  <div class="text-center mt-4 mb-3">
+    <img src="../../assets/images/transcriptomics_evolution.png"
+         alt="Transcriptomics evolution"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mb-4">
+    Microarray → Bulk RNA-seq → Single-cell RNA-seq → Spatial transcriptomics로 이어지는 기술 발전 흐름
   </p>
 
   <div class="card tip mb-3">
     <div class="card-body">
-      <h6>기술 발전 흐름</h6>
+      <h6>기술 발전 흐름 요약</h6>
       <div>Microarray → Bulk RNA-seq → Single-cell RNA-seq → Spatial transcriptomics</div>
     </div>
   </div>
@@ -98,15 +126,15 @@
   <p class="note">
     Bulk RNA-seq는 조직 또는 샘플 전체에서 RNA를 추출하여 분석하기 때문에,
     측정된 발현값은 여러 세포의 평균값을 의미합니다.
-    따라서 샘플 내에 서로 다른 세포 집단이 혼재되어 있는 경우,
+    따라서 샘플 안에 서로 다른 세포 집단이 혼재되어 있는 경우,
     어떤 세포가 어떤 유전자를 발현하는지 직접적으로 구분하기 어렵습니다.
   </p>
 
   <p class="note">
     반면, Single-cell RNA-seq는 각 세포를 독립적으로 측정하므로
     세포 간 이질성(heterogeneity)을 직접 분석할 수 있습니다.
-    이를 통해 기존에는 하나의 집단처럼 보였던 조직이
-    실제로는 다양한 세포 유형과 서로 다른 상태의 세포들로 구성되어 있음을 확인할 수 있습니다.
+    이를 통해 기존에는 하나의 집단처럼 보였던 조직이 실제로는 다양한 세포 유형과
+    서로 다른 상태(state)의 세포들로 구성되어 있음을 확인할 수 있습니다.
   </p>
 
   <p class="note">
@@ -155,7 +183,8 @@
   <h3 class="mt-4">C) scRNA-seq 핵심 개념</h3>
 
   <p class="note">
-    scRNA-seq 데이터는 일반적인 bulk RNA-seq와 다른 구조를 가지며, 몇 가지 핵심 개념을 이해하는 것이 중요합니다.
+    scRNA-seq 데이터는 일반적인 bulk RNA-seq와 다른 구조를 가지며,
+    몇 가지 핵심 개념을 이해하는 것이 중요합니다.
   </p>
 
   <p class="note">
