@@ -1,1 +1,266 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 05. Dimensional Reduction and Clustering</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; overflow-x:auto; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .table thead th { background:#f3f6ff; }
+    .step-badge{
+      border:1px solid #0d6efd;
+      border-radius:999px;
+      padding:.25rem .6rem;
+      color:#0d6efd;
+      font-weight:600;
+    }
+    .section-img {
+      max-width: 980px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    }
+  </style>
+</head>
+
+<body>
+<div class="container py-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h1>Dimensional Reduction and Clustering</h1>
+    <span class="step-badge">Step 05 / 08</span>
+  </div>
+
+  <p class="lead">
+    정규화 및 feature selection 이후에는 고차원 유전자 발현 데이터를
+    <b>차원축소</b>하여 구조를 요약하고, 세포 간 유사성을 기반으로
+    <b>clustering</b>을 수행합니다.
+  </p>
+
+  <hr/>
+
+  <!-- A -->
+  <h3>A) 왜 차원축소가 필요한가?</h3>
+  <ul class="note">
+    <li>scRNA-seq 데이터는 수천~수만 개 유전자를 포함하는 고차원 데이터입니다.</li>
+    <li>모든 유전자를 그대로 사용하면 noise가 크고 계산이 비효율적입니다.</li>
+    <li>PCA는 주요 variation을 요약하여 downstream 분석의 입력으로 사용됩니다.</li>
+    <li>UMAP/t-SNE는 데이터를 2차원으로 시각화하여 cluster 구조를 직관적으로 보여줍니다.</li>
+  </ul>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>핵심 포인트</h6>
+      <ul class="mb-0">
+        <li><b>PCA</b>는 분석용 입력 공간, <b>UMAP</b>은 주로 시각화용 공간으로 이해하면 좋습니다.</li>
+        <li>UMAP에서 가까워 보인다고 해서 반드시 biological distance가 정확히 보존되는 것은 아닙니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- B -->
+  <h3 class="mt-4">B) PCA 실행</h3>
+  <p class="note">
+    PCA는 가장 먼저 수행하는 차원축소 단계로, 주요 variation을 설명하는 축을 생성합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+obj <- RunPCA(obj, features = VariableFeatures(object = obj))
+
+print(obj[["pca"]], dims = 1:5, nfeatures = 5)
+VizDimLoadings(obj, dims = 1:2, reduction = "pca")
+DimPlot(obj, reduction = "pca")
+</code></pre>
+
+  <!-- C -->
+  <h3 class="mt-4">C) 몇 개의 PC를 사용할 것인가?</h3>
+  <p class="note">
+    downstream 분석에 사용할 principal components 수를 정하는 것은 중요합니다.
+    보통 Elbow plot을 참고하여 적절한 차원을 선택합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+ElbowPlot(obj)
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실전 팁</h6>
+      <ul class="mb-0">
+        <li>보통 10~30개의 PC를 많이 사용하지만, 데이터 복잡도에 따라 달라질 수 있습니다.</li>
+        <li>PC 수를 바꾸면 clustering 결과도 달라질 수 있으므로 기록해두는 것이 좋습니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- D -->
+  <h3 class="mt-4">D) Neighbor graph 구성</h3>
+  <p class="note">
+    Seurat clustering은 세포 간 최근접 이웃(nearest neighbors)을 기반으로 graph를 만든 뒤,
+    이 graph에서 community를 찾는 방식입니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+obj <- FindNeighbors(obj, dims = 1:20)
+</code></pre>
+
+  <!-- E -->
+  <h3 class="mt-4">E) Clustering 수행</h3>
+  <p class="note">
+    FindClusters 함수는 neighbor graph에서 cluster를 찾습니다.
+    이때 <b>resolution</b> 값이 cluster granularity에 큰 영향을 줍니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+obj <- FindClusters(obj, resolution = 0.5)
+</code></pre>
+
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th style="width:25%">resolution</th>
+          <th style="width:75%">해석</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>낮음 (예: 0.2)</td>
+          <td>cluster 수가 적고, 더 큰 집단으로 묶이는 경향이 있습니다.</td>
+        </tr>
+        <tr>
+          <td>중간 (예: 0.5~0.8)</td>
+          <td>실무에서 자주 쓰이는 범위이며, 데이터에 따라 적절한 구분을 제공합니다.</td>
+        </tr>
+        <tr>
+          <td>높음 (예: 1.0 이상)</td>
+          <td>cluster 수가 많아지고 세분화되지만, 과도한 분할(over-clustering)이 생길 수 있습니다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- F -->
+  <h3 class="mt-4">F) UMAP 실행</h3>
+  <p class="note">
+    UMAP은 PCA 공간을 바탕으로 세포를 2차원에 배치하여 cluster 구조를 시각화합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+obj <- RunUMAP(obj, dims = 1:20)
+DimPlot(obj, reduction = "umap", label = TRUE)
+</code></pre>
+
+  <div class="text-center mt-4">
+    <img src="../../assets/images/scrna_clustering.png"
+         alt="Dimensional reduction and clustering illustration"
+         class="section-img">
+  </div>
+  <p class="text-center text-muted mt-2">
+    PCA와 UMAP을 통해 세포 분포를 요약하고, neighbor graph 기반 clustering으로
+    세포 집단을 탐색할 수 있습니다.
+  </p>
+
+  <!-- G -->
+  <h3 class="mt-4">G) resolution 비교 예시</h3>
+  <p class="note">
+    resolution 값에 따라 cluster 수와 세분화 정도가 달라지므로, 여러 값을 비교해보는 것이 좋습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+obj <- FindClusters(obj, resolution = c(0.2, 0.5, 0.8, 1.0))
+
+head(obj@meta.data)
+</code></pre>
+
+  <p class="note">
+    이후 metadata에 여러 resolution 결과가 저장되며, 원하는 값을 선택해서 사용할 수 있습니다.
+  </p>
+
+  <!-- H -->
+  <h3 class="mt-4">H) 전체 실습 코드 예시</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# PCA
+obj <- RunPCA(obj, features = VariableFeatures(object = obj))
+
+# PC 선택 참고
+ElbowPlot(obj)
+
+# neighbor graph
+obj <- FindNeighbors(obj, dims = 1:20)
+
+# clustering
+obj <- FindClusters(obj, resolution = 0.5)
+
+# UMAP
+obj <- RunUMAP(obj, dims = 1:20)
+
+# visualization
+DimPlot(obj, reduction = "umap", label = TRUE)
+</code></pre>
+
+  <!-- I -->
+  <h3 class="mt-4">I) 해석 시 주의점</h3>
+  <ul class="note">
+    <li>UMAP은 시각화 도구이지, clustering 알고리즘 자체는 아닙니다.</li>
+    <li>PC 수, resolution, normalization 방법에 따라 clustering 결과가 달라질 수 있습니다.</li>
+    <li>따라서 cluster는 “정답”이라기보다, biological interpretation을 위한 가설 구조로 보는 것이 좋습니다.</li>
+    <li>이후 marker gene 확인과 annotation 과정을 통해 cluster의 의미를 해석해야 합니다.</li>
+  </ul>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실전 팁</h6>
+      <ul class="mb-0">
+        <li>항상 한 가지 resolution만 보지 말고 여러 값을 비교해보세요.</li>
+        <li>cluster 수가 많다고 좋은 것이 아니라, <b>해석 가능성</b>이 중요합니다.</li>
+        <li>known marker가 자연스럽게 분리되는지 같이 확인하는 것이 좋습니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>PCA는 고차원 유전자 발현 데이터를 요약하는 첫 단계입니다.</li>
+          <li>FindNeighbors와 FindClusters를 통해 graph 기반 clustering을 수행합니다.</li>
+          <li>UMAP은 cluster 구조를 시각화하는 대표적인 방법입니다.</li>
+          <li>PC 수와 resolution 값은 clustering 결과에 큰 영향을 주므로 비교가 중요합니다.</li>
+        </ul>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="step4_integration.html">← Back to Integration</a>
+          <a class="btn btn-primary" href="step6_annotation.html">Next: Cell Type Annotation →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function copyCode(btn){
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(()=>{
+    const t = btn.innerText;
+    btn.innerText = "Copied!";
+    setTimeout(()=> btn.innerText = t, 1500);
+  });
+}
+</script>
+
+</body>
+</html>
