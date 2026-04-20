@@ -1,1 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 02. QC and Filtering</title>
 
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; overflow-x:auto; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .table thead th { background:#f3f6ff; }
+    .step-badge{
+      border:1px solid #0d6efd;
+      border-radius:999px;
+      padding:.25rem .6rem;
+      color:#0d6efd;
+      font-weight:600;
+    }
+    .section-img {
+      max-width: 980px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    }
+  </style>
+</head>
+
+<body>
+<div class="container py-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h1>QC and Filtering</h1>
+    <span class="step-badge">Step 02 / 08</span>
+  </div>
+
+  <p class="lead">
+    scRNA-seq 데이터 분석의 첫 번째 핵심 단계는 <b>품질 관리(QC)</b>입니다.
+    저품질 세포, 손상된 세포, 잠재적 doublet을 점검하고 제거하여
+    이후 정규화, 차원축소, 클러스터링 결과의 신뢰도를 높입니다.
+  </p>
+
+  <hr/>
+
+  <!-- A -->
+  <h3>A) 왜 QC가 중요한가?</h3>
+  <ul class="note">
+    <li>scRNA-seq 데이터는 bulk RNA-seq보다 sparse하며 technical noise가 큽니다.</li>
+    <li>손상되거나 죽어가는 세포는 <b>mitochondrial gene 비율 증가</b>, <b>낮은 유전자 수</b> 등의 패턴을 보일 수 있습니다.</li>
+    <li>QC를 제대로 하지 않으면 이후 클러스터링에서 <b>가짜 cluster</b>가 생기거나, 특정 세포군 해석이 왜곡될 수 있습니다.</li>
+    <li>threshold는 고정값이라기보다, <b>데이터 분포를 보고 합리적으로 설정</b>하는 것이 중요합니다.</li>
+  </ul>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>핵심 메시지</h6>
+      <ul class="mb-0">
+        <li>QC는 “지저분한 세포 제거”가 아니라, <b>분석 가능한 세포를 선별하는 과정</b>입니다.</li>
+        <li>너무 엄격한 기준은 실제 biological signal을 잃게 할 수 있고, 너무 느슨한 기준은 noise를 남길 수 있습니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- B -->
+  <h3 class="mt-4">B) 주요 QC 지표</h3>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th style="width:22%">지표</th>
+          <th style="width:78%">의미 및 해석</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>nFeature_RNA</b></td>
+          <td>세포에서 검출된 유전자 수. 너무 낮으면 저품질 세포, 너무 높으면 doublet 가능성을 의심할 수 있습니다.</td>
+        </tr>
+        <tr>
+          <td><b>nCount_RNA</b></td>
+          <td>세포의 총 UMI count. 세포 내 RNA 양과 library size를 반영하지만, 지나치게 높으면 doublet 가능성이 있습니다.</td>
+        </tr>
+        <tr>
+          <td><b>percent.mt</b></td>
+          <td>미토콘드리아 유전자 비율. 일반적으로 높을수록 손상되거나 dying cell 가능성이 커집니다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- C -->
+  <h3 class="mt-4">C) QC 메타데이터 생성</h3>
+  <p class="note">
+    Seurat object를 만든 뒤, 먼저 mitochondrial gene 비율을 계산하고
+    기본 QC 지표를 확인합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(Seurat)
+library(ggplot2)
+
+# human data example
+obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^MT-")
+
+# mouse data example
+# obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^mt-")
+
+head(obj@meta.data)
+summary(obj$nFeature_RNA)
+summary(obj$nCount_RNA)
+summary(obj$percent.mt)
+</code></pre>
+
+  <!-- D -->
+  <h3 class="mt-4">D) QC 지표 시각화</h3>
+  <p class="note">
+    보통 violin plot과 scatter plot을 함께 사용하여 데이터 분포를 확인합니다.
+    threshold를 정하기 전에 반드시 분포를 먼저 확인하는 것이 좋습니다.
+  </p>
+
+  <h5 class="mt-3">D-1) Violin plot</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+VlnPlot(
+  obj,
+  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
+  ncol = 3,
+  pt.size = 0.1
+)
+</code></pre>
+
+  <h5 class="mt-3">D-2) Scatter plot</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+</code></pre>
+
+  <div class="text-center mt-4">
+    <img src="../../assets/images/scrna_qc.png"
+         alt="QC metrics illustration"
+         class="section-img">
+  </div>
+  <p class="text-center text-muted mt-2">
+    QC 단계에서는 nFeature_RNA, nCount_RNA, percent.mt의 분포를 확인하여
+    저품질 세포와 이상치를 점검합니다.
+  </p>
+
+  <!-- E -->
+  <h3 class="mt-4">E) Filtering 기준 설정 예시</h3>
+  <p class="note">
+    아래는 예시일 뿐이며, 데이터셋에 따라 cut-off는 달라질 수 있습니다.
+    조직 종류, dissociation 상태, species, chemistry version에 따라 조정이 필요합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+obj <- subset(
+  obj,
+  subset =
+    nFeature_RNA > 200 &
+    nFeature_RNA < 6000 &
+    percent.mt < 10
+)
+
+obj
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>threshold 설정 팁</h6>
+      <ul class="mb-0">
+        <li><code>nFeature_RNA &lt; 200</code> 미만 세포는 보통 저품질 세포로 간주하는 경우가 많습니다.</li>
+        <li><code>percent.mt</code> cut-off는 5%, 10%, 15% 등 데이터에 따라 달라질 수 있습니다.</li>
+        <li>상한선(<code>nFeature_RNA</code>, <code>nCount_RNA</code>)은 doublet 또는 multiplet 가능성을 고려해 설정합니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- F -->
+  <h3 class="mt-4">F) Filtering 전후 비교</h3>
+  <p class="note">
+    filtering 후에는 세포 수와 QC 지표 분포가 어떻게 달라졌는지 다시 확인합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# filtering 이후 violin plot 재확인
+VlnPlot(
+  obj,
+  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
+  ncol = 3,
+  pt.size = 0.1
+)
+
+# 남은 cell 수 확인
+dim(obj)
+</code></pre>
+
+  <!-- G -->
+  <h3 class="mt-4">G) Doublet에 대한 간단한 이해</h3>
+  <ul class="note">
+    <li>doublet은 하나의 barcode에 두 개 이상의 세포가 함께 잡힌 경우입니다.</li>
+    <li>이 경우 <b>비정상적으로 높은 nFeature_RNA</b>, <b>높은 nCount_RNA</b>를 보일 수 있습니다.</li>
+    <li>기본 QC에서 일부 의심 세포를 줄일 수 있지만, 본격적인 검출은 이후 <b>DoubletFinder</b> 같은 도구를 사용할 수 있습니다.</li>
+  </ul>
+
+  <!-- H -->
+  <h3 class="mt-4">H) 실습용 예시 코드 정리</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# 1. mitochondrial ratio 계산
+obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^MT-")
+
+# 2. QC plot 확인
+VlnPlot(obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+# 3. filtering
+obj <- subset(
+  obj,
+  subset =
+    nFeature_RNA > 200 &
+    nFeature_RNA < 6000 &
+    percent.mt < 10
+)
+
+# 4. filtering 후 재확인
+VlnPlot(obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+dim(obj)
+</code></pre>
+
+  <!-- Summary -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>QC는 이후 분석 결과의 신뢰도를 결정하는 매우 중요한 단계입니다.</li>
+          <li>주요 지표는 <b>nFeature_RNA</b>, <b>nCount_RNA</b>, <b>percent.mt</b>입니다.</li>
+          <li>threshold는 고정값이 아니라, 데이터 분포를 먼저 보고 설정해야 합니다.</li>
+          <li>filtering 후에는 반드시 세포 수와 분포를 다시 점검해야 합니다.</li>
+        </ul>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="step1_intro.html">← Back to Introduction</a>
+          <a class="btn btn-primary" href="step3_normalization.html">Next: Normalization and Feature Selection →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function copyCode(btn){
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(()=>{
+    const t = btn.innerText;
+    btn.innerText = "Copied!";
+    setTimeout(()=> btn.innerText = t, 1500);
+  });
+}
+</script>
+
+</body>
+</html>
