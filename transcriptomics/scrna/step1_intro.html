@@ -14,7 +14,7 @@
     code { white-space: pre; }
     .note { color: #444; }
     .tip { border-left: 4px solid #0d6efd; background: #f8fbff; }
-    .tip h6 { color: #0d6efd; }
+    .tip h6 { color: #0d6efd; margin-bottom: .4rem; }
     .section-img {
       max-width: 1100px;
       width: 100%;
@@ -28,185 +28,358 @@
       color:#0d6efd;
       font-weight:600;
     }
+    .part-title {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: #eef4ff;
+      border-left: 6px solid #0d6efd;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0d6efd;
+    }
+    .table thead th { background: #f3f6ff; }
   </style>
 </head>
 
 <body>
 <div class="container py-5">
 
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <h1>Introduction to scRNA-seq and Analysis Environment</h1>
-  <span class="step-badge">Step 01 / 08</span>
-</div>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h1>Introduction to scRNA-seq and Analysis Environment</h1>
+    <span class="step-badge">Step 01 / 08</span>
+  </div>
 
-<p class="lead">
-본 실습에서는 <b>mouse colorectal cancer single-cell RNA-seq 데이터</b>를 사용하여  
-scRNA-seq의 개념부터 실제 분석 환경까지 이해하고, 이후 단계에서 분석을 수행할 준비를 합니다.
-</p>
+  <p class="lead">
+    본 실습에서는 <b>mouse colorectal cancer single-cell RNA-seq</b> 데이터를 사용하여
+    scRNA-seq의 기본 개념을 이해하고, 실제 분석 환경에서 데이터를 불러오는 방법까지 학습합니다.
+  </p>
 
-<hr/>
+  <hr/>
 
-<!-- A -->
-<h3>A) Transcriptomics 기술의 발전</h3>
+  <div class="part-title">Part 1. Theoretical Background</div>
 
-<p class="note">
-유전자 발현 분석 기술은 지속적으로 발전해 왔으며, 각 단계는 이전 기술의 한계를 보완하는 방향으로 진화해 왔습니다.
-</p>
+  <!-- A -->
+  <h3>A) Transcriptomics 기술의 발전</h3>
 
-<p class="note">
-초기의 <b>Microarray</b> 기술은 수천 개 유전자의 발현을 동시에 측정할 수 있었지만,
-미리 정의된 probe에 의존한다는 제한이 있었습니다.
-이후 등장한 <b>Bulk RNA-seq</b>은 sequencing 기반으로 보다 정확한 발현 측정이 가능해졌지만,
-여전히 하나의 샘플을 평균값으로 분석한다는 한계를 가지고 있습니다.
-</p>
+  <p class="note">
+    유전자 발현 분석 기술은 지속적으로 발전해 왔으며, 각 단계는 이전 기술의 한계를 보완하는 방향으로 진화해 왔습니다.
+  </p>
 
-<p class="note">
-이러한 한계를 해결하기 위해 등장한 <b>Single-cell RNA-seq</b>은
-개별 세포 단위에서 유전자 발현을 측정하여 세포 간 이질성을 직접 분석할 수 있게 합니다.
-</p>
+  <p class="note">
+    초기의 <b>Microarray</b> 기술은 미리 설계된 probe를 이용하여 유전자 발현을 측정하였고,
+    이후 <b>Bulk RNA-seq</b>은 sequencing 기반으로 더 넓고 정밀한 transcriptome 분석을 가능하게 했습니다.
+    그러나 bulk RNA-seq는 하나의 샘플을 구성하는 모든 세포의 평균 발현값을 반영하기 때문에,
+    세포 간 차이나 희귀 세포 집단을 직접 관찰하기 어렵다는 한계가 있었습니다.
+  </p>
 
-<p class="note">
-최근에는 <b>Spatial transcriptomics</b> 기술이 등장하여,
-유전자 발현뿐 아니라 세포의 위치 정보까지 함께 분석할 수 있는 단계로 발전하고 있습니다.
-</p>
+  <p class="note">
+    이러한 한계를 해결하기 위해 등장한 것이 <b>Single-cell RNA-seq (scRNA-seq)</b>입니다.
+    scRNA-seq는 개별 세포 단위에서 유전자 발현을 측정할 수 있어,
+    동일한 조직 안에서도 서로 다른 세포 유형과 상태를 구분할 수 있게 해줍니다.
+  </p>
 
-<div class="card tip mb-3">
-<div class="card-body">
-<b>기술 흐름</b><br>
-Microarray → Bulk RNA-seq → Single-cell RNA-seq → Spatial transcriptomics
-</div>
-</div>
+  <p class="note">
+    최근에는 여기에 공간 정보를 결합한 <b>Spatial transcriptomics</b> 기술이 발전하면서,
+    세포의 발현 정보뿐 아니라 조직 내 위치 정보까지 함께 분석할 수 있는 방향으로 확장되고 있습니다.
+  </p>
 
-<!-- B -->
-<h3 class="mt-4">B) Bulk vs Single-cell RNA-seq</h3>
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>기술 발전 흐름</h6>
+      <div>Microarray → Bulk RNA-seq → Single-cell RNA-seq → Spatial transcriptomics</div>
+    </div>
+  </div>
 
-<p class="note">
-Bulk RNA-seq는 조직 전체에서 RNA를 추출하여 분석하기 때문에,
-측정된 발현값은 여러 세포의 평균값을 의미합니다.
-따라서 서로 다른 세포 유형이 섞여 있을 경우 개별 세포의 특성을 구분하기 어렵습니다.
-</p>
+  <!-- B -->
+  <h3 class="mt-4">B) Bulk RNA-seq와 Single-cell RNA-seq의 차이</h3>
 
-<p class="note">
-반면, Single-cell RNA-seq는 각 세포를 개별적으로 분석하여,
-세포 간 차이와 다양한 세포 상태를 직접적으로 확인할 수 있습니다.
-</p>
+  <p class="note">
+    Bulk RNA-seq는 조직 또는 샘플 전체에서 RNA를 추출하여 분석하기 때문에,
+    측정된 발현값은 여러 세포의 평균값을 의미합니다.
+    따라서 샘플 내에 서로 다른 세포 집단이 혼재되어 있는 경우,
+    어떤 세포가 어떤 유전자를 발현하는지 직접적으로 구분하기 어렵습니다.
+  </p>
 
-<div class="text-center mt-4">
-<img src="../../assets/images/bulk_vs_scrna.png" class="section-img">
-</div>
+  <p class="note">
+    반면, Single-cell RNA-seq는 각 세포를 독립적으로 측정하므로
+    세포 간 이질성(heterogeneity)을 직접 분석할 수 있습니다.
+    이를 통해 기존에는 하나의 집단처럼 보였던 조직이
+    실제로는 다양한 세포 유형과 서로 다른 상태의 세포들로 구성되어 있음을 확인할 수 있습니다.
+  </p>
 
-<!-- C -->
-<h3 class="mt-4">C) scRNA-seq 핵심 개념</h3>
+  <p class="note">
+    특히 종양 조직에서는 종양세포, 면역세포, 섬유아세포, 내피세포 등이 함께 존재하므로,
+    scRNA-seq는 종양 미세환경을 정밀하게 해석하는 데 매우 유용합니다.
+  </p>
 
-<p class="note">
-scRNA-seq 데이터는 gene × cell 형태의 matrix로 구성되며,
-각 세포는 고유한 barcode를 통해 구분됩니다.
-또한 UMI는 PCR 중복을 제거하여 실제 분자 수를 보다 정확하게 반영합니다.
-</p>
+  <table class="table table-bordered align-middle mt-3">
+    <thead>
+      <tr>
+        <th style="width:14%">항목</th>
+        <th style="width:43%">Bulk RNA-seq</th>
+        <th style="width:43%">Single-cell RNA-seq</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>단위</td>
+        <td>샘플 전체</td>
+        <td>개별 세포</td>
+      </tr>
+      <tr>
+        <td>특징</td>
+        <td>평균 발현</td>
+        <td>세포 간 이질성 분석</td>
+      </tr>
+      <tr>
+        <td>결과</td>
+        <td>gene × sample matrix</td>
+        <td>gene × cell matrix</td>
+      </tr>
+    </tbody>
+  </table>
 
-<p class="note">
-이 데이터의 특징은 많은 값이 0으로 나타나는 sparsity이며,
-이는 기술적 요인과 biological 특성이 함께 반영된 결과입니다.
-</p>
+  <div class="text-center mt-4">
+    <img src="../../assets/images/bulk_vs_scrna.png"
+         alt="Bulk vs Single-cell RNA-seq comparison"
+         class="section-img">
+  </div>
 
-<!-- D -->
-<h3 class="mt-4">D) 분석 환경: RStudio Server</h3>
+  <p class="text-center text-muted mt-2">
+    Bulk RNA-seq는 샘플 평균 발현을 측정하고, scRNA-seq는 개별 세포 단위 발현을 분석합니다.
+  </p>
 
-<p class="note">
-본 실습은 로컬 PC가 아닌 <b>리눅스 서버 기반 RStudio Server</b>에서 수행됩니다.
-</p>
+  <!-- C -->
+  <h3 class="mt-4">C) scRNA-seq 핵심 개념</h3>
 
-<pre><code>http://server_ip:8787</code></pre>
+  <p class="note">
+    scRNA-seq 데이터는 일반적인 bulk RNA-seq와 다른 구조를 가지며, 몇 가지 핵심 개념을 이해하는 것이 중요합니다.
+  </p>
 
-<p class="note">
-웹 브라우저에서 접속 후 ID / Password 입력하여 로그인합니다.
-</p>
+  <p class="note">
+    먼저, 각 세포에는 <b>barcode</b>가 부여되어 어떤 read가 어떤 세포에서 유래했는지를 구분할 수 있습니다.
+    또한 <b>UMI (Unique Molecular Identifier)</b>는 PCR 과정에서 생길 수 있는 중복을 보정하기 위해 사용되며,
+    실제 분자 수를 보다 정확하게 반영하는 데 도움을 줍니다.
+  </p>
 
-<div class="text-center mt-4">
-<img src="../../assets/images/rstudio_server_flow.png" class="section-img">
-</div>
+  <p class="note">
+    이렇게 생성된 데이터는 보통 <b>gene × cell</b> 형태의 <b>count matrix</b>로 정리됩니다.
+    여기서 각 값은 특정 유전자가 특정 세포에서 얼마나 관찰되었는지를 의미합니다.
+  </p>
 
-<!-- E -->
-<h3 class="mt-4">E) NAS 데이터 접근 (중요)</h3>
+  <p class="note">
+    scRNA-seq 데이터의 또 하나의 특징은 <b>sparsity</b>입니다.
+    이는 많은 유전자들이 많은 세포에서 0으로 기록되는 현상으로,
+    기술적 제한과 biological 특성이 함께 반영된 결과입니다.
+  </p>
 
-<p class="note">
-실습 데이터는 NAS(Network Attached Storage)에 저장되어 있으며,
-분석 서버에 <b>원격 마운트(remote mount)</b> 되어 있어야 접근 가능합니다.
-</p>
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>핵심 개념 요약</h6>
+      <ul class="mb-0">
+        <li>Barcode: 세포 식별자</li>
+        <li>UMI: PCR bias 완화</li>
+        <li>Count matrix: gene × cell 구조</li>
+        <li>Sparsity: 많은 0 값이 존재하는 데이터 특성</li>
+      </ul>
+    </div>
+  </div>
 
-<div class="card tip mb-3">
-<div class="card-body">
-<b>핵심 개념</b><br>
-사용자는 웹브라우저로 서버에 접속하지만,<br>
-실제 데이터는 NAS에서 불러옵니다.
-</div>
-</div>
+  <div class="part-title">Part 2. Hands-on Practice</div>
 
-<pre><code>~/God_nas/Mouse_CRC/</code></pre>
+  <!-- D -->
+  <h3>D) 실습 데이터 개요</h3>
 
-<!-- F -->
-<h3 class="mt-4">F) 데이터 구조</h3>
+  <p class="note">
+    본 실습에서는 총 <b>6개의 mouse colorectal cancer scRNA-seq 샘플</b>을 사용합니다.
+    샘플은 식이 조건에 따라 두 그룹으로 나뉩니다.
+  </p>
 
-<pre><code>
-Mouse_CRC/
+  <ul class="note">
+    <li><b>ND1, ND2, ND3</b>: Normal diet 대장암 마우스 샘플</li>
+    <li><b>WD1, WD2, WD3</b>: Western diet 대장암 마우스 샘플</li>
+  </ul>
+
+  <p class="note">
+    즉, 본 튜토리얼은 단일 샘플 분석뿐 아니라,
+    이후 단계에서 여러 샘플을 비교하고 통합(integration)하는 흐름까지 실습할 수 있도록 구성되어 있습니다.
+  </p>
+
+  <!-- E -->
+  <h3 class="mt-4">E) 분석 환경: RStudio Server</h3>
+
+  <p class="note">
+    본 실습은 로컬 PC에서 직접 계산하지 않고,
+    <b>리눅스 서버 기반의 RStudio Server</b> 환경에서 수행합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>http://server_ip:8787
+</code></pre>
+
+  <p class="note">
+    웹 브라우저에서 위 주소로 접속한 뒤, 제공된 ID와 Password를 입력하여 로그인합니다.
+  </p>
+
+  <div class="text-center mt-4">
+    <img src="../../assets/images/rstudio_server_flow.png"
+         alt="RStudio Server workflow"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    로컬 PC의 웹브라우저를 통해 서버에 접속하고, RStudio Server 환경에서 분석을 수행합니다.
+  </p>
+
+  <!-- F -->
+  <h3 class="mt-4">F) NAS 데이터 저장소 접근</h3>
+
+  <p class="note">
+    실습 데이터는 NAS(Network Attached Storage)에 저장되어 있으며,
+    분석용 서버에서 해당 NAS가 <b>원격 마운트(remote mount)</b>된 상태여야 접근할 수 있습니다.
+  </p>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>중요</h6>
+      <ul class="mb-0">
+        <li>사용자는 웹브라우저로 서버에 접속하지만, 실제 데이터는 NAS에 저장되어 있습니다.</li>
+        <li>따라서 서버에서 NAS 경로가 정상적으로 마운트되어 있어야 파일을 읽을 수 있습니다.</li>
+        <li>대용량 scRNA-seq 데이터는 로컬 PC가 아니라 서버/NAS에서 직접 처리하는 것이 일반적입니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>~/God_nas/Mouse_CRC/
+</code></pre>
+
+  <!-- G -->
+  <h3 class="mt-4">G) 데이터 폴더 구조</h3>
+
+  <p class="note">
+    single-cell 데이터를 전달받으면 일반적으로 원시 데이터와 분석 결과가 분리되어 제공됩니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>Mouse_CRC/
 ├── Raw_data/
 └── SevenBridges/
 </code></pre>
 
-<ul class="note">
-<li>Raw_data → 원시 데이터</li>
-<li>SevenBridges → 분석 결과 및 Seurat object</li>
-</ul>
+  <ul class="note">
+    <li><b>Raw_data/</b>: FASTQ 등 원시 데이터</li>
+    <li><b>SevenBridges/</b>: 분석 결과, report, Seurat object 등 downstream 분석용 파일</li>
+  </ul>
 
-<!-- G -->
-<h3 class="mt-4">G) 분석용 데이터 (.rds)</h3>
+  <!-- H -->
+  <h3 class="mt-4">H) 실제 분석에 사용하는 파일</h3>
 
-<pre><code>
-~/God_nas/Mouse_CRC/SevenBridges/ND1/
-└── DA250003-ND1_Seurat.rds
+  <p class="note">
+    본 실습에서는 <b>SevenBridges</b> 폴더 아래에 있는 전처리된 <b>Seurat object (.rds)</b> 파일을 사용합니다.
+    예를 들어 ND1 샘플은 아래와 같은 경로에 위치할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>~/God_nas/Mouse_CRC/SevenBridges/ND1/DA250003-ND1_Seurat.rds
 </code></pre>
 
-<p class="note">
-실제 분석은 이 Seurat object를 기반으로 수행됩니다.
-</p>
+  <p class="note">
+    동일한 방식으로 ND2, ND3, WD1, WD2, WD3 샘플도 각각 대응되는 폴더 아래에 저장되어 있다고 가정합니다.
+  </p>
 
-<!-- H -->
-<h3 class="mt-4">H) 데이터 불러오기</h3>
+  <!-- I -->
+  <h3 class="mt-4">I) 작업 디렉토리 설정</h3>
 
-<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(Seurat)
+  <p class="note">
+    실습을 시작하기 전에 현재 작업 경로를 확인하고,
+    기본 실습 폴더로 이동합니다.
+  </p>
 
-obj <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND1/DA250003-ND1_Seurat.rds")
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>getwd()
 
-obj
+setwd("~/God_nas/Mouse_CRC")
+
+getwd()
+list.files()
 </code></pre>
 
-<!-- Summary -->
-<div class="card border-primary mt-5">
-<div class="card-header bg-primary text-white">요약</div>
-<div class="card-body">
+  <!-- J -->
+  <h3 class="mt-4">J) Seurat object 불러오기</h3>
 
-<ul>
-<li>scRNA-seq는 세포 단위 발현 분석 기술이다</li>
-<li>Bulk의 평균 문제를 해결한다</li>
-<li>Spatial은 위치 정보까지 포함한다</li>
-<li>분석은 RStudio Server + NAS 환경에서 수행한다</li>
-<li>실습 데이터는 SevenBridges 폴더의 rds 파일을 사용한다</li>
-</ul>
+  <p class="note">
+    아래 예시는 ND1 샘플을 불러오는 코드입니다.
+    이후 다른 샘플도 같은 방식으로 불러와 통합 분석에 사용할 수 있습니다.
+  </p>
 
-<a href="step2_qc.html" class="btn btn-primary">Next → QC</a>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
 
-</div>
-</div>
+obj_nd1 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND1/DA250003-ND1_Seurat.rds")
+obj_nd2 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND2/DA250003-ND2_Seurat.rds")
+obj_nd3 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND3/DA250003-ND3_Seurat.rds")
+
+obj_wd1 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/WD1/DA250003-WD1_Seurat.rds")
+obj_wd2 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/WD2/DA250003-WD2_Seurat.rds")
+obj_wd3 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/WD3/DA250003-WD3_Seurat.rds")
+</code></pre>
+
+  <p class="note">
+    필요에 따라 각 샘플에 condition 정보를 metadata로 추가할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>obj_nd1$condition <- "ND"
+obj_nd2$condition <- "ND"
+obj_nd3$condition <- "ND"
+
+obj_wd1$condition <- "WD"
+obj_wd2$condition <- "WD"
+obj_wd3$condition <- "WD"
+</code></pre>
+
+  <!-- K -->
+  <h3 class="mt-4">K) 실습에서 사용할 샘플 목록 정리</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list <- list(
+  ND1 = obj_nd1,
+  ND2 = obj_nd2,
+  ND3 = obj_nd3,
+  WD1 = obj_wd1,
+  WD2 = obj_wd2,
+  WD3 = obj_wd3
+)
+
+names(sample_list)
+</code></pre>
+
+  <!-- Summary -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>A)~C)는 scRNA-seq의 개념과 기술 발전 흐름을 설명하는 이론 파트입니다.</li>
+          <li>D)부터는 실제 실습을 위한 환경 및 데이터 설명입니다.</li>
+          <li>본 실습 데이터는 총 6개 샘플이며, ND1~3은 Normal diet, WD1~3은 Western diet 대장암 마우스 샘플입니다.</li>
+          <li>분석은 RStudio Server 환경에서 수행하며, 데이터는 NAS가 서버에 원격 마운트된 상태에서 접근합니다.</li>
+          <li>실제 분석에는 SevenBridges 폴더 아래의 Seurat object(.rds) 파일을 사용합니다.</li>
+        </ul>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="index.html">← Back to scRNA-seq Tutorial</a>
+          <a class="btn btn-primary" href="step2_qc.html">Next: QC and Filtering →</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </div>
 
 <script>
 function copyCode(btn){
-const code = btn.nextElementSibling.innerText;
-navigator.clipboard.writeText(code);
-btn.innerText="Copied!";
-setTimeout(()=>btn.innerText="Copy",1500);
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(()=>{
+    const t = btn.innerText;
+    btn.innerText = "Copied!";
+    setTimeout(()=> btn.innerText = t, 1500);
+  });
 }
 </script>
 
