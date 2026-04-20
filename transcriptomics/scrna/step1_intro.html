@@ -71,7 +71,7 @@
     초기의 <b>Microarray</b> 기술은 미리 설계된 probe를 이용하여 유전자 발현을 측정하였고,
     이후 <b>Bulk RNA-seq</b>은 sequencing 기반으로 더 넓고 정밀한 transcriptome 분석을 가능하게 했습니다.
     그러나 bulk RNA-seq는 하나의 샘플을 구성하는 모든 세포의 평균 발현값을 반영하기 때문에,
-    세포 간 차이나 희귀 세포 집단을 직접 관찰하기 어렵다는 한계가 있었습니다.
+    세포 간 차이나 희귀 세포 집단을 직접 관찰하기 어렵다는 한계를 가지고 있습니다.
   </p>
 
   <p class="note">
@@ -82,7 +82,7 @@
 
   <p class="note">
     최근에는 여기에 공간 정보를 결합한 <b>Spatial transcriptomics</b> 기술이 발전하면서,
-    세포의 발현 정보뿐 아니라 조직 내 위치 정보까지 함께 분석할 수 있는 방향으로 확장되고 있습니다.
+    유전자 발현뿐 아니라 조직 내 위치 정보까지 함께 분석할 수 있는 방향으로 확장되고 있습니다.
   </p>
 
   <div class="card tip mb-3">
@@ -306,8 +306,8 @@ list.files()
   <h3 class="mt-4">J) Seurat object 불러오기</h3>
 
   <p class="note">
-    아래 예시는 ND1 샘플을 불러오는 코드입니다.
-    이후 다른 샘플도 같은 방식으로 불러와 통합 분석에 사용할 수 있습니다.
+    아래 예시는 6개 샘플을 모두 불러오고, 각 샘플에 식이 조건 정보를 metadata로 추가한 뒤
+    <code>sample_list</code>를 만드는 코드입니다.
   </p>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
@@ -319,25 +319,16 @@ obj_nd3 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND3/DA250003-ND3_Seurat.rds
 obj_wd1 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/WD1/DA250003-WD1_Seurat.rds")
 obj_wd2 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/WD2/DA250003-WD2_Seurat.rds")
 obj_wd3 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/WD3/DA250003-WD3_Seurat.rds")
-</code></pre>
 
-  <p class="note">
-    필요에 따라 각 샘플에 condition 정보를 metadata로 추가할 수 있습니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>obj_nd1$condition <- "ND"
+obj_nd1$condition <- "ND"
 obj_nd2$condition <- "ND"
 obj_nd3$condition <- "ND"
 
 obj_wd1$condition <- "WD"
 obj_wd2$condition <- "WD"
 obj_wd3$condition <- "WD"
-</code></pre>
 
-  <!-- K -->
-  <h3 class="mt-4">K) 실습에서 사용할 샘플 목록 정리</h3>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list <- list(
+sample_list <- list(
   ND1 = obj_nd1,
   ND2 = obj_nd2,
   ND3 = obj_nd3,
@@ -348,6 +339,32 @@ obj_wd3$condition <- "WD"
 
 names(sample_list)
 </code></pre>
+
+  <!-- K -->
+  <h3 class="mt-4">K) Expected output</h3>
+
+  <p class="note">
+    아래는 6개 샘플( ND1~3, WD1~3 )을 불러오고, condition metadata를 추가한 뒤
+    <code>sample_list</code>를 생성했을 때의 예시 화면입니다.
+    Environment 창에서 각 샘플 object와 6개 element를 가진 list가 정상적으로 보이면
+    다음 단계로 진행할 수 있습니다.
+  </p>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step1_expected_output.png"
+         alt="Expected output after loading six Seurat objects"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    Example result after loading ND1–3 and WD1–3 Seurat objects and creating <code>sample_list</code>.
+  </p>
+
+  <ul class="note mt-3">
+    <li>Environment 창에 <code>obj_nd1</code> ~ <code>obj_wd3</code>가 보여야 합니다.</li>
+    <li><code>sample_list</code>는 6개 element를 가진 list여야 합니다.</li>
+    <li><code>names(sample_list)</code> 결과는 ND1, ND2, ND3, WD1, WD2, WD3 순서로 확인됩니다.</li>
+  </ul>
 
   <!-- Summary -->
   <section class="mt-4">
