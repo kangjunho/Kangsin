@@ -1,1 +1,344 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Step 07. DEG and Pathway Analysis</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../assets/css/style.css"/>
+
+  <style>
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; overflow-x:auto; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .table thead th { background:#f3f6ff; }
+    .step-badge{
+      border:1px solid #0d6efd;
+      border-radius:999px;
+      padding:.25rem .6rem;
+      color:#0d6efd;
+      font-weight:600;
+    }
+    .section-img {
+      max-width: 980px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    }
+  </style>
+</head>
+
+<body>
+<div class="container py-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h1>DEG and Pathway Analysis</h1>
+    <span class="step-badge">Step 07 / 08</span>
+  </div>
+
+  <p class="lead">
+    Annotation 이후에는 cluster 간 또는 조건 간 <b>differentially expressed genes (DEGs)</b>를 확인하고,
+    pathway 분석을 통해 해당 세포 집단의 biological meaning을 해석할 수 있습니다.
+  </p>
+
+  <hr/>
+
+  <!-- A -->
+  <h3>A) DEG 분석이란?</h3>
+  <ul class="note">
+    <li>DEG 분석은 두 집단 사이에서 유의하게 차이나는 유전자를 찾는 과정입니다.</li>
+    <li>예를 들어, T cell과 B cell을 비교하거나, 같은 cell type 내에서 control과 disease를 비교할 수 있습니다.</li>
+    <li>단순 marker gene 확인보다 한 단계 더 나아가, 어떤 biological process가 활성화되어 있는지 해석할 수 있습니다.</li>
+  </ul>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>핵심 포인트</h6>
+      <ul class="mb-0">
+        <li><b>cluster 간 비교</b>와 <b>condition 간 비교</b>는 목적이 다릅니다.</li>
+        <li>비교 대상이 명확해야 해석도 명확해집니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- B -->
+  <h3 class="mt-4">B) Cluster 간 DEG 분석</h3>
+  <p class="note">
+    Seurat에서는 <code>FindMarkers()</code>를 이용해 두 cluster 간 차이를 비교할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+deg_cluster <- FindMarkers(
+  obj,
+  ident.1 = "T cells",
+  ident.2 = "B cells",
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+head(deg_cluster)
+</code></pre>
+
+  <p class="note">
+    결과 테이블에는 p-value, adjusted p-value, average log2 fold change, 발현 비율 등이 포함됩니다.
+  </p>
+
+  <!-- C -->
+  <h3 class="mt-4">C) Condition 간 DEG 분석</h3>
+  <p class="note">
+    같은 cell type 내에서 조건 간 비교를 하고 싶다면, 먼저 특정 세포 유형만 subset한 뒤 비교할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+tcell_obj <- subset(obj, idents = "T cells")
+
+Idents(tcell_obj) <- "condition"
+
+deg_condition <- FindMarkers(
+  tcell_obj,
+  ident.1 = "disease",
+  ident.2 = "control",
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+head(deg_condition)
+</code></pre>
+
+  <!-- D -->
+  <h3 class="mt-4">D) 상위 DEG 확인</h3>
+  <p class="note">
+    상위 유전자를 정리하면 cluster 또는 condition을 구분하는 핵심 유전자를 빠르게 확인할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(dplyr)
+
+deg_cluster %>%
+  rownames_to_column("gene") %>%
+  arrange(desc(avg_log2FC)) %>%
+  head(20)
+</code></pre>
+
+  <!-- E -->
+  <h3 class="mt-4">E) Heatmap 시각화</h3>
+  <p class="note">
+    DEG 결과 중 상위 marker 또는 상위 DEG를 heatmap으로 시각화하면 group 간 차이를 직관적으로 확인할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+top_genes <- rownames(deg_cluster)[1:20]
+
+DoHeatmap(obj, features = top_genes) + NoLegend()
+</code></pre>
+
+  <!-- F -->
+  <h3 class="mt-4">F) Volcano plot 예시</h3>
+  <p class="note">
+    Volcano plot은 fold change와 statistical significance를 함께 보여주는 대표적 시각화입니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(ggplot2)
+library(tibble)
+
+volcano_df <- deg_cluster %>%
+  rownames_to_column("gene") %>%
+  mutate(
+    significant = ifelse(p_val_adj < 0.05 & abs(avg_log2FC) > 0.5, "Yes", "No")
+  )
+
+ggplot(volcano_df, aes(x = avg_log2FC, y = -log10(p_val_adj), color = significant)) +
+  geom_point(size = 1.2) +
+  theme_classic() +
+  labs(x = "avg_log2FC", y = "-log10 adjusted p-value")
+</code></pre>
+
+  <!-- G -->
+  <h3 class="mt-4">G) Violin plot으로 개별 유전자 확인</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+VlnPlot(
+  obj,
+  features = c("CD3D", "MS4A1", "EPCAM"),
+  group.by = "celltype",
+  ncol = 3
+)
+</code></pre>
+
+  <div class="text-center mt-4">
+    <img src="../../assets/images/scrna_deg_pathway.png"
+         alt="DEG and pathway analysis illustration"
+         class="section-img">
+  </div>
+  <p class="text-center text-muted mt-2">
+    DEG 분석으로 차이를 보이는 유전자를 찾고, pathway 분석을 통해 biological function을 해석할 수 있습니다.
+  </p>
+
+  <!-- H -->
+  <h3 class="mt-4">H) GO / KEGG enrichment 분석</h3>
+  <p class="note">
+    DEG 리스트를 이용하면 enrichment 분석을 통해 활성화된 biological process를 확인할 수 있습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(clusterProfiler)
+library(org.Hs.eg.db)
+
+sig_genes <- deg_cluster %>%
+  rownames_to_column("gene") %>%
+  filter(p_val_adj < 0.05, avg_log2FC > 0.5) %>%
+  pull(gene)
+
+gene_df <- bitr(sig_genes,
+                fromType = "SYMBOL",
+                toType = "ENTREZID",
+                OrgDb = org.Hs.eg.db)
+
+ego <- enrichGO(
+  gene = gene_df$ENTREZID,
+  OrgDb = org.Hs.eg.db,
+  ont = "BP",
+  pAdjustMethod = "BH",
+  readable = TRUE
+)
+
+head(ego)
+dotplot(ego)
+</code></pre>
+
+  <!-- I -->
+  <h3 class="mt-4">I) GSEA 예시</h3>
+  <p class="note">
+    ORA뿐 아니라 전체 ranked gene list를 사용하는 GSEA도 자주 사용됩니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+gene_list <- deg_cluster$avg_log2FC
+names(gene_list) <- rownames(deg_cluster)
+gene_list <- sort(gene_list, decreasing = TRUE)
+
+gsea_res <- gseGO(
+  geneList = gene_list,
+  OrgDb = org.Hs.eg.db,
+  ont = "BP",
+  keyType = "SYMBOL",
+  verbose = FALSE
+)
+
+head(gsea_res)
+ridgeplot(gsea_res)
+</code></pre>
+
+  <!-- J -->
+  <h3 class="mt-4">J) 실전 해석 포인트</h3>
+  <ul class="note">
+    <li>유의한 p-value만 보지 말고, <b>effect size (log fold change)</b>도 함께 봐야 합니다.</li>
+    <li>세포 수가 많으면 작은 차이도 매우 유의하게 나올 수 있으므로 biological relevance를 함께 고려해야 합니다.</li>
+    <li>DEG는 annotation을 보강할 수도 있고, condition-specific state를 설명할 수도 있습니다.</li>
+    <li>Pathway 결과는 해석을 돕지만, gene set database의 특성과 bias도 염두에 두어야 합니다.</li>
+  </ul>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실전 팁</h6>
+      <ul class="mb-0">
+        <li>비교 그룹을 너무 넓게 잡기보다, biological question에 맞게 명확히 정의하세요.</li>
+        <li>condition 비교는 가능하면 같은 cell type 내에서 수행하는 것이 해석이 더 명확합니다.</li>
+        <li>heatmap, violin plot, enrichment 결과를 함께 제시하면 설명력이 높아집니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- K -->
+  <h3 class="mt-4">K) 전체 실습 코드 예시</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(Seurat)
+library(dplyr)
+library(tibble)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+
+# 1. cluster 간 DEG
+deg_cluster <- FindMarkers(
+  obj,
+  ident.1 = "T cells",
+  ident.2 = "B cells",
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+# 2. 상위 DEG 확인
+deg_cluster %>%
+  rownames_to_column("gene") %>%
+  arrange(desc(avg_log2FC)) %>%
+  head(20)
+
+# 3. heatmap
+top_genes <- rownames(deg_cluster)[1:20]
+DoHeatmap(obj, features = top_genes) + NoLegend()
+
+# 4. violin plot
+VlnPlot(obj, features = c("CD3D", "MS4A1", "EPCAM"), group.by = "celltype", ncol = 3)
+
+# 5. enrichment
+sig_genes <- deg_cluster %>%
+  rownames_to_column("gene") %>%
+  filter(p_val_adj < 0.05, avg_log2FC > 0.5) %>%
+  pull(gene)
+
+gene_df <- bitr(sig_genes,
+                fromType = "SYMBOL",
+                toType = "ENTREZID",
+                OrgDb = org.Hs.eg.db)
+
+ego <- enrichGO(
+  gene = gene_df$ENTREZID,
+  OrgDb = org.Hs.eg.db,
+  ont = "BP",
+  pAdjustMethod = "BH",
+  readable = TRUE
+)
+
+dotplot(ego)
+</code></pre>
+
+  <!-- Summary -->
+  <section class="mt-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white fw-bold">요약</div>
+      <div class="card-body">
+        <ul class="mb-3">
+          <li>DEG 분석은 cluster 간 또는 condition 간 차이를 유전자 수준에서 확인하는 과정입니다.</li>
+          <li><code>FindMarkers()</code>를 이용해 두 그룹을 비교할 수 있습니다.</li>
+          <li>Heatmap, volcano plot, violin plot으로 DEG 결과를 시각화할 수 있습니다.</li>
+          <li>GO/KEGG/GSEA 분석을 통해 biological pathway 수준의 해석이 가능합니다.</li>
+        </ul>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="step6_annotation.html">← Back to Annotation</a>
+          <a class="btn btn-primary" href="step8_advanced.html">Next: Advanced Analysis →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function copyCode(btn){
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(()=>{
+    const t = btn.innerText;
+    btn.innerText = "Copied!";
+    setTimeout(()=> btn.innerText = t, 1500);
+  });
+}
+</script>
+
+</body>
+</html>
