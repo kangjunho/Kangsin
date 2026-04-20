@@ -3,150 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Single-cell RNA-seq Tutorial (Hands-on)</title>
+  <title>Step 01. Introduction to scRNA-seq and R Server Environment</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="../../assets/css/style.css"/>
+
   <style>
-    .card-step { box-shadow:0 6px 16px rgba(0,0,0,.06); border-radius:12px; }
-    .card-step:hover { transform: translateY(-4px); transition: .25s ease; }
-    .card-step img { height:170px; object-fit:cover; border-top-left-radius:12px; border-top-right-radius:12px; }
-    .step-title { font-weight:700; font-size:1.05rem; }
-    .go-btn { min-width:56px; }
-    .grid-gap { row-gap: 1.25rem; }
+    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; overflow-x:auto; }
+    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
+    code { white-space:pre; }
+    .note { color:#444; }
+    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
+    .tip h6 { color:#0d6efd; }
+    .step-badge{
+      border:1px solid #0d6efd;
+      border-radius:999px;
+      padding:.25rem .6rem;
+      color:#0d6efd;
+      font-weight:600;
+    }
   </style>
 </head>
+
 <body>
-  <div class="container py-5">
-    <h1 class="text-center mb-2">Single-cell RNA-seq Tutorial (Hands-on)</h1>
-    <p class="text-center text-muted mb-4">각 단계를 차례대로 클릭하여 실습을 진행하세요.</p>
+<div class="container py-5">
 
-    <div class="row grid-gap">
-      <!-- Step 01 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_intro.png" alt="Introduction to scRNA-seq">
-          <div class="card-body">
-            <div class="step-title">Step 01. scRNA-seq 소개 및 서버 접근</div>
-            <p class="mb-3">
-              scRNA-seq 기본 개념, barcode·UMI·count matrix, bulk RNA-seq와의 차이,
-              droplet 기반 원리와 서버 접속 방법을 소개합니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step1_intro.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <div class="d-flex justify-content-between align-items-center">
+    <h1>Introduction to scRNA-seq and R Server Environment</h1>
+    <span class="step-badge">Step 01 / 08</span>
+  </div>
 
-      <!-- Step 02 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_qc.png" alt="QC and Filtering">
-          <div class="card-body">
-            <div class="step-title">Step 02. QC와 Filtering</div>
-            <p class="mb-3">
-              nFeature_RNA, nCount_RNA, percent.mt를 이용한 품질관리와
-              저품질 세포 제거, doublet 개념을 학습합니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step2_qc.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <p class="lead">
+    single-cell RNA-seq의 기본 개념을 이해하고, 
+    웹 기반 <b>RStudio Server</b>를 통해 분석 환경에 접속한 뒤 
+    <b>NAS 데이터 저장소</b>를 활용하여 실습을 시작합니다.
+  </p>
 
-      <!-- Step 03 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_normalization.png" alt="Normalization and Feature Selection">
-          <div class="card-body">
-            <div class="step-title">Step 03. 정규화와 Feature Selection</div>
-            <p class="mb-3">
-              NormalizeData, FindVariableFeatures, ScaleData를 이용한
-              정규화와 고변이 유전자 선택 과정을 실습합니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step3_normalization.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <hr/>
 
-      <!-- Step 04 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_integration.png" alt="Integration and Batch Correction">
-          <div class="card-body">
-            <div class="step-title">Step 04. Integration과 Batch Correction</div>
-            <p class="mb-3">
-              여러 샘플 통합, batch effect 개념, Seurat integration과
-              Harmony 기반 보정의 개요를 다룹니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step4_integration.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <!-- A -->
+  <h3>A) scRNA-seq 개요</h3>
+  <ul class="note">
+    <li>scRNA-seq는 개별 세포 단위의 유전자 발현을 분석하는 기술입니다.</li>
+    <li>bulk RNA-seq는 평균값을 분석하지만, scRNA-seq는 세포 간 이질성을 분석합니다.</li>
+  </ul>
 
-      <!-- Step 05 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_clustering.png" alt="Dimension Reduction and Clustering">
-          <div class="card-body">
-            <div class="step-title">Step 05. 차원축소와 Clustering</div>
-            <p class="mb-3">
-              PCA, UMAP, FindNeighbors, FindClusters를 이용해
-              세포 집단을 탐색하고 시각화합니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step5_clustering.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <!-- B -->
+  <h3 class="mt-4">B) Bulk vs Single-cell</h3>
+  <table class="table table-bordered">
+    <tr><th>항목</th><th>Bulk</th><th>Single-cell</th></tr>
+    <tr><td>단위</td><td>샘플 전체</td><td>개별 세포</td></tr>
+    <tr><td>특징</td><td>평균 발현</td><td>이질성 분석</td></tr>
+    <tr><td>결과</td><td>gene × sample</td><td>gene × cell</td></tr>
+  </table>
 
-      <!-- Step 06 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_annotation.png" alt="Cell Type Annotation">
-          <div class="card-body">
-            <div class="step-title">Step 06. Cell Type Annotation</div>
-            <p class="mb-3">
-              marker gene 기반으로 immune, stromal, epithelial 등
-              세포 유형을 annotation하는 방법을 실습합니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step6_annotation.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <!-- C -->
+  <h3 class="mt-4">C) 핵심 개념</h3>
+  <ul>
+    <li><b>Barcode</b>: 세포 식별</li>
+    <li><b>UMI</b>: PCR 중복 제거</li>
+    <li><b>Count matrix</b>: gene × cell</li>
+  </ul>
 
-      <!-- Step 07 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_deg_pathway.png" alt="DEG and Pathway Analysis">
-          <div class="card-body">
-            <div class="step-title">Step 07. DEG와 Pathway 분석</div>
-            <p class="mb-3">
-              cluster 간 또는 조건 간 DEG를 분석하고,
-              pathway enrichment를 통해 생물학적 의미를 해석합니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step7_deg_pathway.html">Go</a>
-          </div>
-        </div>
-      </div>
+  <!-- D -->
+  <h3 class="mt-4">D) 10X 데이터 구조</h3>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+filtered_feature_bc_matrix/
+├── barcodes.tsv.gz
+├── features.tsv.gz
+└── matrix.mtx.gz
+</code></pre>
 
-      <!-- Step 08 -->
-      <div class="col-md-4">
-        <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_advanced.png" alt="Advanced Analysis">
-          <div class="card-body">
-            <div class="step-title">Step 08. Advanced 분석</div>
-            <p class="mb-3">
-              doublet detection, cell cycle scoring, CNV inference,
-              pseudotime, cell-cell communication 등 고급 주제를 다룹니다.
-            </p>
-            <a class="btn btn-primary go-btn" href="step8_advanced.html">Go</a>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- E -->
+  <h3 class="mt-4">E) RStudio Server 접속</h3>
 
-    <div class="text-center mt-4">
-      <a class="btn btn-outline-secondary" href="../../e-learning.html">← Back to E-learning</a>
+  <h5>1) 웹 접속</h5>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+http://server_ip:8787
+</code></pre>
+
+  <p class="note">
+    브라우저에서 접속하면 RStudio Server 로그인 화면이 나타납니다.
+    제공된 ID와 Password를 입력하여 로그인합니다.
+  </p>
+
+  <h5>2) 로그인 후 환경</h5>
+  <ul class="note">
+    <li>Source: 코드 작성</li>
+    <li>Console: 실행</li>
+    <li>Environment: 객체 확인</li>
+    <li>Files: 파일 탐색</li>
+  </ul>
+
+  <!-- NAS -->
+  <h3 class="mt-4">F) NAS 데이터 접근</h3>
+
+  <p class="note">
+    분석 환경에 접속하면, 사용자는 반드시 <b>개인 데이터 저장소(NAS)</b>에 접근해야 합니다.
+    실습 데이터 및 분석 결과는 NAS 경로에 저장됩니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+/nas/username/scRNA_project/
+</code></pre>
+
+  <div class="card tip mt-3">
+    <div class="card-body">
+      <h6>중요</h6>
+      <ul>
+        <li>데이터는 반드시 NAS 경로에서 불러와야 합니다.</li>
+        <li>로컬 경로와 혼동하지 않도록 주의합니다.</li>
+        <li>용량이 큰 데이터는 서버/NAS에서 직접 처리합니다.</li>
+      </ul>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- G -->
+  <h3 class="mt-4">G) 작업 디렉토리 설정</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+getwd()
+
+setwd("/nas/username/scRNA_project")
+
+getwd()
+</code></pre>
+
+  <!-- H -->
+  <h3 class="mt-4">H) Seurat 시작</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+library(Seurat)
+
+data_dir <- "/nas/username/scRNA_project/sample1/filtered_feature_bc_matrix"
+
+counts <- Read10X(data.dir = data_dir)
+
+obj <- CreateSeuratObject(counts = counts)
+
+obj
+</code></pre>
+
+  <!-- Summary -->
+  <div class="card mt-4 border-primary">
+    <div class="card-header bg-primary text-white">요약</div>
+    <div class="card-body">
+      <ul>
+        <li>scRNA-seq는 세포 단위 분석</li>
+        <li>RStudio Server로 분석 수행</li>
+        <li>데이터는 NAS에서 관리</li>
+        <li>다음 단계는 QC</li>
+      </ul>
+
+      <a class="btn btn-outline-secondary" href="index.html">← Back</a>
+      <a class="btn btn-primary" href="step2_qc.html">Next →</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyCode(btn){
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code);
+  btn.innerText="Copied!";
+  setTimeout(()=>btn.innerText="Copy",1500);
+}
+</script>
+
 </body>
 </html>
