@@ -253,6 +253,66 @@
   )
 }
 </code></pre>
+  </code></pre>
+  <!-- 에러 해결 섹션 -->
+<h3 class="mt-4">⚠️ VlnPlot() 실행 중 오류 해결</h3>
+
+<p class="note">
+일부 환경에서 <code>VlnPlot()</code> 실행 시 아래와 같은 에러가 발생할 수 있습니다.
+이는 Seurat 패키지 버전 문제 또는 내부 S4 객체 처리 오류로 인해 발생하는 경우가 많습니다.
+</p>
+
+<pre><code>'S4SXP': should not happen - please report
+Error during wrapup
+Error: no more error handlers available
+</code></pre>
+
+<div class="text-center mt-4 mb-3">
+  <img src="../../assets/images/vlnplot_error_fix.png"
+       alt="VlnPlot error fix guide"
+       class="section-img">
+</div>
+
+<p class="text-center text-muted mb-4">
+  VlnPlot 실행 오류 및 해결 방법 요약
+</p>
+
+<div class="card tip mb-3">
+  <div class="card-body">
+    <h6>해결 방법</h6>
+    <ol class="mb-0">
+      <li>Seurat 최신 개발 버전 설치</li>
+      <li>R 세션 완전 재시작</li>
+      <li><code>layer = "counts"</code> 옵션 추가</li>
+    </ol>
+  </div>
+</div>
+
+<pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># Seurat 최신 버전 설치
+install.packages("devtools")
+devtools::install_github("satijalab/seurat", ref = "main", force = TRUE)
+
+# 설치 후 R 재시작
+packageVersion("Seurat")
+
+# VlnPlot 재실행
+VlnPlot(
+  sample_list[[1]],
+  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
+  ncol = 3,
+  pt.size = 0.1,
+  layer = "counts"
+)
+</code></pre>
+
+<div class="card border-warning mb-3">
+  <div class="card-body">
+    <b>Tip</b><br>
+    Seurat v5에서는 assay 구조가 변경되면서 <code>layer</code> 개념이 도입되었습니다.
+    따라서 일부 plotting 함수에서 <code>layer="counts"</code> 옵션을 명시하면
+    더 안정적으로 실행됩니다.
+  </div>
+</div>
 
   <div class="text-center mt-4">
     <img src="../../assets/images/scrna_qc.png"
@@ -331,67 +391,6 @@ qc_summary
     ) + ggtitle(paste0(nm, " (filtered)"))
   )
 }
-</code></pre>
-  <!-- 에러 해결 섹션 -->
-<h3 class="mt-4">⚠️ VlnPlot() 실행 중 오류 해결</h3>
-
-<p class="note">
-일부 환경에서 <code>VlnPlot()</code> 실행 시 아래와 같은 에러가 발생할 수 있습니다.
-이는 Seurat 패키지 버전 문제 또는 내부 S4 객체 처리 오류로 인해 발생하는 경우가 많습니다.
-</p>
-
-<pre><code>'S4SXP': should not happen - please report
-Error during wrapup
-Error: no more error handlers available
-</code></pre>
-
-<div class="text-center mt-4 mb-3">
-  <img src="../../assets/images/vlnplot_error_fix.png"
-       alt="VlnPlot error fix guide"
-       class="section-img">
-</div>
-
-<p class="text-center text-muted mb-4">
-  VlnPlot 실행 오류 및 해결 방법 요약
-</p>
-
-<div class="card tip mb-3">
-  <div class="card-body">
-    <h6>해결 방법</h6>
-    <ol class="mb-0">
-      <li>Seurat 최신 개발 버전 설치</li>
-      <li>R 세션 완전 재시작</li>
-      <li><code>layer = "counts"</code> 옵션 추가</li>
-    </ol>
-  </div>
-</div>
-
-<pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># Seurat 최신 버전 설치
-install.packages("devtools")
-devtools::install_github("satijalab/seurat", ref = "main", force = TRUE)
-
-# 설치 후 R 재시작
-packageVersion("Seurat")
-
-# VlnPlot 재실행
-VlnPlot(
-  sample_list[[1]],
-  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
-  ncol = 3,
-  pt.size = 0.1,
-  layer = "counts"
-)
-</code></pre>
-
-<div class="card border-warning mb-3">
-  <div class="card-body">
-    <b>Tip</b><br>
-    Seurat v5에서는 assay 구조가 변경되면서 <code>layer</code> 개념이 도입되었습니다.
-    따라서 일부 plotting 함수에서 <code>layer="counts"</code> 옵션을 명시하면
-    더 안정적으로 실행됩니다.
-  </div>
-</div>
-
   <p class="note">
     filtering 후에는 분포가 더 안정적으로 정리되었는지 다시 확인하는 것이 중요합니다.
   </p>
