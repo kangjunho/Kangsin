@@ -9,13 +9,27 @@
   <link rel="stylesheet" href="../../assets/css/style.css"/>
 
   <style>
-    pre { position:relative; background:#f8f9fa; padding:1rem; border-radius:6px; overflow-x:auto; }
-    .copy-btn { position:absolute; top:6px; right:6px; font-size:.8rem; }
-    code { white-space:pre; }
-    .note { color:#444; }
-    .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
-    .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
-    .table thead th { background:#f3f6ff; }
+    pre {
+      position: relative;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: .8rem;
+    }
+    code { white-space: pre; }
+    .note { color:#444; line-height:1.75; }
+    .section-img {
+      max-width: 1000px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    }
     .step-badge{
       border:1px solid #0d6efd;
       border-radius:999px;
@@ -23,11 +37,31 @@
       color:#0d6efd;
       font-weight:600;
     }
-    .section-img {
-      max-width: 980px;
-      width: 100%;
-      border-radius: 10px;
-      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    .part-title {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: #eef4ff;
+      border-left: 6px solid #0d6efd;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0d6efd;
+    }
+    .tip {
+      border-left: 4px solid #0d6efd;
+      background: #f8fbff;
+    }
+    .tip h6 {
+      color: #0d6efd;
+      margin-bottom: .4rem;
+    }
+    .warn-box {
+      border-left: 4px solid #ffc107;
+      background: #fffaf0;
+    }
+    .table thead th {
+      background: #f3f6ff;
     }
   </style>
 </head>
@@ -41,195 +75,270 @@
   </div>
 
   <p class="lead">
-    scRNA-seq 데이터 분석의 첫 번째 핵심 단계는 <b>품질 관리(QC)</b>입니다.
-    저품질 세포, 손상된 세포, 잠재적 doublet을 점검하고 제거하여
-    이후 정규화, 차원축소, 클러스터링 결과의 신뢰도를 높입니다.
+    본 단계에서는 single-cell RNA-seq 데이터의 품질을 평가하고,
+    low-quality cell을 제거하는 과정을 수행합니다.
+    QC는 downstream clustering, annotation, DEG 분석의 신뢰도를 결정하는 핵심 단계입니다.
   </p>
 
   <hr/>
 
+  <div class="part-title">Part 1. Theoretical Background</div>
+
   <!-- A -->
-  <h3>A) 왜 QC가 중요한가?</h3>
-  <ul class="note">
-    <li>scRNA-seq 데이터는 bulk RNA-seq보다 sparse하며 technical noise가 큽니다.</li>
-    <li>손상되거나 죽어가는 세포는 <b>mitochondrial gene 비율 증가</b>, <b>낮은 유전자 수</b> 등의 패턴을 보일 수 있습니다.</li>
-    <li>QC를 제대로 하지 않으면 이후 클러스터링에서 <b>가짜 cluster</b>가 생기거나, 특정 세포군 해석이 왜곡될 수 있습니다.</li>
-    <li>threshold는 고정값이라기보다, <b>데이터 분포를 보고 합리적으로 설정</b>하는 것이 중요합니다.</li>
-  </ul>
+  <h3>A) 왜 QC가 필요한가?</h3>
+
+  <p class="note">
+    Single-cell RNA-seq 데이터는 개별 세포 수준의 전사체를 측정할 수 있는 강력한 기술이지만,
+    실제 데이터에는 다양한 기술적 및 생물학적 artifact가 포함될 수 있습니다.
+    예를 들어 세포 분리 과정에서 손상되거나 죽어가는 세포가 capture될 수 있고,
+    두 개 이상의 세포가 하나의 droplet에 함께 들어가는 doublet이 발생할 수 있으며,
+    주변 ambient RNA가 실제 세포의 발현 패턴을 오염시킬 수도 있습니다.
+  </p>
+
+  <p class="note">
+    이러한 artifact를 적절히 제거하지 않으면, 이후 단계에서 가짜 cluster가 형성되거나
+    세포 유형 annotation이 왜곡되고, DEG 결과 역시 신뢰하기 어려워질 수 있습니다.
+    따라서 QC는 단순한 전처리가 아니라, downstream 분석 전체의 해석 가능성을 높이는 필수 과정입니다.
+  </p>
 
   <div class="card tip mb-3">
     <div class="card-body">
       <h6>핵심 메시지</h6>
       <ul class="mb-0">
-        <li>QC는 “지저분한 세포 제거”가 아니라, <b>분석 가능한 세포를 선별하는 과정</b>입니다.</li>
-        <li>너무 엄격한 기준은 실제 biological signal을 잃게 할 수 있고, 너무 느슨한 기준은 noise를 남길 수 있습니다.</li>
+        <li>QC는 “나쁜 세포를 버리는 작업”이 아니라, 분석 가능한 세포를 선별하는 과정입니다.</li>
+        <li>좋은 QC는 clustering, annotation, DEG, pathway 분석의 품질을 크게 좌우합니다.</li>
       </ul>
     </div>
   </div>
 
   <!-- B -->
-  <h3 class="mt-4">B) 주요 QC 지표</h3>
+  <h3 class="mt-4">B) 주요 QC artifact</h3>
+
   <div class="table-responsive">
     <table class="table table-bordered align-middle">
       <thead>
         <tr>
-          <th style="width:22%">지표</th>
-          <th style="width:78%">의미 및 해석</th>
+          <th style="width:28%">항목</th>
+          <th style="width:72%">설명</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><b>nFeature_RNA</b></td>
-          <td>세포에서 검출된 유전자 수. 너무 낮으면 저품질 세포, 너무 높으면 doublet 가능성을 의심할 수 있습니다.</td>
+          <td>Low-quality / damaged cells</td>
+          <td>유전자 수가 지나치게 적거나 mitochondrial gene 비율이 높아, 정상 세포 상태를 반영하지 못할 수 있습니다.</td>
         </tr>
         <tr>
-          <td><b>nCount_RNA</b></td>
-          <td>세포의 총 UMI count. 세포 내 RNA 양과 library size를 반영하지만, 지나치게 높으면 doublet 가능성이 있습니다.</td>
+          <td>Doublets / multiplets</td>
+          <td>둘 이상의 세포가 하나의 droplet에 함께 들어가 혼합된 발현 패턴을 보입니다.</td>
         </tr>
         <tr>
-          <td><b>percent.mt</b></td>
-          <td>미토콘드리아 유전자 비율. 일반적으로 높을수록 손상되거나 dying cell 가능성이 커집니다.</td>
+          <td>Ambient RNA</td>
+          <td>주변에 떠다니는 RNA가 droplet에 섞여 들어가 실제 세포 발현을 오염시킬 수 있습니다.</td>
+        </tr>
+        <tr>
+          <td>Dissociation stress</td>
+          <td>조직 분리 과정 자체가 스트레스 반응 유전자를 유도하여 인위적인 transcriptome 변화를 만들 수 있습니다.</td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <!-- C -->
-  <h3 class="mt-4">C) QC 메타데이터 생성</h3>
+  <h3 class="mt-4">C) 주요 QC 지표</h3>
+
   <p class="note">
-    Seurat object를 만든 뒤, 먼저 mitochondrial gene 비율을 계산하고
-    기본 QC 지표를 확인합니다.
+    Seurat 기반 QC에서는 보통 다음 세 가지 지표를 가장 먼저 확인합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(Seurat)
-library(ggplot2)
+  <ul class="note">
+    <li><b>nFeature_RNA</b>: 세포당 검출된 유전자 수</li>
+    <li><b>nCount_RNA</b>: 세포당 총 UMI / read count</li>
+    <li><b>percent.mt</b>: mitochondrial gene 비율</li>
+  </ul>
 
-# human data example
-obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^MT-")
-
-# mouse data example
-# obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^mt-")
-
-head(obj@meta.data)
-summary(obj$nFeature_RNA)
-summary(obj$nCount_RNA)
-summary(obj$percent.mt)
-</code></pre>
+  <p class="note">
+    일반적으로 nFeature_RNA가 지나치게 낮은 세포는 low-quality cell일 가능성이 있고,
+    반대로 지나치게 높은 세포는 doublet을 의심할 수 있습니다.
+    percent.mt가 높은 세포는 손상되었거나 stressed 상태일 가능성이 높습니다.
+  </p>
 
   <!-- D -->
-  <h3 class="mt-4">D) QC 지표 시각화</h3>
+  <h3 class="mt-4">D) QC 기준은 고정되어 있지 않다</h3>
+
   <p class="note">
-    보통 violin plot과 scatter plot을 함께 사용하여 데이터 분포를 확인합니다.
-    threshold를 정하기 전에 반드시 분포를 먼저 확인하는 것이 좋습니다.
+    QC filtering 기준에는 절대적인 정답이 없습니다.
+    실제 연구에서는 tissue type, cell type composition, species, sequencing depth,
+    dissociation protocol, disease context에 따라 서로 다른 기준이 사용됩니다.
   </p>
 
-  <h5 class="mt-3">D-1) Violin plot</h5>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-VlnPlot(
-  obj,
+  <p class="note">
+    예를 들어 종양 조직은 스트레스가 높아 mitochondrial gene 비율이 상대적으로 높게 나타날 수 있고,
+    면역세포는 다른 세포 유형보다 검출 유전자 수가 적을 수 있습니다.
+    따라서 threshold는 “문헌값을 그대로 복사”하기보다, 데이터 분포를 먼저 확인한 뒤 합리적으로 조정해야 합니다.
+  </p>
+
+  <div class="card warn-box mb-3">
+    <div class="card-body">
+      <b>중요</b><br>
+      QC 기준은 고정값이 아니라, 조직 특성과 연구 목적에 맞게 설정해야 합니다.
+    </div>
+  </div>
+
+  <div class="part-title">Part 2. Hands-on Practice</div>
+
+  <!-- E -->
+  <h3>E) 실습 데이터와 QC 전략</h3>
+
+  <p class="note">
+    본 실습에서는 mouse colorectal cancer 6개 샘플
+    (ND1, ND2, ND3, WD1, WD2, WD3)을 사용합니다.
+    각 샘플은 이미 Seurat object로 불러와 <code>sample_list</code>로 정리한 상태를 가정합니다.
+  </p>
+
+  <p class="note">
+    이번 단계에서는 각 샘플에 대해 mitochondrial gene 비율을 계산하고,
+    분포를 시각화한 뒤, 동일한 기준으로 샘플별 filtering을 수행합니다.
+  </p>
+
+  <!-- F -->
+  <h3 class="mt-4">F) mitochondrial gene 비율 계산</h3>
+
+  <p class="note">
+    mouse 데이터이므로 mitochondrial gene prefix는 보통 <code>mt-</code> 형식을 사용합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list <- lapply(sample_list, function(obj) {
+  obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^mt-")
+  return(obj)
+})
+</code></pre>
+
+  <!-- G -->
+  <h3 class="mt-4">G) QC 분포 시각화</h3>
+
+  <p class="note">
+    먼저 개별 샘플에서 QC 지표 분포를 확인합니다.
+    아래 예시는 ND1 샘플의 violin plot입니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>VlnPlot(
+  sample_list[[1]],
   features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
   ncol = 3,
   pt.size = 0.1
 )
 </code></pre>
 
-  <h5 class="mt-3">D-2) Scatter plot</h5>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
-FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+  <p class="note">
+    실제 분석에서는 모든 샘플에 대해 같은 분포를 확인하는 것이 좋습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>for (nm in names(sample_list)) {
+  print(
+    VlnPlot(
+      sample_list[[nm]],
+      features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
+      ncol = 3,
+      pt.size = 0.1
+    ) + ggtitle(nm)
+  )
+}
 </code></pre>
 
   <div class="text-center mt-4">
     <img src="../../assets/images/scrna_qc.png"
-         alt="QC metrics illustration"
+         alt="QC metrics overview"
          class="section-img">
   </div>
+
   <p class="text-center text-muted mt-2">
-    QC 단계에서는 nFeature_RNA, nCount_RNA, percent.mt의 분포를 확인하여
-    저품질 세포와 이상치를 점검합니다.
+    QC 단계에서는 nFeature_RNA, nCount_RNA, percent.mt 분포를 먼저 확인한 뒤 filtering 기준을 정합니다.
   </p>
-
-  <!-- E -->
-  <h3 class="mt-4">E) Filtering 기준 설정 예시</h3>
-  <p class="note">
-    아래는 예시일 뿐이며, 데이터셋에 따라 cut-off는 달라질 수 있습니다.
-    조직 종류, dissociation 상태, species, chemistry version에 따라 조정이 필요합니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-obj <- subset(
-  obj,
-  subset =
-    nFeature_RNA > 200 &
-    nFeature_RNA < 6000 &
-    percent.mt < 10
-)
-
-obj
-</code></pre>
-
-  <div class="card tip mb-3">
-    <div class="card-body">
-      <h6>threshold 설정 팁</h6>
-      <ul class="mb-0">
-        <li><code>nFeature_RNA &lt; 200</code> 미만 세포는 보통 저품질 세포로 간주하는 경우가 많습니다.</li>
-        <li><code>percent.mt</code> cut-off는 5%, 10%, 15% 등 데이터에 따라 달라질 수 있습니다.</li>
-        <li>상한선(<code>nFeature_RNA</code>, <code>nCount_RNA</code>)은 doublet 또는 multiplet 가능성을 고려해 설정합니다.</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- F -->
-  <h3 class="mt-4">F) Filtering 전후 비교</h3>
-  <p class="note">
-    filtering 후에는 세포 수와 QC 지표 분포가 어떻게 달라졌는지 다시 확인합니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# filtering 이후 violin plot 재확인
-VlnPlot(
-  obj,
-  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
-  ncol = 3,
-  pt.size = 0.1
-)
-
-# 남은 cell 수 확인
-dim(obj)
-</code></pre>
-
-  <!-- G -->
-  <h3 class="mt-4">G) Doublet에 대한 간단한 이해</h3>
-  <ul class="note">
-    <li>doublet은 하나의 barcode에 두 개 이상의 세포가 함께 잡힌 경우입니다.</li>
-    <li>이 경우 <b>비정상적으로 높은 nFeature_RNA</b>, <b>높은 nCount_RNA</b>를 보일 수 있습니다.</li>
-    <li>기본 QC에서 일부 의심 세포를 줄일 수 있지만, 본격적인 검출은 이후 <b>DoubletFinder</b> 같은 도구를 사용할 수 있습니다.</li>
-  </ul>
 
   <!-- H -->
-  <h3 class="mt-4">H) 실습용 예시 코드 정리</h3>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# 1. mitochondrial ratio 계산
-obj[["percent.mt"]] <- PercentageFeatureSet(obj, pattern = "^MT-")
+  <h3 class="mt-4">H) filtering 기준 설정</h3>
 
-# 2. QC plot 확인
-VlnPlot(obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
-FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+  <p class="note">
+    여기서는 실습용 예시로 다음 기준을 사용합니다.
+  </p>
 
-# 3. filtering
-obj <- subset(
-  obj,
-  subset =
-    nFeature_RNA > 200 &
-    nFeature_RNA < 6000 &
-    percent.mt < 10
+  <ul class="note">
+    <li><b>nFeature_RNA &gt; 200</b></li>
+    <li><b>nFeature_RNA &lt; 6000</b></li>
+    <li><b>percent.mt &lt; 10</b></li>
+  </ul>
+
+  <p class="note">
+    이 값은 하나의 예시이며, 실제 연구에서는 샘플 분포와 조직 특성을 고려해 조정할 수 있습니다.
+  </p>
+
+  <!-- I -->
+  <h3 class="mt-4">I) 샘플별 filtering 수행</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list_filtered <- lapply(sample_list, function(obj) {
+  subset(
+    obj,
+    subset =
+      nFeature_RNA > 200 &
+      nFeature_RNA < 6000 &
+      percent.mt < 10
+  )
+})
+</code></pre>
+
+  <!-- J -->
+  <h3 class="mt-4">J) filtering 전후 cell 수 비교</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># filtering 전 cell 수
+before_cells <- sapply(sample_list, ncol)
+
+# filtering 후 cell 수
+after_cells <- sapply(sample_list_filtered, ncol)
+
+qc_summary <- data.frame(
+  sample = names(before_cells),
+  before = before_cells,
+  after = after_cells,
+  removed = before_cells - after_cells
 )
 
-# 4. filtering 후 재확인
-VlnPlot(obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-dim(obj)
+qc_summary
+</code></pre>
+
+  <p class="note">
+    이 표를 통해 각 샘플에서 얼마나 많은 세포가 제거되었는지 확인할 수 있습니다.
+  </p>
+
+  <!-- K -->
+  <h3 class="mt-4">K) filtering 후 분포 재확인</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>for (nm in names(sample_list_filtered)) {
+  print(
+    VlnPlot(
+      sample_list_filtered[[nm]],
+      features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
+      ncol = 3,
+      pt.size = 0.1
+    ) + ggtitle(paste0(nm, " (filtered)"))
+  )
+}
+</code></pre>
+
+  <p class="note">
+    filtering 후에는 분포가 더 안정적으로 정리되었는지 다시 확인하는 것이 중요합니다.
+  </p>
+
+  <!-- L -->
+  <h3 class="mt-4">L) 다음 단계로 넘길 객체 준비</h3>
+
+  <p class="note">
+    이후 단계에서는 filtering된 객체를 사용합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list <- sample_list_filtered
+rm(sample_list_filtered)
+
+names(sample_list)
 </code></pre>
 
   <!-- Summary -->
@@ -238,10 +347,10 @@ dim(obj)
       <div class="card-header bg-primary text-white fw-bold">요약</div>
       <div class="card-body">
         <ul class="mb-3">
-          <li>QC는 이후 분석 결과의 신뢰도를 결정하는 매우 중요한 단계입니다.</li>
-          <li>주요 지표는 <b>nFeature_RNA</b>, <b>nCount_RNA</b>, <b>percent.mt</b>입니다.</li>
-          <li>threshold는 고정값이 아니라, 데이터 분포를 먼저 보고 설정해야 합니다.</li>
-          <li>filtering 후에는 반드시 세포 수와 분포를 다시 점검해야 합니다.</li>
+          <li>QC는 low-quality cell, doublet, ambient RNA, dissociation artifact를 줄이기 위한 필수 단계입니다.</li>
+          <li>주요 QC 지표는 <code>nFeature_RNA</code>, <code>nCount_RNA</code>, <code>percent.mt</code>입니다.</li>
+          <li>QC 기준에는 절대적인 정답이 없으며, 조직 특성과 데이터 분포에 따라 달라집니다.</li>
+          <li>본 실습에서는 6개 mouse CRC 샘플에 대해 동일한 기준으로 filtering을 수행했습니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">
