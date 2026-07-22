@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step 00. R과 RStudio 설치 | GEO Microarray Analysis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <style>
+    body { background:#f7f9fc; color:#263238; }
+    h1, h2, h3 { scroll-margin-top:80px; }
+    .lesson-hero { background:linear-gradient(135deg,#0d6efd,#164e9b); color:#fff; }
+    .lesson-hero h1 { color:#fff; }
+    .content-card { border:0; border-radius:14px; box-shadow:0 5px 18px rgba(26,54,93,.08); }
+    .section-number { display:inline-flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:50%; background:#0d6efd; color:#fff; font-weight:700; margin-right:.55rem; }
+    .concept-box { border-left:5px solid #0d6efd; background:#eef5ff; }
+    .tip-box { border-left:5px solid #198754; background:#eef9f3; }
+    .warning-box { border-left:5px solid #dc3545; background:#fff1f2; }
+    .download-card { border:2px solid #dbe9ff; border-radius:14px; }
+    .download-card:hover { border-color:#0d6efd; }
+    .code-block { position:relative; background:#17212b; color:#f3f6f8; border-radius:10px; padding:1.2rem; overflow-x:auto; }
+    .code-block code { color:inherit; }
+    .toc a { color:#405166; text-decoration:none; }
+    .toc a:hover { color:#0d6efd; }
+    .compare-table th { background:#eaf2ff; }
+    .check-item { display:flex; gap:.75rem; align-items:flex-start; margin-bottom:.65rem; }
+    .check-icon { color:#198754; font-weight:800; }
+    .step-list li { margin-bottom:.7rem; }
+    .external-link::after { content:" ↗"; }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#lessonNav" aria-label="메뉴 열기">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="lessonNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">과정 목차</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../e-learning.html">E-learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container py-3" style="max-width:1000px">
+      <span class="badge rounded-pill bg-light text-primary mb-3">Step 00 · 환경 설정</span>
+      <h1 class="display-5 fw-bold mb-3">Windows에서 R과 RStudio 설치하기</h1>
+      <p class="lead mb-0">R과 RStudio의 차이를 이해하고 GEO microarray 분석을 위한 기본 실습 환경을 준비합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h4 mb-3">이번 단계의 학습 목표</h2>
+        <div class="check-item"><span class="check-icon">✓</span><span>R과 RStudio가 각각 어떤 역할을 하는지 설명할 수 있습니다.</span></div>
+        <div class="check-item"><span class="check-icon">✓</span><span>공식 홈페이지에서 Windows용 R과 RStudio를 올바른 순서로 설치할 수 있습니다.</span></div>
+        <div class="check-item"><span class="check-icon">✓</span><span>RStudio의 주요 화면을 이해하고 간단한 R 코드를 실행할 수 있습니다.</span></div>
+        <div class="check-item mb-0"><span class="check-icon">✓</span><span>GEO 실습용 폴더와 RStudio Project를 만들 수 있습니다.</span></div>
+      </div>
+    </section>
+
+    <section class="card content-card toc mb-5">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">페이지 목차</h2>
+        <div class="row g-2">
+          <div class="col-md-6"><a href="#what-is-r">1. R이란 무엇인가?</a></div>
+          <div class="col-md-6"><a href="#what-is-rstudio">2. RStudio란 무엇인가?</a></div>
+          <div class="col-md-6"><a href="#difference">3. R과 RStudio의 차이</a></div>
+          <div class="col-md-6"><a href="#install-r">4. R 설치</a></div>
+          <div class="col-md-6"><a href="#install-rstudio">5. RStudio 설치</a></div>
+          <div class="col-md-6"><a href="#rstudio-screen">6. RStudio 화면 구성</a></div>
+          <div class="col-md-6"><a href="#test">7. 설치 확인</a></div>
+          <div class="col-md-6"><a href="#project">8. 실습 Project 생성</a></div>
+          <div class="col-md-6"><a href="#troubleshooting">9. 자주 발생하는 문제</a></div>
+          <div class="col-md-6"><a href="#checklist">10. 최종 점검</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="what-is-r" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">1</span>R이란 무엇인가?</h2>
+        <p><strong>R</strong>은 데이터를 처리하고 통계적으로 분석하며, 분석 결과를 그래프로 표현할 수 있는 프로그래밍 언어이자 분석 실행 환경입니다.</p>
+        <p>생명정보학에서는 유전자 발현 분석, 차등발현 유전자 분석, 생존분석, 기능분석 등 다양한 연구에 R이 사용됩니다. 이번 교육에서는 GEO에서 공개된 microarray 데이터를 R로 불러와 분석합니다.</p>
+        <div class="concept-box rounded p-4 mt-4">
+          <h3 class="h5">이번 과정에서 R이 하는 일</h3>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <span class="badge text-bg-light border p-2">GEO 데이터 다운로드</span>
+            <span class="badge text-bg-light border p-2">임상정보 정리</span>
+            <span class="badge text-bg-light border p-2">발현값 전처리</span>
+            <span class="badge text-bg-light border p-2">DEG 분석</span>
+            <span class="badge text-bg-light border p-2">결과 시각화</span>
+            <span class="badge text-bg-light border p-2">GO·KEGG·GSEA</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="what-is-rstudio" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">2</span>RStudio란 무엇인가?</h2>
+        <p><strong>RStudio</strong>는 R 코드를 편리하게 작성하고 실행할 수 있도록 도와주는 통합개발환경(IDE)입니다.</p>
+        <p>코드 편집기, 실행 결과, 분석 중 생성된 데이터, 그래프와 파일을 하나의 화면에서 관리할 수 있습니다. RStudio는 R을 대신하는 프로그램이 아니라 <strong>설치된 R을 더 편리하게 사용하도록 도와주는 프로그램</strong>입니다.</p>
+        <div class="tip-box rounded p-4 mt-4">
+          <strong>중요:</strong> RStudio만 설치해서는 R 분석을 실행할 수 없습니다. 반드시 <strong>R을 먼저 설치한 다음 RStudio를 설치</strong>해야 합니다.
+        </div>
+      </div>
+    </section>
+
+    <section id="difference" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">3</span>R과 RStudio의 차이</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle compare-table">
+            <thead>
+              <tr><th>구분</th><th>R</th><th>RStudio</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>역할</th><td>분석을 실제로 실행</td><td>R을 편리하게 사용하는 작업환경</td></tr>
+              <tr><th>비유</th><td>자동차의 엔진</td><td>운전석과 계기판</td></tr>
+              <tr><th>주요 기능</th><td>계산, 통계분석, 그래프 생성</td><td>코드 작성, 실행, 파일과 결과 관리</td></tr>
+              <tr><th>설치 순서</th><td><strong>먼저 설치</strong></td><td>R 설치 후 설치</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="text-center fs-5 fw-bold text-primary mt-4">R 설치 → RStudio 설치 → RStudio에서 R 코드 실행</div>
+      </div>
+    </section>
+
+    <section id="install-r" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">4</span>Windows에서 R 설치하기</h2>
+        <div class="download-card p-4 mb-4">
+          <h3 class="h5">R 공식 다운로드</h3>
+          <p class="text-muted">CRAN(The Comprehensive R Archive Network)의 공식 Windows 다운로드 페이지를 이용합니다.</p>
+          <a class="btn btn-primary external-link" href="https://cran.r-project.org/bin/windows/base/" target="_blank" rel="noopener">Windows용 R 다운로드</a>
+          <a class="btn btn-outline-primary external-link ms-1" href="https://cran.r-project.org/" target="_blank" rel="noopener">CRAN 홈페이지</a>
+        </div>
+        <ol class="step-list">
+          <li>위의 <strong>Windows용 R 다운로드</strong> 버튼을 클릭합니다.</li>
+          <li>페이지 상단의 <strong>Download R-x.x.x for Windows</strong> 링크를 클릭합니다.</li>
+          <li>다운로드된 <code>.exe</code> 설치 파일을 실행합니다.</li>
+          <li>설치 언어를 선택하고 안내에 따라 진행합니다.</li>
+          <li>특별한 이유가 없다면 설치 위치와 구성 요소를 포함한 모든 항목을 기본값으로 유지합니다.</li>
+          <li>설치가 완료되면 Windows 시작 메뉴에서 R을 확인합니다.</li>
+        </ol>
+        <div class="tip-box rounded p-4 mt-4">
+          <strong>권장 설정:</strong> 이 교육에서는 최신 정식 버전의 64-bit R을 사용합니다. R 버전 번호는 업데이트에 따라 달라질 수 있습니다.
+        </div>
+      </div>
+    </section>
+
+    <section id="install-rstudio" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">5</span>Windows에서 RStudio 설치하기</h2>
+        <div class="download-card p-4 mb-4">
+          <h3 class="h5">RStudio Desktop 공식 다운로드</h3>
+          <p class="text-muted">RStudio는 Posit에서 개발합니다. 교육용으로 무료 RStudio Desktop을 설치합니다.</p>
+          <a class="btn btn-primary external-link" href="https://posit.co/download/rstudio-desktop/" target="_blank" rel="noopener">RStudio Desktop 다운로드</a>
+          <a class="btn btn-outline-primary external-link ms-1" href="https://posit.co/products/open-source/rstudio/" target="_blank" rel="noopener">RStudio 소개</a>
+        </div>
+        <ol class="step-list">
+          <li>R 설치가 완료되었는지 먼저 확인합니다.</li>
+          <li>위의 <strong>RStudio Desktop 다운로드</strong> 버튼을 클릭합니다.</li>
+          <li>Windows용 RStudio 설치 파일을 다운로드합니다.</li>
+          <li>다운로드된 설치 파일을 실행합니다.</li>
+          <li>설치 위치 등은 기본값을 유지하고 설치를 완료합니다.</li>
+          <li>Windows 시작 메뉴에서 <strong>RStudio</strong>를 실행합니다.</li>
+        </ol>
+        <div class="concept-box rounded p-4 mt-4">
+          처음 실행했을 때 RStudio가 정상적으로 열리고 Console에 R 버전이 표시되면 R과 RStudio가 서로 연결된 것입니다.
+        </div>
+      </div>
+    </section>
+
+    <section id="rstudio-screen" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">6</span>RStudio 화면 구성 이해하기</h2>
+        <p>RStudio는 일반적으로 네 개의 영역으로 구성됩니다. Source 창은 R script를 열거나 새로 만들었을 때 나타납니다.</p>
+        <div class="row g-3 mt-2">
+          <div class="col-md-6"><div class="border rounded p-4 h-100"><h3 class="h5 text-primary">① Source</h3><p class="mb-0">R 코드를 작성하고 <code>.R</code> 파일로 저장하는 공간입니다.</p></div></div>
+          <div class="col-md-6"><div class="border rounded p-4 h-100"><h3 class="h5 text-primary">② Console</h3><p class="mb-0">R 코드가 실제로 실행되고 결과와 오류 메시지가 출력되는 공간입니다.</p></div></div>
+          <div class="col-md-6"><div class="border rounded p-4 h-100"><h3 class="h5 text-primary">③ Environment / History</h3><p class="mb-0">현재 생성된 데이터와 객체, 이전에 실행한 명령을 확인합니다.</p></div></div>
+          <div class="col-md-6"><div class="border rounded p-4 h-100"><h3 class="h5 text-primary">④ Files / Plots / Packages / Help</h3><p class="mb-0">파일, 그래프, 설치 패키지와 도움말을 확인합니다.</p></div></div>
+        </div>
+        <div class="tip-box rounded p-4 mt-4">
+          Source에서 현재 줄 또는 선택한 코드를 실행하려면 <kbd>Ctrl</kbd> + <kbd>Enter</kbd>를 누릅니다.
+        </div>
+      </div>
+    </section>
+
+    <section id="test" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">7</span>설치 확인하기</h2>
+        <p>RStudio를 실행하고 Console에 다음 코드를 한 줄씩 입력합니다.</p>
+        <pre class="code-block"><code># 설치된 R 버전 확인
+R.version.string
+
+# 간단한 계산
+1 + 1
+
+# 문자 출력
+print("R installation completed!")
+
+# 현재 작업 폴더 확인
+getwd()</code></pre>
+        <p class="mt-4 mb-2">다음과 같은 결과가 표시되면 정상입니다.</p>
+        <pre class="code-block"><code>[1] 2
+[1] "R installation completed!"</code></pre>
+        <div class="concept-box rounded p-4 mt-4">
+          코드 앞에 있는 <code>&gt;</code> 기호는 Console의 입력 표시이므로 직접 입력하지 않습니다.
+        </div>
+      </div>
+    </section>
+
+    <section id="project" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">8</span>GEO 실습용 Project 만들기</h2>
+        <p>분석 코드와 데이터를 일정하게 관리하기 위해 실습 전용 폴더와 RStudio Project를 만듭니다.</p>
+        <h3 class="h5 mt-4">1) Windows에 영문 폴더 만들기</h3>
+        <pre class="code-block"><code>C:/Bioinformatics/GEO_microarray</code></pre>
+        <div class="warning-box rounded p-4 mt-3">
+          <strong>주의:</strong> 한글, 공백 또는 특수문자가 포함된 경로는 일부 패키지에서 오류를 유발할 수 있습니다. 가능하면 짧은 영문 경로를 사용합니다.
+        </div>
+        <h3 class="h5 mt-4">2) RStudio Project 생성</h3>
+        <ol class="step-list">
+          <li>RStudio 상단 메뉴에서 <strong>File → New Project</strong>를 선택합니다.</li>
+          <li><strong>Existing Directory</strong>를 선택합니다.</li>
+          <li><code>C:/Bioinformatics/GEO_microarray</code> 폴더를 지정합니다.</li>
+          <li><strong>Create Project</strong>를 클릭합니다.</li>
+          <li>RStudio 오른쪽 위에 Project 이름이 표시되는지 확인합니다.</li>
+        </ol>
+        <h3 class="h5 mt-4">3) 권장 하위 폴더</h3>
+        <pre class="code-block"><code>GEO_microarray/
+├── data_raw/
+├── data_processed/
+├── results/
+├── figures/
+└── scripts/</code></pre>
+      </div>
+    </section>
+
+    <section id="troubleshooting" class="card content-card mb-4">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">9</span>자주 발생하는 문제</h2>
+        <div class="accordion" id="troubleAccordion">
+          <div class="accordion-item">
+            <h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#problem1">RStudio가 실행되지 않습니다.</button></h3>
+            <div id="problem1" class="accordion-collapse collapse show" data-bs-parent="#troubleAccordion"><div class="accordion-body">R이 먼저 설치되어 있는지 확인합니다. 설치 후 컴퓨터를 다시 시작하고 RStudio를 실행합니다.</div></div>
+          </div>
+          <div class="accordion-item">
+            <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#problem2">R이 여러 버전 설치되어 있습니다.</button></h3>
+            <div id="problem2" class="accordion-collapse collapse" data-bs-parent="#troubleAccordion"><div class="accordion-body">RStudio 실행 시 <kbd>Ctrl</kbd> 키를 누른 채 시작하면 사용할 R 버전을 선택할 수 있습니다. 특별한 이유가 없다면 최신 버전을 사용합니다.</div></div>
+          </div>
+          <div class="accordion-item">
+            <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#problem3">작업 폴더나 파일을 찾지 못합니다.</button></h3>
+            <div id="problem3" class="accordion-collapse collapse" data-bs-parent="#troubleAccordion"><div class="accordion-body"><code>getwd()</code>로 현재 작업 폴더를 확인합니다. 한글, 공백, OneDrive 동기화 경로를 피하고 RStudio Project를 사용합니다.</div></div>
+          </div>
+          <div class="accordion-item">
+            <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#problem4">Rtools도 설치해야 하나요?</button></h3>
+            <div id="problem4" class="accordion-collapse collapse" data-bs-parent="#troubleAccordion"><div class="accordion-body">이번 입문 실습에서는 우선 설치하지 않아도 됩니다. Windows용 바이너리 패키지 설치만으로 대부분의 실습이 가능합니다. 소스 패키지 컴파일이 필요할 때 별도로 안내합니다.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="checklist" class="card content-card mb-5">
+      <div class="card-body p-4 p-md-5">
+        <h2 class="h3 mb-4"><span class="section-number">10</span>최종 점검</h2>
+        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="check1"><label class="form-check-label" for="check1">R을 설치했습니다.</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="check2"><label class="form-check-label" for="check2">RStudio Desktop을 설치했습니다.</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="check3"><label class="form-check-label" for="check3">RStudio Console에서 확인 코드를 실행했습니다.</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="check4"><label class="form-check-label" for="check4">영문 경로에 GEO 실습 폴더를 만들었습니다.</label></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="check5"><label class="form-check-label" for="check5">GEO_microarray RStudio Project를 만들었습니다.</label></div>
+      </div>
+    </section>
+
+    <section class="card border-primary mb-5">
+      <div class="card-body p-4 text-center">
+        <h2 class="h4">다음 단계</h2>
+        <p class="mb-3">다음 시간에는 GEO 분석에 필요한 최소한의 R 사용법과 패키지 설치 방법을 배웁니다.</p>
+        <button class="btn btn-primary" disabled>Step 01. R 기초와 작업환경 → 준비 중</button>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="index.html">← 과정 목차</a>
+      <a class="btn btn-outline-primary external-link" href="https://docs.posit.co/ide/user/" target="_blank" rel="noopener">RStudio 공식 가이드</a>
+    </div>
+  </main>
+
+  <footer class="bg-light border-top mt-5 py-4">
+    <div class="container text-center text-muted">
+      GEO Microarray Analysis · Kang's Bioinformatics
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
