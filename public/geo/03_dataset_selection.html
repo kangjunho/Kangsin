@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 03. 데이터셋 선정과 metadata 해석</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 03</span>
+      <h1 class="display-5 fw-bold">데이터셋 선정과 metadata 해석</h1>
+      <p class="lead mb-0">GSE와 GSM 페이지에 포함된 연구·샘플·발현정보를 읽고, 다운로드 파일의 종류와 분석 가능성을 판단합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">GSE와 GSM의 관계</h2>
+        <p><strong>GSE(Series)</strong>는 하나의 연구 전체를 나타내며, 연구에 사용된 여러 <strong>GSM(Sample)</strong>을 포함합니다. <strong>GPL(Platform)</strong>은 발현값을 측정하는 데 사용한 microarray 또는 sequencing platform입니다.</p>
+        <div class="flow-row my-3">
+          <span class="flow-item">GSE: 연구 전체</span><span class="flow-arrow">→</span>
+          <span class="flow-item">GSM: 개별 샘플</span><span class="flow-arrow">→</span>
+          <span class="flow-item">GPL: 측정 플랫폼</span>
+        </div>
+        <div class="warning-box rounded p-3"><strong>GSM은 반드시 환자 한 명을 의미하지 않습니다.</strong> 같은 환자의 치료 전·후, 여러 조직 또는 반복측정 샘플이 각각 다른 GSM으로 등록될 수 있습니다. 반대로 pooling된 GSM에는 여러 사람의 시료가 포함될 수도 있습니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">GSE record 전체 화면 읽기</h2>
+        <div class="figure-card">
+          <a href="assets/images/gse-record-detailed.png" target="_blank"><img class="lesson-img" src="assets/images/gse-record-detailed.png" alt="GSE146446 상세 record"></a>
+          <div class="img-caption">GSE146446의 Series record. 이미지를 클릭하면 원본 크기로 볼 수 있습니다.</div>
+        </div>
+        <div class="table-responsive mt-4">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th style="width:23%">항목</th><th>의미와 확인할 내용</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Status</strong></td><td>데이터 공개 상태와 공개일. Public인지 확인합니다.</td></tr>
+              <tr><td><strong>Title</strong></td><td>연구의 핵심 질문과 대상. 제목만으로 분석 그룹을 결정하지 않습니다.</td></tr>
+              <tr><td><strong>Organism</strong></td><td>시료가 유래한 종. 사람 연구는 Homo sapiens인지 확인합니다.</td></tr>
+              <tr><td><strong>Experiment type</strong></td><td>Microarray, RNA-seq, methylation 등 데이터 생성 방식입니다.</td></tr>
+              <tr><td><strong>Summary</strong></td><td>연구 배경, 가설과 주요 결과를 요약한 설명입니다.</td></tr>
+              <tr><td><strong>Overall design</strong></td><td>그룹, 시점, 치료, 반복측정과 비교 구조를 설명하는 가장 중요한 항목입니다.</td></tr>
+              <tr><td><strong>Contributor(s)</strong></td><td>데이터를 제출한 연구자입니다.</td></tr>
+              <tr><td><strong>Citation(s)</strong></td><td>연결된 논문. 실험방법과 포함·제외 기준을 확인하는 데 사용합니다.</td></tr>
+              <tr><td><strong>Platforms</strong></td><td>GPL accession과 microarray 제품명. 하나 이상의 GPL이 있는지 확인합니다.</td></tr>
+              <tr><td><strong>Samples</strong></td><td>연구에 포함된 GSM 목록. More를 눌러 전체 샘플을 확인합니다.</td></tr>
+              <tr><td><strong>Relations</strong></td><td>BioProject, SRA 등 연결된 NCBI 자료입니다.</td></tr>
+              <tr><td><strong>Download family</strong></td><td>SOFT, MINiML, Series Matrix 등 GEO 구조화 파일입니다.</td></tr>
+              <tr><td><strong>Supplementary file</strong></td><td>연구자가 제출한 raw data, processed matrix와 추가 파일입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="concept-box rounded p-3"><strong>분석 그룹을 결정하는 핵심 순서:</strong> Overall design → Samples의 characteristics → 원 논문의 Methods 순서로 교차 확인합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">GSM을 클릭하면 무엇이 보이나?</h2>
+        <p>GSE의 Samples 목록에서 GSM accession을 클릭하면 개별 샘플 페이지로 이동합니다. 이 페이지에는 de-identified sample metadata, 실험방법과 해당 샘플의 발현값이 포함될 수 있습니다.</p>
+        <div class="figure-card">
+          <a href="assets/images/gsm-record-expression.png" target="_blank"><img class="lesson-img" src="assets/images/gsm-record-expression.png" alt="GSM4385584 sample metadata와 expression table"></a>
+          <div class="img-caption">GSM4385584의 sample metadata, 실험 protocol과 normalized expression table.</div>
+        </div>
+        <div class="table-responsive mt-4">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th style="width:25%">GSM 항목</th><th>확인 내용</th></tr></thead>
+            <tbody>
+              <tr><td>Title</td><td>연구자가 부여한 샘플 이름. 그룹·시점 코드가 포함될 수 있습니다.</td></tr>
+              <tr><td>Source name</td><td>whole blood, tumor tissue, PBMC 등 시료의 생물학적 출처입니다.</td></tr>
+              <tr><td>Organism</td><td>샘플의 종입니다.</td></tr>
+              <tr><td>Characteristics</td><td>subject ID, visit, treatment, age, sex, response, tissue 등 분석 그룹과 임상정보가 기록됩니다.</td></tr>
+              <tr><td>Extracted molecule</td><td>total RNA, genomic DNA 등 추출한 분자 유형입니다.</td></tr>
+              <tr><td>Protocols</td><td>추출, 표지, hybridization, scan과 data processing 방법입니다.</td></tr>
+              <tr><td>Platform ID</td><td>이 샘플을 측정한 GPL accession입니다.</td></tr>
+              <tr><td>Data table</td><td>probe ID별 processed expression value와 detection P-value 등이 제공될 수 있습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip-box rounded p-3"><strong>개인정보가 아니라 연구용 metadata입니다.</strong> GEO에 공개되는 임상정보는 보통 비식별화되어 있으며 연구자가 제출한 범위로 제한됩니다. 모든 환자의 진단·나이·성별 정보가 항상 제공되는 것은 아닙니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">GSM의 발현값은 무엇인가?</h2>
+        <p>GSM 하단의 Data table에는 한 샘플에서 측정된 probe별 processed value가 표시될 수 있습니다. 예시 화면의 값은 연구자가 처리한 normalized log2 intensity이며, raw intensity와 동일하지 않습니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>열</th><th>일반적인 의미</th></tr></thead>
+            <tbody><tr><td>ID_REF</td><td>GPL에서 정의한 microarray probe ID</td></tr><tr><td>VALUE</td><td>연구자가 제출한 processed expression value</td></tr><tr><td>Detection P-value</td><td>해당 probe signal의 검출 신뢰도 지표. 플랫폼에 따라 없을 수 있음</td></tr></tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3"><strong>주의:</strong> VALUE의 정규화 방식과 log2 변환 여부는 연구마다 다릅니다. GSM의 Data processing, GSE의 Series Matrix 설명과 원 논문을 확인해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">Download family와 Supplementary files</h2>
+        <div class="table-responsive"><table class="table table-bordered align-middle"><thead class="table-light"><tr><th>파일</th><th>내용</th><th>초급 실습 활용</th></tr></thead><tbody><tr><td>Series Matrix</td><td>여러 GSM의 processed expression matrix와 sample metadata</td><td>GEO2R·GEOquery 분석에 가장 편리</td></tr><tr><td>SOFT family</td><td>GSE·GSM·GPL 정보를 텍스트 구조로 묶은 파일</td><td>GEO 구조 확인·프로그램 처리</td></tr><tr><td>MINiML family</td><td>XML 형식으로 제공되는 GEO family metadata</td><td>고급 programmatic parsing</td></tr><tr><td>RAW.tar</td><td>여러 sample raw file을 하나로 모은 TAR archive</td><td>raw data부터 재전처리할 때 사용</td></tr><tr><td>non-normalized matrix</td><td>연구자가 제공한 비정규화 또는 중간 발현행렬</td><td>직접 정규화를 수행할 때 사용</td></tr></tbody></table></div>
+        <p><code>.tar</code>는 분석 데이터 형식이 아니라 여러 파일을 하나로 묶은 <strong>archive 형식</strong>입니다. 압축을 풀면 플랫폼에 따라 <code>.CEL.gz</code>, <code>.txt.gz</code>, <code>.idat</code> 등의 실제 sample file이 나타납니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">Windows에서 .tar 파일 풀기</h2>
+        <h3 class="h5 mt-3">방법 1. 7-Zip 사용</h3>
+        <ol><li><a href="https://www.7-zip.org/" target="_blank" rel="noopener">7-Zip 공식 홈페이지</a>에서 설치합니다.</li><li><code>GSE..._RAW.tar</code> 파일을 마우스 오른쪽 버튼으로 클릭합니다.</li><li><strong>7-Zip → 압축 풀기</strong>를 선택합니다.</li><li>생성된 폴더 안에서 sample별 raw file을 확인합니다.</li><li>내부 파일이 <code>.CEL.gz</code>라면 분석 패키지가 그대로 읽을 수 있는지 확인하고, 필요한 경우 한 번 더 압축을 풉니다.</li></ol>
+        <h3 class="h5 mt-4">방법 2. Windows PowerShell 또는 Terminal</h3>
+        <pre class="code-block"><code># 압축을 풀 폴더 생성
+mkdir data_raw
+
+# TAR archive 풀기
+tar -xf GSE146446_RAW.tar -C data_raw</code></pre>
+        <h3 class="h5 mt-4">방법 3. R에서 풀기</h3>
+        <pre class="code-block"><code>dir.create("data_raw", showWarnings = FALSE)
+
+untar(
+  "GSE146446_RAW.tar",
+  exdir = "data_raw"
+)
+
+# 압축 해제된 파일 확인
+list.files("data_raw")</code></pre>
+        <div class="tip-box rounded p-3">파일명이 <code>.tar.gz</code> 또는 <code>.tgz</code>라면 Linux 명령에서는 일반적으로 <code>tar -xzf 파일명.tar.gz</code>를 사용합니다. R의 <code>untar()</code>는 일반적인 gzip-compressed TAR도 처리할 수 있습니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">어떤 파일을 받아야 하나?</h2>
+        <div class="table-responsive"><table class="table table-bordered compare-table"><thead><tr><th>목적</th><th>권장 파일</th></tr></thead><tbody><tr><td>GEO2R 또는 빠른 DEG 실습</td><td>Series Matrix / GEO2R</td></tr><tr><td>R에서 processed expression 재분석</td><td>Series Matrix를 <code>getGEO()</code>로 다운로드</td></tr><tr><td>정규화부터 직접 재현</td><td>RAW.tar 내부 CEL·TXT·IDAT 등</td></tr><tr><td>metadata 구조 확인</td><td>GSE/GSM 웹 화면, SOFT 또는 MINiML</td></tr></tbody></table></div>
+        <div class="concept-box rounded p-3"><strong>이번 입문 과정:</strong> 먼저 Series Matrix로 전체 분석 흐름을 익힙니다. RAW.tar 전처리는 플랫폼별 방법이 다르므로 별도 심화과정으로 다룹니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">종합 실습: 내가 찾은 데이터셋 조사하기</h2>
+        <p>Step 02에서 선택한 GSE를 열고 다음 정보를 직접 찾아 기록하세요.</p>
+        <ol class="step-list"><li>GSE accession, Title, Organism과 Experiment type</li><li>Summary와 Overall design에서 연구 질문과 비교 구조</li><li>GPL accession과 platform 제품명</li><li>전체 GSM 수와 실제 분석할 Control·Case 수</li><li>각 그룹에서 GSM을 하나씩 열어 공통 characteristics 열 확인</li><li>확인 가능한 임상정보: age, sex, diagnosis, treatment, tissue, visit, response 등</li><li>동일 subject ID가 여러 GSM에 반복되는지 확인</li><li>Data processing에서 normalization과 log2 여부 확인</li><li>Series Matrix와 Supplementary file의 이름·크기·형식</li><li>GEO2R 사용 가능 여부와 분석에 사용할 파일 결정</li></ol>
+        <h3 class="h5 mt-4">제출용 기록표</h3>
+        <div class="table-responsive"><table class="table table-bordered align-middle"><tbody><tr><th class="table-light" style="width:33%">GSE / GPL</th><td></td></tr><tr><th class="table-light">Title</th><td></td></tr><tr><th class="table-light">Organism / Experiment type</th><td></td></tr><tr><th class="table-light">Control 정의 / n</th><td></td></tr><tr><th class="table-light">Case 정의 / n</th><td></td></tr><tr><th class="table-light">조직·세포</th><td></td></tr><tr><th class="table-light">확인 가능한 임상정보</th><td></td></tr><tr><th class="table-light">반복측정 여부</th><td></td></tr><tr><th class="table-light">Normalization / log2</th><td></td></tr><tr><th class="table-light">Series Matrix</th><td>있음 / 없음</td></tr><tr><th class="table-light">Supplementary files</th><td></td></tr><tr><th class="table-light">사용할 파일과 이유</th><td></td></tr></tbody></table></div>
+        <details class="border rounded p-3 mt-4"><summary class="fw-bold text-primary" style="cursor:pointer">분석 전 최종 판단 질문</summary><ul class="mt-3 mb-0"><li>각 GSM이 독립된 환자·샘플인가?</li><li>Control과 Case 외에 시점·치료·조직 차이가 함께 섞여 있지 않은가?</li><li>두 그룹이 동일 GPL과 동일 processing을 사용했는가?</li><li>필요한 임상정보가 모든 GSM에 동일한 형식으로 존재하는가?</li><li>내가 선택한 파일이 raw data인지 processed data인지 설명할 수 있는가?</li></ul></details>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="02_geo_search.html">← Step 02</a>
+      <a class="btn btn-primary" href="04_geo2r.html">Step 04 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
