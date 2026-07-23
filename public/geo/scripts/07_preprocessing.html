@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 07. 전처리, QC와 probe annotation</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 07</span>
+      <h1 class="display-5 fw-bold">전처리, QC와 probe annotation</h1>
+      <p class="lead mb-0">발현값 분포와 sample 관계를 점검하고, 분석 가능한 probe·gene expression matrix를 만듭니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">전처리의 목적</h2>
+        <p>전처리는 단순히 함수를 실행하는 과정이 아니라, 현재 발현값이 어떤 상태인지 확인하고 차등발현 분석에 사용할 수 있는 형태로 만드는 과정입니다.</p>
+        <div class="flow-row my-3">
+          <span class="flow-item">값의 척도</span><span class="flow-arrow">→</span>
+          <span class="flow-item">샘플 QC</span><span class="flow-arrow">→</span>
+          <span class="flow-item">probe annotation</span><span class="flow-arrow">→</span>
+          <span class="flow-item">분석 행렬</span>
+        </div>
+        <div class="warning-box rounded p-3"><strong>Series Matrix는 보통 processed data입니다.</strong> 이미 log2 변환과 normalization이 적용되었을 수 있으므로 raw data 전처리 과정을 무조건 다시 적용하면 안 됩니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. Step 06 결과 불러오기</h2>
+        <pre class="code-block"><code>library(Biobase)
+library(limma)
+library(pheatmap)
+
+eset &lt;- readRDS(
+  "data_processed/expression_set.rds"
+)
+analysis_meta &lt;- read.csv(
+  "data_processed/sample_metadata_analysis.csv",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+
+expr_raw &lt;- exprs(eset)
+feature_info &lt;- fData(eset)
+
+stopifnot(
+  identical(colnames(expr_raw), analysis_meta$GSM)
+)</code></pre>
+        <p class="mb-0">QC 전에 발현행렬의 열과 metadata의 GSM 순서가 동일한지 다시 확인합니다. Step 06 이후 metadata를 수동으로 수정했다면 순서가 달라질 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. Raw data와 processed data 구분</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>구분</th><th>예</th><th>일반적인 처리</th></tr></thead>
+            <tbody>
+              <tr><td>Raw microarray data</td><td>Affymetrix CEL, Illumina IDAT, Agilent TXT</td><td>background correction, normalization, summarization과 QC를 플랫폼별로 수행</td></tr>
+              <tr><td>Processed Series Matrix</td><td>GEO2R와 <code>getGEO(GSEMatrix=TRUE)</code>의 발현값</td><td>제출자가 수행한 처리방법을 확인하고 필요한 점검만 수행</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="concept-box rounded p-3"><strong>이번 과정:</strong> processed Series Matrix를 사용합니다. Raw CEL·IDAT 전처리는 플랫폼마다 다르므로 별도의 심화과정으로 분리합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. log2 변환 여부 판단</h2>
+        <pre class="code-block"><code>qx &lt;- quantile(
+  expr_raw,
+  c(0, 0.25, 0.5, 0.75, 0.99, 1),
+  na.rm = TRUE
+)
+qx
+
+log2_needed &lt;- (qx[5] &gt; 100) ||
+  ((qx[6] - qx[1] &gt; 50) &amp;&amp; qx[2] &gt; 0)
+
+expr_work &lt;- expr_raw
+if (log2_needed) {
+  expr_work[expr_work &lt;= 0] &lt;- NA_real_
+  expr_work &lt;- log2(expr_work)
+}</code></pre>
+        <div class="warning-box rounded p-3">
+          <strong>자동 판단식은 보조 기준입니다.</strong> 최종 결정은 GSE의 Data processing, 값의 범위, boxplot과 density plot을 함께 보고 내립니다. 이미 log2인 값을 다시 변환하면 발현차이와 분포가 왜곡됩니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. 결측값과 비정상 값</h2>
+        <pre class="code-block"><code>sum(is.na(expr_work))
+sum(is.infinite(expr_work))
+
+missing_by_sample &lt;- colSums(is.na(expr_work))
+missing_by_probe &lt;- rowSums(is.na(expr_work))
+
+# 사용할 값이 하나도 없는 probe 제거
+keep_nonempty &lt;- rowSums(!is.na(expr_work)) &gt; 0
+expr_work &lt;- expr_work[
+  keep_nonempty,
+  ,
+  drop = FALSE
+]</code></pre>
+        <p>결측값이 일부 있다는 이유로 모든 probe 또는 sample을 자동 제거하지 않습니다. 특정 sample에 결측이 집중되는지, 플랫폼의 detection filtering 때문인지 확인합니다.</p>
+        <div class="tip-box rounded p-3"><strong>QC용 complete matrix와 DEG용 matrix를 구분합니다.</strong> PCA처럼 결측값을 허용하지 않는 분석에는 complete probe만 임시로 사용하고, DEG 입력에서 어떤 probe를 제거할지는 별도로 기록합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. Boxplot과 density plot</h2>
+        <pre class="code-block"><code>boxplot(
+  expr_work,
+  outline = FALSE,
+  las = 2,
+  ylab = "Expression value",
+  main = "Sample expression distributions"
+)
+
+limma::plotDensities(
+  expr_work,
+  group = analysis_meta$group,
+  legend = "topright",
+  main = "Expression density"
+)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>확인할 현상</th><th>가능한 의미</th><th>다음 확인</th></tr></thead>
+            <tbody>
+              <tr><td>중앙값과 분포가 유사함</td><td>sample 간 global distribution이 비교적 일관됨</td><td>correlation과 PCA 확인</td></tr>
+              <tr><td>특정 sample만 다른 분포</td><td>품질 저하, 처리 차이 또는 생물학적 차이</td><td>GSM protocol, batch, 원 논문과 QC 확인</td></tr>
+              <tr><td>그룹 전체가 다른 분포</td><td>강한 생물학적 신호 또는 그룹과 batch의 혼재</td><td>실험 설계와 processing 확인</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3"><strong>그림만 보고 sample을 삭제하지 않습니다.</strong> 이상치 제거에는 사전에 정한 객관적인 QC 근거와 metadata 확인이 필요하며, 제거 전·후 결과의 민감도도 비교해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. 샘플 correlation heatmap</h2>
+        <pre class="code-block"><code>complete_probe &lt;- rowSums(is.na(expr_work)) == 0
+expr_complete &lt;- expr_work[
+  complete_probe,
+  ,
+  drop = FALSE
+]
+
+sample_cor &lt;- cor(
+  expr_complete,
+  method = "pearson"
+)
+
+pheatmap::pheatmap(
+  sample_cor,
+  annotation_col = data.frame(
+    group = analysis_meta$group,
+    row.names = analysis_meta$GSM
+  ),
+  main = "Sample correlation"
+)</code></pre>
+        <p class="mb-0">상관성이 낮은 sample, 예상하지 못한 cluster, Disease와 Control보다 다른 변수가 더 강하게 sample을 나누는지 확인합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. PCA로 주요 변동 확인</h2>
+        <pre class="code-block"><code>probe_variance &lt;- apply(
+  expr_complete,
+  1,
+  var
+)
+probe_variance &lt;- sort(
+  probe_variance,
+  decreasing = TRUE
+)
+
+top_n &lt;- min(5000, length(probe_variance))
+top_probe_ids &lt;- names(probe_variance)[
+  seq_len(top_n)
+]
+
+pca &lt;- prcomp(
+  t(expr_complete[top_probe_ids, ]),
+  center = TRUE,
+  scale. = FALSE
+)</code></pre>
+        <p>PCA는 가장 큰 발현 변동을 요약합니다. Disease와 Control 분리는 분석의 성공 여부를 직접 증명하지 않으며, 분리되지 않는다고 DEG가 존재하지 않는 것도 아닙니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>PCA에서 보이는 패턴</th><th>확인사항</th></tr></thead>
+            <tbody>
+              <tr><td>그룹별 분리</td><td>질환 효과인지 batch·조직·성별 차이인지 metadata와 대조</td></tr>
+              <tr><td>한 sample이 멀리 떨어짐</td><td>품질, protocol, 진단, 시점과 입력 오류 확인</td></tr>
+              <tr><td>batch별 분리</td><td>batch가 그룹과 독립적인지, design에 포함 가능한지 확인</td></tr>
+              <tr><td>연속적인 분포</td><td>연령, severity 또는 cell composition 같은 연속형 요인 확인</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. 추가 정규화가 필요한가?</h2>
+        <pre class="code-block"><code># 기본값: processed Series Matrix에 재정규화하지 않음
+force_normalization &lt;- FALSE
+
+if (force_normalization) {
+  expr_work &lt;- limma::normalizeBetweenArrays(
+    expr_work,
+    method = "quantile"
+  )
+}</code></pre>
+        <div class="warning-box rounded p-3"><strong>분포가 조금 다르다는 이유만으로 quantile normalization을 적용하지 않습니다.</strong> 원 자료의 처리방법, platform 특성과 QC 결과를 확인한 뒤 결정하고, 적용했다면 분석방법에 명시합니다.</div>
+        <p class="mt-3 mb-0">서로 다른 platform의 Series Matrix를 단순히 합친 뒤 정규화하는 것은 권장되지 않습니다. probe 정의와 측정특성이 다르므로 gene-level 변환, 연구별 분석과 meta-analysis 등의 별도 전략이 필요합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">9. Batch effect는 어떻게 다루나?</h2>
+        <p>Batch effect는 실험 날짜, chip, 연구기관 또는 처리방법처럼 관심 조건 이외의 기술적 변동입니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>상황</th><th>권장 접근</th></tr></thead>
+            <tbody>
+              <tr><td>batch가 metadata에 있고 그룹과 겹치지 않음</td><td>limma design에 batch 공변량 포함</td></tr>
+              <tr><td>시각화에서 batch를 제거하고 싶음</td><td><code>removeBatchEffect()</code> 결과를 PCA·heatmap용으로 사용</td></tr>
+              <tr><td>batch와 Disease가 완전히 일치</td><td>두 효과를 통계적으로 분리하기 어려우므로 데이터셋 설계 재검토</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="code-block"><code># 시각화용 예시이며 원본 DEG 입력을 대체하지 않음
+expr_visual &lt;- limma::removeBatchEffect(
+  expr_work,
+  batch = analysis_meta$batch,
+  design = model.matrix(
+    ~ analysis_meta$group
+  )
+)</code></pre>
+        <div class="tip-box rounded p-3"><strong>DEG 분석에서는:</strong> 가능한 경우 발현값에서 batch를 먼저 제거하기보다 Step 08의 design matrix에 batch를 포함하여 모형 안에서 보정합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">10. Probe annotation 열 찾기</h2>
+        <pre class="code-block"><code>colnames(feature_info)
+
+symbol_candidates &lt;- c(
+  "Gene.symbol", "Gene.Symbol", "Gene Symbol",
+  "GENE_SYMBOL", "SYMBOL", "Symbol"
+)
+symbol_col &lt;- intersect(
+  symbol_candidates,
+  colnames(feature_info)
+)
+
+if (length(symbol_col) == 0) {
+  symbol_col &lt;- grep(
+    "gene.*symbol|symbol",
+    colnames(feature_info),
+    value = TRUE,
+    ignore.case = TRUE
+  )
+}
+
+symbol_col &lt;- symbol_col[1]</code></pre>
+        <p>플랫폼마다 gene symbol 열 이름이 다르므로 실제 열을 확인해야 합니다. 자동으로 선택된 열에 정말 gene symbol이 들어 있는지도 <code>head(feature_info[[symbol_col]])</code>로 확인합니다.</p>
+        <div class="warning-box rounded p-3"><strong><code>org.Hs.eg.db</code>가 모든 microarray probe를 직접 변환해 주지는 않습니다.</strong> GPL annotation 또는 GPL570의 경우 <code>hgu133plus2.db</code>처럼 해당 platform 전용 annotation package를 사용하는 방법을 검토합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">11. Probe와 gene의 관계</h2>
+        <p>Microarray에서는 하나의 gene을 여러 probe가 측정할 수 있고, 하나의 probe가 여러 gene에 연결되는 경우도 있습니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>상황</th><th>문제</th><th>처리 예</th></tr></thead>
+            <tbody>
+              <tr><td>symbol이 비어 있음</td><td>gene 수준 해석 불가</td><td>gene matrix에서 제외하되 probe DEG 결과는 보존</td></tr>
+              <tr><td><code>GENE1 /// GENE2</code></td><td>한 probe의 유전자 대응이 모호함</td><td>입문 분석에서는 제외하거나 별도 검토</td></tr>
+              <tr><td>한 gene에 여러 probe</td><td>gene이 결과표에 중복됨</td><td>평균, 중앙값 또는 최대 변이 probe 선택</td></tr>
+              <tr><td>probe 간 방향이 반대</td><td>isoform, 품질 또는 annotation 문제 가능</td><td>무조건 평균하지 말고 probe 위치와 결과 확인</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">12. 중복 probe 처리 방법</h2>
+        <h3 class="h5 mt-3">방법 A. 동일 gene probe의 평균</h3>
+        <pre class="code-block"><code>gene_matrix_mean &lt;- limma::avereps(
+  expr_mapped,
+  ID = probe_map_valid$gene_symbol
+)</code></pre>
+        <h3 class="h5 mt-4">방법 B. 가장 변이가 큰 probe 선택</h3>
+        <pre class="code-block"><code>mapped_variance &lt;- apply(
+  expr_mapped,
+  1,
+  var,
+  na.rm = TRUE
+)
+ord &lt;- order(
+  mapped_variance,
+  decreasing = TRUE
+)
+keep &lt;- !duplicated(
+  probe_map_valid$gene_symbol[ord]
+)
+
+gene_matrix_maxvar &lt;- expr_mapped[
+  ord[keep],
+  ,
+  drop = FALSE
+]</code></pre>
+        <div class="concept-box rounded p-3"><strong>권장 분리:</strong> Step 08의 limma DEG는 probe 수준 행렬로 수행하고 annotation을 붙이는 흐름을 기본으로 합니다. Gene-level 행렬은 heatmap, pathway score와 데이터 통합에 사용할 수 있습니다. Gene 수준에서 DEG를 수행한다면 병합 기준을 분석 전에 정하고 Methods에 기록해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">13. QC 결과와 전처리 객체 저장</h2>
+        <p>제공된 전체 스크립트는 다음 파일을 생성합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>파일</th><th>내용</th></tr></thead>
+            <tbody>
+              <tr><td><code>GSE54568_preprocessing_QC.pdf</code></td><td>boxplot, density, correlation, PCA, probe variance와 결측값</td></tr>
+              <tr><td><code>expression_probe_processed.rds</code></td><td>Step 08 probe-level DEG에 사용할 행렬</td></tr>
+              <tr><td><code>gene_matrix_mean.rds</code></td><td>중복 probe를 평균한 gene matrix</td></tr>
+              <tr><td><code>gene_matrix_maxvar.rds</code></td><td>gene별 최대 변이 probe를 선택한 matrix</td></tr>
+              <tr><td><code>sample_qc_summary.csv</code></td><td>sample별 결측값, 중앙값과 IQR</td></tr>
+              <tr><td><code>probe_to_gene_valid.csv</code></td><td>분석에 사용 가능한 probe–gene 연결표</td></tr>
+              <tr><td><code>preprocessing_record.txt</code></td><td>log2, normalization과 probe 수 기록</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <a class="btn btn-outline-primary mt-2" href="scripts/07_preprocessing.R" download>전체 R script 다운로드</a>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">종합 실습</h2>
+        <ol class="step-list">
+          <li>발현값의 최소값, 중앙값, 99% 분위수와 최대값을 기록합니다.</li>
+          <li>GSE Data processing 설명과 수치분포를 이용해 log2 여부를 판단합니다.</li>
+          <li>sample별 결측값 수를 계산하고 특정 sample에 집중되는지 확인합니다.</li>
+          <li>boxplot과 density plot에서 분포가 다른 sample을 기록합니다.</li>
+          <li>correlation heatmap과 PCA에서 이상치·그룹·batch 패턴을 설명합니다.</li>
+          <li>추가 normalization이 필요한지 판단하고 근거를 작성합니다.</li>
+          <li>feature annotation에서 gene symbol 열을 찾습니다.</li>
+          <li>미매핑·다중매핑·중복 gene symbol probe 수를 계산합니다.</li>
+          <li>평균 방법과 최대 변이 probe 방법으로 만든 gene matrix의 gene 수를 비교합니다.</li>
+        </ol>
+        <h3 class="h5 mt-4">제출용 판단표</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tbody>
+              <tr><th class="table-light" style="width:37%">log2 적용 여부와 근거</th><td></td></tr>
+              <tr><th class="table-light">추가 normalization 여부와 근거</th><td></td></tr>
+              <tr><th class="table-light">결측값이 많은 sample</th><td></td></tr>
+              <tr><th class="table-light">Boxplot·density 특이사항</th><td></td></tr>
+              <tr><th class="table-light">Correlation 특이사항</th><td></td></tr>
+              <tr><th class="table-light">PCA 특이사항</th><td></td></tr>
+              <tr><th class="table-light">Batch 가능성</th><td></td></tr>
+              <tr><th class="table-light">사용한 gene symbol 열</th><td></td></tr>
+              <tr><th class="table-light">유효 probe / unique gene 수</th><td></td></tr>
+              <tr><th class="table-light">선택한 중복 probe 처리법</th><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="06_geo_download.html">← Step 06</a>
+      <a class="btn btn-primary" href="08_limma_deg.html">Step 08 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
