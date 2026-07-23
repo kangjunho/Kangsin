@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 06. GEOquery로 데이터와 임상정보 가져오기</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 06</span>
+      <h1 class="display-5 fw-bold">GEOquery로 데이터와 임상정보 가져오기</h1>
+      <p class="lead mb-0">GSE의 발현행렬, sample metadata와 probe annotation을 분리하고 분석용 그룹 정보를 만듭니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">이번 단계의 결과물</h2>
+        <p>Step 05에서는 GEO2R 코드를 재현했습니다. 이번 단계에서는 GEO 자료를 R 객체로 가져온 뒤, 다음 세 종류의 정보를 서로 연결하여 저장합니다.</p>
+        <div class="flow-row my-3">
+          <span class="flow-item">발현행렬</span><span class="flow-arrow">+</span>
+          <span class="flow-item">샘플·임상정보</span><span class="flow-arrow">+</span>
+          <span class="flow-item">probe annotation</span>
+        </div>
+        <ul class="mb-0">
+          <li><code>expression_matrix.csv</code>: probe × sample 발현값</li>
+          <li><code>sample_metadata_full.csv</code>: GEO가 제공한 전체 sample metadata</li>
+          <li><code>sample_metadata_analysis.csv</code>: 분석에 사용할 GSM과 그룹 정보</li>
+          <li><code>characteristics_long.csv</code>: characteristics를 항목·값으로 분리한 표</li>
+          <li><code>feature_annotation.csv</code>: probe annotation</li>
+          <li><code>expression_set.rds</code>: 원래 ExpressionSet 객체</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. GSE 다운로드</h2>
+        <pre class="code-block"><code>library(GEOquery)
+library(Biobase)
+
+options(timeout = 600)
+options(download.file.method = "libcurl")
+
+gse_id &lt;- "GSE54568"
+cache_dir &lt;- "C:/GEO_cache"
+dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+
+gset_list &lt;- getGEO(
+  gse_id,
+  GSEMatrix = TRUE,
+  AnnotGPL = TRUE,
+  destdir = cache_dir
+)</code></pre>
+        <p><code>getGEO()</code>의 결과가 바로 하나의 발현행렬이 아니라 <strong>ExpressionSet을 담은 list</strong>인 이유는 하나의 GSE에 여러 GPL이 포함될 수 있기 때문입니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>인수</th><th>의미</th></tr></thead>
+            <tbody>
+              <tr><td><code>GSEMatrix = TRUE</code></td><td>Series Matrix를 ExpressionSet 형태로 불러옵니다.</td></tr>
+              <tr><td><code>AnnotGPL = TRUE</code></td><td>가능한 경우 NCBI가 생성한 GPL annotation을 feature 정보에 추가합니다.</td></tr>
+              <tr><td><code>destdir</code></td><td>다운로드 파일을 저장할 cache 폴더입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip-box rounded p-3"><strong>Step 05의 다운로드 오류가 다시 발생한다면:</strong> 먼저 <code>C:/GEO_cache</code> 폴더와 네트워크를 확인하고, Series Matrix를 수동 다운로드하는 방법을 사용합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. 여러 GPL 중 분석대상 선택</h2>
+        <pre class="code-block"><code>length(gset_list)
+names(gset_list)
+
+data.frame(
+  object = names(gset_list),
+  platform = vapply(gset_list, annotation, character(1)),
+  probes = vapply(gset_list, nrow, integer(1)),
+  samples = vapply(gset_list, ncol, integer(1))
+)</code></pre>
+        <p>분석하려는 GPL이 <code>GPL570</code>이라면 이름이나 <code>annotation()</code> 결과를 이용해 명시적으로 선택합니다.</p>
+        <pre class="code-block"><code>target_gpl &lt;- "GPL570"
+gpl_ids &lt;- vapply(gset_list, annotation, character(1))
+idx &lt;- which(gpl_ids == target_gpl)
+
+if (length(idx) != 1) {
+  stop("분석할 GPL을 하나만 선택하지 못했습니다.")
+}
+
+eset &lt;- gset_list[[idx]]
+annotation(eset)
+dim(eset)</code></pre>
+        <div class="warning-box rounded p-3"><strong><code>gset_list[[1]]</code>을 무조건 사용하지 않습니다.</strong> list의 첫 번째 객체가 원하는 GPL이라는 보장이 없습니다. GSE 웹페이지에서 확인한 platform ID, sample 수와 R 객체가 일치하는지 확인하세요.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. ExpressionSet 이해하기</h2>
+        <p><strong>ExpressionSet</strong>은 발현값과 sample·feature 정보를 연결해서 보관하는 Bioconductor의 객체입니다.</p>
+        <pre class="code-block"><code>expr_matrix  &lt;- exprs(eset)
+sample_info  &lt;- pData(eset)
+feature_info &lt;- fData(eset)
+
+dim(expr_matrix)
+dim(sample_info)
+dim(feature_info)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>함수</th><th>행</th><th>열</th><th>내용</th></tr></thead>
+            <tbody>
+              <tr><td><code>exprs(eset)</code></td><td>probe</td><td>GSM sample</td><td>processed expression value</td></tr>
+              <tr><td><code>pData(eset)</code></td><td>GSM sample</td><td>metadata 항목</td><td>title, source, characteristics, platform 등</td></tr>
+              <tr><td><code>fData(eset)</code></td><td>probe</td><td>annotation 항목</td><td>probe ID, gene symbol, gene title 등</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="concept-box rounded p-3"><strong>연결 기준:</strong> <code>colnames(expr_matrix)</code>와 <code>rownames(sample_info)</code>는 GSM accession으로 연결되고, <code>rownames(expr_matrix)</code>와 <code>rownames(feature_info)</code>는 probe ID로 연결됩니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. 가장 먼저 수행할 일치성 검사</h2>
+        <pre class="code-block"><code>identical(
+  colnames(expr_matrix),
+  rownames(sample_info)
+)
+
+identical(
+  rownames(expr_matrix),
+  rownames(feature_info)
+)
+
+stopifnot(
+  identical(colnames(expr_matrix), rownames(sample_info)),
+  identical(rownames(expr_matrix), rownames(feature_info))
+)</code></pre>
+        <p>두 객체에 같은 GSM이 있어도 순서가 다르면 그룹정보가 잘못 연결될 수 있습니다. 순서가 다른 경우 metadata를 발현행렬 순서에 맞추어 재배열합니다.</p>
+        <pre class="code-block"><code>sample_info &lt;- sample_info[
+  match(colnames(expr_matrix), rownames(sample_info)),
+  ,
+  drop = FALSE
+]
+
+stopifnot(
+  identical(colnames(expr_matrix), rownames(sample_info))
+)</code></pre>
+        <div class="warning-box rounded p-3"><strong>단순히 <code>sort()</code>하지 마세요.</strong> 발현행렬과 metadata를 각각 정렬하면 우연히 맞을 수도 있지만, 일부 샘플이 누락된 경우 잘못 연결될 수 있습니다. 기준 객체의 ID에 <code>match()</code>하는 방법이 안전합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. sample metadata 탐색</h2>
+        <pre class="code-block"><code>dim(sample_info)
+colnames(sample_info)
+
+core_cols &lt;- intersect(
+  c(
+    "geo_accession", "title", "source_name_ch1",
+    "organism_ch1", "characteristics_ch1",
+    "platform_id"
+  ),
+  colnames(sample_info)
+)
+
+head(sample_info[, core_cols, drop = FALSE])
+
+grep(
+  "characteristics",
+  colnames(sample_info),
+  value = TRUE,
+  ignore.case = TRUE
+)</code></pre>
+        <p>GEO의 metadata 열은 데이터셋마다 다릅니다. 어떤 연구에는 <code>disease</code>, <code>age</code>, <code>sex</code>가 별도 열로 분리되어 있지만, 다른 연구에서는 여러 <code>characteristics_ch1</code> 열 안에 문자열로 저장됩니다.</p>
+        <div class="tip-box rounded p-3"><strong>그룹을 자동 추측하기 전에:</strong> GSE의 Overall design, GSM의 characteristics와 원 논문의 Methods를 대조하여 어떤 값이 Disease와 Control을 의미하는지 먼저 결정합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. characteristics를 임상정보 표로 분리하기</h2>
+        <p>예를 들어 metadata에 다음과 같은 문자열이 저장될 수 있습니다.</p>
+        <pre class="code-block"><code>subject id: 101
+disease: MDD
+age: 45
+gender: female
+tissue: brain</code></pre>
+        <p>먼저 모든 characteristics 열을 <strong>GSM–항목–값</strong>의 긴 형식으로 변환합니다.</p>
+        <pre class="code-block"><code>char_cols &lt;- grep(
+  "^characteristics_ch1",
+  colnames(sample_info),
+  value = TRUE
+)
+
+char_long &lt;- do.call(
+  rbind,
+  lapply(seq_len(nrow(sample_info)), function(i) {
+    values &lt;- unlist(
+      sample_info[i, char_cols, drop = FALSE],
+      use.names = FALSE
+    )
+    values &lt;- trimws(as.character(values))
+    values &lt;- values[!is.na(values) &amp; nzchar(values)]
+
+    data.frame(
+      GSM = rownames(sample_info)[i],
+      field = trimws(sub(":.*$", "", values)),
+      value = trimws(sub("^[^:]*:[[:space:]]*", "", values)),
+      raw = values,
+      stringsAsFactors = FALSE
+    )
+  })
+)
+
+head(char_long)
+sort(unique(char_long$field))</code></pre>
+        <div class="warning-box rounded p-3"><strong>콜론이 없는 값도 확인하세요.</strong> 모든 characteristics가 반드시 <code>항목: 값</code> 형식은 아닙니다. <code>raw</code> 열을 보존하여 분리 결과가 원문과 일치하는지 확인합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. 분석용 Disease·Control 그룹 만들기</h2>
+        <p>GSE54568 예시에서는 title에 MDD와 Control 정보가 들어 있으므로 다음과 같이 후보 그룹을 만들 수 있습니다.</p>
+        <pre class="code-block"><code>analysis_meta &lt;- data.frame(
+  GSM = rownames(sample_info),
+  title = sample_info$title,
+  source = sample_info$source_name_ch1,
+  stringsAsFactors = FALSE
+)
+
+analysis_meta$group &lt;- NA_character_
+analysis_meta$group[
+  grepl("MDD", analysis_meta$title, ignore.case = TRUE)
+] &lt;- "Disease"
+analysis_meta$group[
+  grepl("control", analysis_meta$title, ignore.case = TRUE)
+] &lt;- "Control"
+
+table(analysis_meta$group, useNA = "ifany")
+analysis_meta[, c("GSM", "title", "group")]</code></pre>
+        <div class="warning-box rounded p-3"><strong>이 코드는 GSE54568에 맞춘 예시입니다.</strong> 다른 데이터셋에 그대로 적용하지 말고 실제 metadata 값에 맞게 검색어와 조건을 수정하세요. <code>grepl()</code> 결과를 GSM별로 눈으로 확인한 후 그룹을 확정합니다.</div>
+        <p class="mt-3">그룹 순서를 명확히 지정하면 이후 design matrix에서 기준을 일관되게 관리할 수 있습니다.</p>
+        <pre class="code-block"><code>analysis_meta$group &lt;- factor(
+  analysis_meta$group,
+  levels = c("Control", "Disease")
+)
+
+stopifnot(!anyNA(analysis_meta$group))
+table(analysis_meta$group)</code></pre>
+        <p class="mb-0">factor의 첫 level을 Control로 둔 것은 metadata 관리 방식입니다. limma에서 최종 logFC 방향은 다음 단계에서 작성할 <code>Disease-Control</code> contrast가 결정합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. 반복측정과 동일 환자 확인</h2>
+        <p>GSM 수와 환자 수는 같지 않을 수 있습니다. characteristics에 subject ID가 있다면 같은 대상자가 여러 시점에 반복되는지 확인합니다.</p>
+        <pre class="code-block"><code>subject_rows &lt;- char_long[
+  tolower(char_long$field) %in% c(
+    "subject id", "subject_id", "patient id", "patient_id"
+  ),
+  c("GSM", "value")
+]
+colnames(subject_rows)[2] &lt;- "subject_id"
+
+table(subject_rows$subject_id)
+subject_rows[duplicated(subject_rows$subject_id) |
+               duplicated(subject_rows$subject_id, fromLast = TRUE), ]</code></pre>
+        <div class="concept-box rounded p-3"><strong>반복측정이 발견되면:</strong> 독립 2그룹 분석보다 patient blocking 또는 paired design이 필요할 수 있습니다. 동일 subject의 치료 전·후 샘플을 서로 독립된 환자로 분석하면 분산과 P-value가 잘못 계산될 수 있습니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">9. 원본과 분석용 파일 저장</h2>
+        <pre class="code-block"><code>output_dir &lt;- "data_processed"
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+# R 객체 구조를 그대로 보존
+saveRDS(
+  eset,
+  file.path(output_dir, "expression_set.rds")
+)
+
+# Excel에서 한글이 깨지지 않도록 UTF-8-BOM CSV 저장
+expression_export &lt;- data.frame(
+  PROBE_ID = rownames(expr_matrix),
+  expr_matrix,
+  check.names = FALSE
+)
+write.csv(
+  expression_export,
+  file.path(output_dir, "expression_matrix.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)
+write.csv(
+  cbind(GSM = rownames(sample_info), sample_info),
+  file.path(output_dir, "sample_metadata_full.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)
+write.csv(
+  analysis_meta,
+  file.path(output_dir, "sample_metadata_analysis.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)
+write.csv(
+  char_long,
+  file.path(output_dir, "characteristics_long.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)
+write.csv(
+  cbind(PROBE_ID = rownames(feature_info), feature_info),
+  file.path(output_dir, "feature_annotation.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>형식</th><th>장점</th><th>용도</th></tr></thead>
+            <tbody>
+              <tr><td>RDS</td><td>ExpressionSet의 class와 내부 구조를 그대로 보존</td><td>다음 R 분석에서 <code>readRDS()</code>로 재사용</td></tr>
+              <tr><td>CSV</td><td>Excel과 다른 프로그램에서 쉽게 확인</td><td>검토·공유·수동 수정</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip-box rounded p-3"><strong>원본 metadata를 덮어쓰지 않습니다.</strong> 전체 metadata와 분석용으로 정리한 metadata를 별도 파일로 저장하면 그룹 결정 과정을 추적할 수 있습니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">10. 저장 후 다시 불러와 검증하기</h2>
+        <pre class="code-block"><code>eset_check &lt;- readRDS(
+  "data_processed/expression_set.rds"
+)
+
+meta_check &lt;- read.csv(
+  "data_processed/sample_metadata_analysis.csv",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+
+stopifnot(
+  identical(
+    sampleNames(eset_check),
+    meta_check$GSM
+  )
+)
+
+table(meta_check$group)
+sessionInfo()</code></pre>
+        <p class="mb-0">파일이 생성되었다는 사실만 확인하지 말고 다시 불러온 뒤 GSM 순서와 그룹 수가 동일한지 검증합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">종합 실습: 나의 데이터셋을 분석용 객체로 만들기</h2>
+        <ol class="step-list">
+          <li>본인이 선택한 GSE를 <code>getGEO()</code>로 내려받습니다.</li>
+          <li>포함된 GPL별 probe 수와 sample 수를 표로 정리하고 분석할 GPL을 선택합니다.</li>
+          <li><code>exprs()</code>, <code>pData()</code>, <code>fData()</code>의 차원을 기록합니다.</li>
+          <li>발현행렬–metadata와 발현행렬–annotation의 ID 및 순서가 일치하는지 검사합니다.</li>
+          <li>characteristics를 긴 형식으로 분리하고 이용 가능한 임상정보 항목을 나열합니다.</li>
+          <li>Control과 Disease를 구분하는 조건을 R 코드로 작성합니다.</li>
+          <li>각 그룹의 sample 수와 NA 그룹이 없는지 확인합니다.</li>
+          <li>동일 subject가 여러 GSM에 반복되는지 확인합니다.</li>
+          <li>ExpressionSet, 발현행렬, 전체 metadata와 분석용 metadata를 각각 저장합니다.</li>
+        </ol>
+        <h3 class="h5 mt-4">제출용 점검표</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tbody>
+              <tr><th class="table-light" style="width:36%">GSE / 선택한 GPL</th><td></td></tr>
+              <tr><th class="table-light">probe × sample</th><td></td></tr>
+              <tr><th class="table-light">metadata에서 확인한 임상정보</th><td></td></tr>
+              <tr><th class="table-light">Control 정의 / n</th><td></td></tr>
+              <tr><th class="table-light">Disease 정의 / n</th><td></td></tr>
+              <tr><th class="table-light">NA 또는 제외 sample</th><td></td></tr>
+              <tr><th class="table-light">반복측정 여부</th><td></td></tr>
+              <tr><th class="table-light">ID·순서 일치 여부</th><td></td></tr>
+              <tr><th class="table-light">생성한 파일</th><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <a class="btn btn-outline-primary mt-2" href="scripts/06_geo_download.R" download>전체 R script 다운로드</a>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="05_geo2r_script.html">← Step 05</a>
+      <a class="btn btn-primary" href="07_preprocessing.html">Step 07 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
