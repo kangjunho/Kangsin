@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEO Microarray 실습 | Kang's Bioinformatics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <style>
+    body { background:#f7f9fc; }
+    .course-hero { background:linear-gradient(135deg,#0d6efd,#164e9b); color:#fff; }
+    .course-hero h1 { color:#fff; }
+    .course-card { border:0; border-radius:14px; box-shadow:0 6px 18px rgba(26,54,93,.08); transition:.2s ease; }
+    .course-card:hover { transform:translateY(-4px); box-shadow:0 10px 24px rgba(26,54,93,.14); }
+    .step-number { width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; background:#e8f1ff; color:#0d6efd; font-weight:800; }
+    .badge-level { background:#e9f7ef; color:#18794e; }
+    .course-card .btn.disabled { pointer-events:none; opacity:.6; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container">
+      <a class="navbar-brand" href="../../index.html">
+        <img src="../../assets/images/logo.png" alt="Logo" style="width:80px" class="d-inline-block align-text-top">
+        Kang's Bioinformatics
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="메뉴 열기">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link active" href="../../e-learning.html">E-learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="course-hero py-5">
+    <div class="container text-center py-3">
+      <span class="badge rounded-pill bg-light text-primary mb-3">Public Data Analysis</span>
+      <h1 class="display-5 fw-bold mb-3">GEO Microarray Analysis</h1>
+      <p class="lead mb-3">Windows 환경 설정부터 GEO 공개데이터의 DEG 및 기능분석까지 진행하는 입문 실습입니다.</p>
+      <span class="badge badge-level px-3 py-2">초급 · R 기반 · 단계별 실습</span>
+    </div>
+  </header>
+
+  <main class="container py-5">
+    <section class="mb-5">
+      <h2 class="h3 mb-3">교육 목표</h2>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <p class="mb-2">GEO에서 연구 목적에 맞는 microarray 데이터를 찾고, R을 이용해 재현 가능한 분석을 수행합니다.</p>
+          <p class="mb-0">하나의 예제 데이터셋을 이용하여 다운로드, 임상정보 정리, QC, DEG, 시각화 및 기능분석을 순서대로 연결합니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="d-flex justify-content-between align-items-end mb-3">
+        <div>
+          <h2 class="h3 mb-1">실습 과정</h2>
+          <p class="text-muted mb-0">Step 00부터 순서대로 진행하세요.</p>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">00</span>
+              <h3 class="h5">R과 RStudio 설치</h3>
+              <p class="text-muted">Windows에서 R, RStudio 및 실습 패키지를 설치하고 환경을 점검합니다.</p>
+              <a href="00_installation.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">01</span>
+              <h3 class="h5">R 기초와 작업환경</h3>
+              <p class="text-muted">RStudio 화면, 프로젝트, 작업 폴더, 패키지와 데이터프레임을 익힙니다.</p>
+              <a href="01_r_basics.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">02</span>
+              <h3 class="h5">GEO 데이터 검색</h3>
+              <p class="text-muted">GEO의 GSE, GSM, GPL 구조를 이해하고 적절한 데이터셋을 선택합니다.</p>
+              <a href="02_geo_search.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">03</span>
+              <h3 class="h5">데이터셋 선정</h3>
+              <p class="text-muted">GSE record와 metadata를 읽고 분석 가능한 비교를 정의합니다.</p>
+              <a href="03_dataset_selection.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">04</span>
+              <h3 class="h5">GEO2R 빠른 분석</h3>
+              <p class="text-muted">웹에서 그룹을 정의하고 DEG 결과와 분석 방향을 확인합니다.</p>
+              <a href="04_geo2r.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">05</span>
+              <h3 class="h5">GEO2R R script</h3>
+              <p class="text-muted">웹 결과의 R 코드를 확인하고 재현 가능한 분석으로 연결합니다.</p>
+              <a href="05_geo2r_script.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">06</span>
+              <h3 class="h5">GEOquery 다운로드</h3>
+              <p class="text-muted">발현행렬, sample metadata와 probe annotation을 R로 가져옵니다.</p>
+              <a href="06_geo_download.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">07</span>
+              <h3 class="h5">전처리와 QC</h3>
+              <p class="text-muted">분포, PCA, 상관성과 probe annotation을 점검합니다.</p>
+              <a href="07_preprocessing.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+          <div class="card course-card h-100">
+            <div class="card-body p-4">
+              <span class="step-number mb-3">08</span>
+              <h3 class="h5">limma DEG</h3>
+              <p class="text-muted">Design과 contrast를 구성하고 차등발현 유전자를 선별합니다.</p>
+              <a href="08_limma_deg.html" class="btn btn-primary">실습 시작</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">09</span><h3 class="h5">결과 시각화</h3><p class="text-muted">PCA, volcano, heatmap과 결과표를 작성하고 저장합니다.</p><a href="09_visualization.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">10</span><h3 class="h5">DAVID GO·Pathway</h3><p class="text-muted">Up·Down DEG에서 과대표현된 기능과 경로를 탐색합니다.</p><a href="10_david.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">11</span><h3 class="h5">STRING network</h3><p class="text-muted">단백질 연관 network와 PPI enrichment를 해석합니다.</p><a href="11_string.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">12</span><h3 class="h5">GSEA·MSigDB</h3><p class="text-muted">전체 유전자 순위에서 일관된 pathway 변화를 찾습니다.</p><a href="12_gsea.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">13</span><h3 class="h5">결과 통합과 보고</h3><p class="text-muted">분석 결과, 한계, 버전과 재현성 정보를 정리합니다.</p><a href="13_reporting.html" class="btn btn-primary">실습 시작</a></div></div></div>
+      </div>
+    </section>
+
+    <div class="text-center mt-5">
+      <a href="../../e-learning.html" class="btn btn-outline-secondary">← E-learning으로 돌아가기</a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

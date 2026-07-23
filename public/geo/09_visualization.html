@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 09. 시각화</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="assets/css/geo-course.css"></head><body><nav class="navbar navbar-light bg-light border-bottom sticky-top"><div class="container"><a class="navbar-brand" href="index.html">GEO Microarray Analysis</a><a href="index.html">과정 목차</a></div></nav><header class="lesson-hero py-5"><div class="container" style="max-width:1000px"><span class="badge bg-light text-primary mb-3">Step 09</span><h1 class="display-5 fw-bold">PCA, Volcano와 Heatmap</h1><p class="lead">분석 품질과 차등발현 결과를 이해하기 쉬운 그림과 표로 저장합니다.</p></div></header><main class="container py-5" style="max-width:1000px"><section class="card content-card mb-4"><div class="card-body p-4"><h2>PCA</h2><pre class="code-block"><code>pca &lt;- prcomp(t(gene_matrix), scale. = FALSE)
+pca_df &lt;- data.frame(
+  PC1 = pca$x[, 1], PC2 = pca$x[, 2],
+  group = group
+)
+
+ggplot2::ggplot(pca_df, ggplot2::aes(PC1, PC2, color = group)) +
+  ggplot2::geom_point(size = 3) +
+  ggplot2::theme_classic()</code></pre><p>PCA 분리는 생물학적 그룹뿐 아니라 batch, 조직과 outlier에 의해 생길 수 있습니다.</p></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>Volcano plot</h2><pre class="code-block"><code>deg_result$gene &lt;- rownames(deg_result)
+
+p_volcano &lt;- ggplot2::ggplot(
+  deg_result,
+  ggplot2::aes(logFC, -log10(adj.P.Val), color = status)
+) +
+  ggplot2::geom_point(alpha = 0.65) +
+  ggplot2::scale_color_manual(values = c(
+    Down = "#2166AC", `Not significant` = "grey75", Up = "#B2182B"
+  )) + ggplot2::theme_classic()</code></pre></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>Top DEG heatmap</h2><pre class="code-block"><code>top_genes &lt;- head(rownames(deg_result), 50)
+heatmap_matrix &lt;- gene_matrix[top_genes, , drop = FALSE]
+
+pheatmap::pheatmap(
+  heatmap_matrix,
+  scale = "row",
+  annotation_col = data.frame(Group = group)
+)</code></pre><div class="tip-box rounded p-3">Heatmap의 row scaling은 유전자별 상대 발현 패턴을 보여주며 유전자 간 절대 발현량 비교에는 사용하지 않습니다.</div></div></section><section class="card content-card mb-5"><div class="card-body p-4"><h2>결과 저장</h2><pre class="code-block"><code>ggplot2::ggsave("figures/volcano.pdf", p_volcano,
+                width = 7, height = 6)
+
+# Windows Excel에서 한글이 깨지지 않는 CSV
+write.csv(
+  deg_result,
+  file = "results/DEG_Disease_vs_Control.csv",
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)</code></pre><a class="btn btn-outline-primary" href="scripts/09_visualization.R" download>전체 R script 다운로드</a></div></section><div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="08_limma_deg.html">← Step 08</a><a class="btn btn-primary" href="10_david.html">Step 10 →</a></div></main></body></html>

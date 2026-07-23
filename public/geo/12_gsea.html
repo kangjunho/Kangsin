@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 12. GSEA</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="assets/css/geo-course.css"></head><body><nav class="navbar navbar-light bg-light border-bottom sticky-top"><div class="container"><a class="navbar-brand" href="index.html">GEO Microarray Analysis</a><a href="index.html">과정 목차</a></div></nav><header class="lesson-hero py-5"><div class="container" style="max-width:1000px"><span class="badge bg-light text-primary mb-3">Step 12</span><h1 class="display-5 fw-bold">GSEA와 MSigDB</h1><p class="lead">유의한 DEG만 자르지 않고 전체 유전자 순위에서 일관된 pathway 변화를 찾습니다.</p></div></header><main class="container py-5" style="max-width:1000px"><section class="card content-card mb-4"><div class="card-body p-4"><h2>ORA와 GSEA 차이</h2><div class="table-responsive"><table class="table table-bordered compare-table"><thead><tr><th></th><th>DAVID ORA</th><th>GSEA</th></tr></thead><tbody><tr><td>입력</td><td>cutoff를 통과한 DEG</td><td>전체 유전자 순위</td></tr><tr><td>질문</td><td>DEG에 특정 기능이 많은가?</td><td>경로 유전자가 순위 위·아래에 모이는가?</td></tr><tr><td>방향</td><td>Up/Down을 별도 분석</td><td>NES 부호로 해석</td></tr><tr><td>주요 값</td><td>Count, enrichment, FDR</td><td>NES, P-value, FDR</td></tr></tbody></table></div><a class="btn btn-primary external-link" href="https://www.gsea-msigdb.org/" target="_blank">GSEA·MSigDB 공식 사이트</a></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>유전자 순위 만들기</h2><pre class="code-block"><code># 권장 예: moderated t-statistic
+gene_rank &lt;- deg_result$t
+names(gene_rank) &lt;- deg_result$gene
+gene_rank &lt;- gene_rank[!is.na(gene_rank)]
+gene_rank &lt;- sort(gene_rank, decreasing = TRUE)</code></pre><div class="warning-box rounded p-3">중복 gene symbol은 하나의 대표값으로 정리해야 합니다. P-value만으로 순위를 만들면 방향성이 사라질 수 있습니다.</div></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>MSigDB collection</h2><ul><li><strong>Hallmark:</strong> 중복을 줄인 핵심 생물학적 프로그램</li><li><strong>GO Biological Process:</strong> 세부 기능과 과정</li><li><strong>Reactome/curated pathways:</strong> 정리된 신호·대사경로</li><li><strong>Human/Mouse:</strong> 종에 맞는 collection 선택</li></ul></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>R에서 실행 예시</h2><pre class="code-block"><code>library(msigdbr)
+library(fgsea)
+
+msig_h &lt;- msigdbr(
+  species = "Homo sapiens",
+  collection = "H"
+)
+pathways &lt;- split(msig_h$gene_symbol, msig_h$gs_name)
+
+gsea_result &lt;- fgsea(
+  pathways = pathways,
+  stats = gene_rank,
+  minSize = 15,
+  maxSize = 500
+)
+gsea_result &lt;- gsea_result[order(gsea_result$padj), ]
+
+# CSV 저장 전 list 열을 문자로 변환
+gsea_result$leadingEdge &lt;- vapply(
+  gsea_result$leadingEdge, paste, collapse = ";",
+  FUN.VALUE = character(1)
+)</code></pre><a class="btn btn-outline-primary" href="scripts/12_gsea.R" download>전체 R script 다운로드</a></div></section><section class="card content-card mb-5"><div class="card-body p-4"><h2>결과 해석</h2><ul><li><strong>NES &gt; 0:</strong> 순위 상단, 즉 Test 방향에 집중</li><li><strong>NES &lt; 0:</strong> 순위 하단, 즉 Control 방향에 집중</li><li><strong>FDR:</strong> 여러 gene set 검사에 대한 보정 결과</li><li><strong>Leading edge:</strong> enrichment signal에 크게 기여한 핵심 유전자</li></ul><div class="tip-box rounded p-3">경로 이름만 나열하지 말고 NES 방향, FDR와 leading-edge gene을 DEG·STRING 결과와 연결합니다.</div></div></section><div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="11_string.html">← Step 11</a><a class="btn btn-primary" href="13_reporting.html">Step 13 →</a></div></main></body></html>
