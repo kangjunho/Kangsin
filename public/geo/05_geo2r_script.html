@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 05. GEO2R R script와 DEG 분석도구</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 05</span>
+      <h1 class="display-5 fw-bold">GEO2R R script와 DEG 분석도구</h1>
+      <p class="lead mb-0">GEO2R 코드를 RStudio에서 재현하고, 자주 발생하는 오류를 해결하며 limma·DESeq2·edgeR의 차이를 이해합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">이번 단계의 목표</h2>
+        <ol class="step-list mb-0">
+          <li>GEO2R에서 생성한 R script의 각 구간이 무엇을 하는지 설명할 수 있습니다.</li>
+          <li><code>getGEO()</code> 다운로드 오류와 GPL·그룹·annotation 오류를 점검할 수 있습니다.</li>
+          <li>모든 probe의 DEG 결과를 저장하고 QC 그림을 다시 생성할 수 있습니다.</li>
+          <li>자료의 형태에 따라 limma, DESeq2와 edgeR 중 적절한 도구를 선택할 수 있습니다.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. GEO2R script의 전체 구조</h2>
+        <div class="figure-card">
+          <a href="assets/images/geo2r-r-script-detailed.png" target="_blank">
+            <img class="lesson-img" src="assets/images/geo2r-r-script-detailed.png" alt="GEO2R가 생성한 R script 화면">
+          </a>
+          <div class="img-caption">R script 탭에는 다운로드, 그룹 벡터, log2 판단, limma 모형과 시각화 코드가 순서대로 포함됩니다.</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th style="width:27%">코드 구간</th><th>역할</th></tr></thead>
+            <tbody>
+              <tr><td><code>getGEO()</code></td><td>GSE Series Matrix와 platform annotation을 내려받아 ExpressionSet 객체를 만듭니다.</td></tr>
+              <tr><td>GPL 선택</td><td>한 GSE에 여러 platform이 있으면 분석 대상 GPL을 선택합니다.</td></tr>
+              <tr><td><code>gsms</code>, <code>sml</code></td><td>각 GSM이 어느 그룹에 속하는지 문자 벡터로 기록합니다.</td></tr>
+              <tr><td>log2 transformation</td><td>발현값 분위수를 이용하여 log2 변환 필요성을 자동 판단합니다.</td></tr>
+              <tr><td>design matrix</td><td>각 샘플과 분석 그룹의 관계를 통계모형으로 표현합니다.</td></tr>
+              <tr><td><code>lmFit()</code></td><td>각 probe에 선형모형을 적합합니다.</td></tr>
+              <tr><td><code>makeContrasts()</code></td><td>Disease − Control과 같은 비교 방향을 정의합니다.</td></tr>
+              <tr><td><code>eBayes()</code></td><td>probe 간 정보를 빌려 분산을 안정화하고 moderated 통계량을 계산합니다.</td></tr>
+              <tr><td><code>topTable()</code></td><td>logFC, P-value, FDR과 annotation을 결과표로 반환합니다.</td></tr>
+              <tr><td>QC와 plots</td><td>P-value, volcano, MD, boxplot, density와 UMAP을 생성합니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <a class="btn btn-primary mt-2" href="scripts/05_geo2r_local.R" download>정리된 R script 다운로드</a>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. 패키지 설치는 한 번, 불러오기는 매번</h2>
+        <p>매 실행마다 <code>BiocManager::install()</code>을 수행할 필요는 없습니다. 설치 여부를 확인한 뒤 없는 패키지만 설치합니다.</p>
+        <pre class="code-block"><code>if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+
+bioc_pkgs &lt;- c("GEOquery", "limma", "Biobase")
+missing_bioc &lt;- bioc_pkgs[
+  !vapply(bioc_pkgs, requireNamespace, logical(1), quietly = TRUE)
+]
+if (length(missing_bioc) &gt; 0) {
+  BiocManager::install(missing_bioc, ask = FALSE, update = FALSE)
+}
+
+if (!requireNamespace("umap", quietly = TRUE)) {
+  install.packages("umap")
+}
+
+library(GEOquery)
+library(limma)
+library(Biobase)
+library(umap)</code></pre>
+        <div class="tip-box rounded p-3"><strong>버전 기록:</strong> GEO2R 화면과 내 컴퓨터의 패키지 버전이 다르면 결과가 미세하게 달라질 수 있습니다. 분석 종료 후 <code>sessionInfo()</code>를 저장하세요.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. Windows에서 getGEO() 다운로드 실패</h2>
+        <p>다음 오류는 DEG 분석 오류가 아니라 <strong>Series Matrix를 임시폴더로 내려받지 못한 다운로드 단계의 오류</strong>입니다.</p>
+        <pre class="code-block"><code>Failed to download
+C:\Users\USER\AppData\Local\Temp\Rtmp.../GSE54568_series_matrix.txt.gz</code></pre>
+        <p>일시적인 NCBI 접속 문제, 짧은 timeout, 기관 네트워크·프록시, 보안 프로그램, 임시폴더 권한 또는 불안정한 저장 경로가 원인일 수 있습니다. 오류문만으로 한 가지 원인을 확정할 수는 없습니다.</p>
+
+        <h3 class="h5 mt-4">권장 해결 순서</h3>
+        <ol class="step-list">
+          <li>웹브라우저에서 GEO와 NCBI에 접속되는지 확인하고 잠시 후 다시 시도합니다.</li>
+          <li>R과 RStudio를 재시작하고 다운로드 제한시간을 늘립니다.</li>
+          <li>임시폴더 대신 영문으로 된 짧은 로컬 cache 폴더를 지정합니다.</li>
+          <li>Windows 다운로드 방식을 <code>libcurl</code>로 명시합니다.</li>
+          <li>기관 네트워크라면 프록시·방화벽 정책을 관리자에게 확인합니다.</li>
+          <li>그래도 실패하면 Series Matrix를 브라우저로 내려받아 로컬 파일에서 불러옵니다.</li>
+        </ol>
+        <pre class="code-block"><code>options(timeout = 600)
+options(download.file.method = "libcurl")
+
+cache_dir &lt;- "C:/GEO_cache"
+dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+
+gset_list &lt;- getGEO(
+  "GSE54568",
+  GSEMatrix = TRUE,
+  AnnotGPL = TRUE,
+  destdir = cache_dir
+)</code></pre>
+        <div class="warning-box rounded p-3">
+          <strong>경로 주의:</strong> Windows R에서는 <code>C:/GEO_cache</code> 또는 <code>C:\\GEO_cache</code>를 사용합니다. 한글·공백·OneDrive 동기화 폴더는 반드시 실패하는 것은 아니지만, 문제를 줄이기 위해 실습 cache는 짧은 로컬 경로를 권장합니다.
+        </div>
+
+        <h3 class="h5 mt-4">수동 다운로드 후 불러오기</h3>
+        <p>GSE 페이지의 <strong>Series Matrix File(s)</strong>에서 <code>GSE54568_series_matrix.txt.gz</code>를 내려받아 <code>C:/GEO_cache</code>에 저장한 뒤 실행합니다.</p>
+        <pre class="code-block"><code>local_matrix &lt;- "C:/GEO_cache/GSE54568_series_matrix.txt.gz"
+stopifnot(file.exists(local_matrix))
+
+gset_list &lt;- getGEO(
+  filename = local_matrix,
+  GSEMatrix = TRUE,
+  AnnotGPL = FALSE
+)</code></pre>
+        <p class="mb-0"><code>AnnotGPL = FALSE</code>로 불러오면 NCBI가 생성한 annotation이 결과에 붙지 않을 수 있습니다. 분석 자체는 가능하지만 probe-to-gene annotation은 GPL 파일이나 플랫폼별 annotation package를 이용해 별도로 확인해야 합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. ExpressionSet과 GPL 선택 확인</h2>
+        <pre class="code-block"><code># 내려받은 ExpressionSet의 개수와 platform 이름 확인
+length(gset_list)
+names(gset_list)
+
+if (length(gset_list) &gt; 1) {
+  idx &lt;- grep("GPL570", names(gset_list), fixed = TRUE)
+  if (length(idx) != 1) {
+    stop("GPL570에 해당하는 ExpressionSet을 하나만 선택하지 못했습니다.")
+  }
+} else {
+  idx &lt;- 1
+}
+
+gset &lt;- gset_list[[idx]]
+
+annotation(gset)
+dim(exprs(gset))
+dim(pData(gset))
+head(sampleNames(gset))
+head(fvarLabels(gset))</code></pre>
+        <div class="warning-box rounded p-3"><strong>GPL을 자동으로 고르지 마세요.</strong> 여러 GPL이 있는 연구에서 잘못된 platform을 선택하면 샘플과 annotation이 달라집니다. GSE 화면에서 확인한 GPL과 <code>annotation(gset)</code>이 일치해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. 그룹 문자열에서 가장 많이 생기는 오류</h2>
+        <p>GEO2R가 만든 <code>gsms</code> 문자열의 각 문자는 ExpressionSet의 각 sample에 순서대로 대응합니다.</p>
+        <pre class="code-block"><code>gsms &lt;- "111111111111111000000000000000"
+sml &lt;- strsplit(gsms, split = "")[[1]]
+
+stopifnot(length(sml) == ncol(gset))
+table(sml)
+
+groups &lt;- make.names(c("Disease", "Control"))
+gs &lt;- factor(sml, levels = c("1", "0"), labels = groups)
+
+table(gs, useNA = "ifany")
+data.frame(
+  GSM = sampleNames(gset),
+  group = gs
+)</code></pre>
+        <div class="warning-box rounded p-3">
+          <strong>중요:</strong> <code>levels(gs) &lt;- groups</code>만 사용하면 기존 factor level의 정렬 순서를 잘못 이해할 위험이 있습니다. 위처럼 원래 코드값 <code>1</code>, <code>0</code>과 원하는 label을 명시하고, GSM별 배정표를 직접 확인하는 편이 안전합니다.
+        </div>
+        <p class="mt-3">문자열 길이와 <code>ncol(gset)</code>이 다르면 <code>variable lengths differ</code>, design matrix 차원 불일치 또는 잘못된 그룹 배정이 발생할 수 있습니다. 샘플을 제외했다면 문자열도 같은 순서로 수정해야 합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. log2 변환과 결측치 처리</h2>
+        <p>GEO2R 코드는 발현값 분위수로 log2 변환 필요성을 추정합니다. 이미 log2 변환된 값을 다시 log2로 변환하면 분포가 왜곡되므로 GSE의 Data processing 설명과 boxplot을 함께 확인합니다.</p>
+        <pre class="code-block"><code>ex &lt;- exprs(gset)
+qx &lt;- quantile(
+  ex,
+  probs = c(0, 0.25, 0.5, 0.75, 0.99, 1),
+  na.rm = TRUE
+)
+qx
+
+log_needed &lt;- (qx[5] &gt; 100) ||
+  ((qx[6] - qx[1] &gt; 50) &amp;&amp; qx[2] &gt; 0)
+
+if (log_needed) {
+  ex[ex &lt;= 0] &lt;- NA_real_
+  exprs(gset) &lt;- log2(ex)
+}
+
+# 결측치가 하나라도 포함된 probe 제거
+keep &lt;- rowSums(is.na(exprs(gset))) == 0
+gset &lt;- gset[keep, ]</code></pre>
+        <div class="tip-box rounded p-3"><strong>행과 열:</strong> ExpressionSet의 행은 probe, 열은 sample입니다. 따라서 결측 probe를 제거할 때는 <code>gset[keep, ]</code>처럼 첫 번째 차원을 선택합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. design과 contrast 검증</h2>
+        <pre class="code-block"><code>gset$group &lt;- gs
+design &lt;- model.matrix(~ 0 + group, data = pData(gset))
+colnames(design) &lt;- levels(gs)
+
+design
+colSums(design)
+
+contrast_text &lt;- "Disease-Control"
+cont.matrix &lt;- makeContrasts(
+  contrasts = contrast_text,
+  levels = design
+)
+cont.matrix
+
+fit &lt;- lmFit(gset, design)
+fit2 &lt;- contrasts.fit(fit, cont.matrix)
+fit2 &lt;- eBayes(fit2, trend = FALSE, robust = FALSE)</code></pre>
+        <div class="concept-box rounded p-3"><code>Disease-Control</code>이면 logFC 양수는 Disease에서 증가, 음수는 Disease에서 감소를 의미합니다. contrast 이름과 행렬을 출력하여 방향을 확인한 뒤 분석을 계속합니다.</div>
+        <p class="mt-3 mb-0">연령, 성별, batch 또는 paired subject를 보정해야 하는 연구라면 GEO2R의 단순 2그룹 모형만으로는 충분하지 않을 수 있습니다. 이 경우 phenotype table을 정리하여 공변량과 blocking을 포함한 별도의 design을 작성해야 합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. 전체 DEG 결과와 annotation 오류</h2>
+        <pre class="code-block"><code>deg_all &lt;- topTable(
+  fit2,
+  coef = 1,
+  adjust.method = "BH",
+  sort.by = "P",
+  number = Inf
+)
+
+colnames(deg_all)
+colnames(deg_all)[duplicated(colnames(deg_all))]
+
+wanted &lt;- c(
+  "ID", "logFC", "AveExpr", "t", "P.Value",
+  "adj.P.Val", "B", "Gene.symbol",
+  "Gene.Symbol", "Gene.title"
+)
+available &lt;- intersect(wanted, colnames(deg_all))
+deg_export &lt;- deg_all[, available, drop = FALSE]
+
+write.csv(
+  deg_export,
+  "GSE54568_Disease_vs_Control_all_probes.csv",
+  row.names = FALSE,
+  fileEncoding = "UTF-8-BOM"
+)</code></pre>
+        <p>다음과 같은 오류는 대부분 platform마다 annotation 열 이름이 다르기 때문에 발생합니다.</p>
+        <pre class="code-block"><code>Error in `[.data.frame`(...): undefined columns selected</code></pre>
+        <p class="mb-0"><code>colnames(deg_all)</code>로 실제 열을 확인하고 존재하는 열만 선택합니다. <code>Gene.symbol</code>과 <code>Gene.Symbol</code>은 대소문자를 구분하며, 한 유전자에 여러 probe가 존재하거나 gene symbol이 비어 있을 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">9. 그림 코드에서 자주 생기는 문제</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th style="width:27%">증상</th><th>확인 및 해결</th></tr></thead>
+            <tbody>
+              <tr><td><code>figure margins too large</code></td><td>RStudio Plots 창을 키우거나 <code>pdf()</code>로 파일 장치를 연 뒤 그림을 저장합니다.</td></tr>
+              <tr><td>UMAP의 <code>n_neighbors</code> 오류</td><td><code>n_neighbors</code>는 sample 수보다 작아야 합니다. <code>min(13, ncol(gset)-1)</code>처럼 설정합니다.</td></tr>
+              <tr><td>UMAP 결과가 매번 달라짐</td><td><code>random_state = 123</code> 또는 패키지에 맞는 seed 설정을 사용합니다.</td></tr>
+              <tr><td>UMAP에서 NA 오류</td><td>NA가 있는 probe를 제거하고, 분산이 0인 probe도 제거합니다.</td></tr>
+              <tr><td><code>dev.off(): null device</code></td><td>열려 있는 파일 장치가 없는데 <code>dev.off()</code>를 실행한 경우입니다. <code>pdf()</code>와 <code>dev.off()</code>를 한 쌍으로 사용합니다.</td></tr>
+              <tr><td>Venn diagram이 의미 없음</td><td>단일 contrast에서는 up/down 요약 정도만 제공하므로 여러 contrast의 교집합과 혼동하지 않습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="code-block"><code>ex &lt;- exprs(gset)
+keep_var &lt;- apply(ex, 1, var, na.rm = TRUE) &gt; 0
+ex_umap &lt;- ex[keep_var, , drop = FALSE]
+
+n_nbr &lt;- min(13, ncol(ex_umap) - 1)
+if (n_nbr &lt; 2) stop("UMAP을 수행하기에 sample 수가 너무 적습니다.")
+
+ump &lt;- umap(
+  t(ex_umap),
+  n_neighbors = n_nbr,
+  random_state = 123
+)</code></pre>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">10. 차등발현유전자 분석이란?</h2>
+        <p>차등발현유전자 분석은 두 조건 사이에서 관찰된 발현 차이가 생물학적 변동과 측정 오차를 고려한 뒤에도 충분히 큰지를 각 유전자별로 검정하는 과정입니다.</p>
+        <pre class="code-block"><code>관찰된 발현 차이
+  = 관심 조건의 효과
+  + 연령·성별·batch 등의 효과
+  + 생물학적 변동
+  + 측정 오차</code></pre>
+        <p>수천~수만 개 유전자를 동시에 검정하므로 raw P-value만 사용하면 거짓양성이 증가합니다. 따라서 일반적으로 Benjamini–Hochberg 방법으로 계산한 FDR(<code>adj.P.Val</code>, <code>padj</code>, <code>FDR</code>)과 효과크기(log2FC)를 함께 사용합니다.</p>
+        <div class="warning-box rounded p-3"><strong>유의함과 중요함은 다릅니다.</strong> 표본 수가 크면 작은 logFC도 통계적으로 유의할 수 있고, 표본 수가 작으면 생물학적으로 큰 변화도 FDR 기준을 통과하지 못할 수 있습니다. 통계적 유의성, 효과크기와 생물학적 타당성을 함께 해석합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">11. limma, DESeq2와 edgeR 비교</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
+              <tr><th>항목</th><th>limma</th><th>DESeq2</th><th>edgeR</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>주요 입력</strong></td><td>정규화된 log2 microarray intensity<br>RNA-seq은 voom 적용 count</td><td>RNA-seq raw integer count</td><td>RNA-seq raw integer count</td></tr>
+              <tr><td><strong>모형</strong></td><td>가중 선형모형 + empirical Bayes</td><td>음이항 GLM + dispersion/LFC shrinkage</td><td>음이항 GLM + empirical Bayes dispersion</td></tr>
+              <tr><td><strong>대표 정규화</strong></td><td>microarray 방법 또는 RNA-seq voom 전 TMM 등</td><td>median-of-ratios size factor</td><td>TMM normalization</td></tr>
+              <tr><td><strong>강점</strong></td><td>microarray 표준, 복잡한 design과 contrast가 유연하고 빠름</td><td>안정적인 dispersion과 LFC 추정, 사용 흐름이 일관됨</td><td>유연한 GLM·quasi-likelihood, 복잡한 design과 대규모 count에 효율적</td></tr>
+              <tr><td><strong>이번 GEO 실습</strong></td><td><strong>사용</strong></td><td>사용하지 않음</td><td>사용하지 않음</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="concept-box rounded p-3">
+          <strong>선택 원칙:</strong> microarray의 processed log2 intensity에는 limma를 사용합니다. RNA-seq raw count에는 DESeq2, edgeR 또는 limma-voom을 사용할 수 있습니다. FPKM·TPM·이미 log 변환된 발현값을 DESeq2나 edgeR의 count 입력으로 넣으면 안 됩니다.
+        </div>
+        <p class="mt-3 mb-0">세 도구의 DEG 목록이 완전히 같을 필요는 없습니다. 정규화, 저발현 필터링, dispersion 추정, outlier 처리와 검정 방식이 다르므로 분석 전에 방법을 정하고, 결과가 마음에 들지 않는다는 이유로 도구를 바꾸어 선택적으로 보고해서는 안 됩니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">12. 권장 논문</h2>
+        <h3 class="h5 mt-3">각 도구의 원 개발·방법 논문</h3>
+        <ul>
+          <li><a href="https://academic.oup.com/nar/article/43/7/e47/2414268" target="_blank" rel="noopener">Ritchie et al. 2015. limma powers differential expression analyses for RNA-sequencing and microarray studies.</a></li>
+          <li><a href="https://genomebiology.biomedcentral.com/articles/10.1186/s13059-014-0550-8" target="_blank" rel="noopener">Love et al. 2014. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.</a></li>
+          <li><a href="https://academic.oup.com/bioinformatics/article/26/1/139/182458" target="_blank" rel="noopener">Robinson et al. 2010. edgeR: a Bioconductor package for differential expression analysis of digital gene expression data.</a></li>
+          <li><a href="https://genomebiology.biomedcentral.com/articles/10.1186/gb-2014-15-2-r29" target="_blank" rel="noopener">Law et al. 2014. voom: precision weights unlock linear model analysis tools for RNA-seq read counts.</a></li>
+        </ul>
+        <h3 class="h5 mt-4">비교·benchmark 논문</h3>
+        <ul class="mb-0">
+          <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3608160/" target="_blank" rel="noopener">Soneson &amp; Delorenzi. 2013. A comparison of methods for differential expression analysis of RNA-seq data.</a></li>
+          <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7192453/" target="_blank" rel="noopener">Baik et al. 2020. Benchmarking RNA-seq differential expression analysis methods using spike-in and simulation data.</a></li>
+          <li><a href="https://www.nature.com/articles/s41598-020-76881-x" target="_blank" rel="noopener">Corchete et al. 2020. Systematic comparison and assessment of RNA-seq procedures for gene expression quantitative analysis.</a></li>
+        </ul>
+        <div class="tip-box rounded p-3 mt-3"><strong>읽는 방법:</strong> benchmark의 단일 순위를 그대로 받아들이지 말고, 사용한 데이터 생성 방식, sample 수, DEG 비율, 평가한 FDR·민감도와 입력 전처리가 내 연구와 유사한지 확인하세요.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">종합 실습</h2>
+        <ol class="step-list">
+          <li>제공된 스크립트로 GSE54568을 <code>C:/GEO_cache</code>에 다운로드합니다.</li>
+          <li>ExpressionSet의 sample 수와 <code>gsms</code> 문자열 길이가 일치하는지 확인합니다.</li>
+          <li>GSM별 Disease·Control 배정표를 출력하고 임의의 3개 샘플을 GEO 웹 metadata와 대조합니다.</li>
+          <li>발현값 분위수와 boxplot을 이용해 log2 변환 여부를 설명합니다.</li>
+          <li><code>Disease-Control</code> contrast를 적용하여 전체 probe 결과를 CSV로 저장합니다.</li>
+          <li><code>adj.P.Val &lt; 0.05</code>와 원하는 <code>|logFC|</code> 기준으로 up/down DEG 수를 계산합니다.</li>
+          <li>이 데이터에 DESeq2를 직접 적용하면 안 되는 이유를 입력자료의 형태와 연결하여 설명합니다.</li>
+        </ol>
+        <details class="border rounded p-3 mt-4">
+          <summary class="fw-bold text-primary" style="cursor:pointer">오류 해결 기록표</summary>
+          <div class="table-responsive mt-3">
+            <table class="table table-bordered align-middle mb-0">
+              <thead class="table-light"><tr><th>오류 메시지</th><th>발생 단계</th><th>추정 원인</th><th>적용한 해결법</th><th>결과</th></tr></thead>
+              <tbody><tr><td style="height:55px"></td><td></td><td></td><td></td><td></td></tr><tr><td style="height:55px"></td><td></td><td></td><td></td><td></td></tr></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="04_geo2r.html">← Step 04</a>
+      <a class="btn btn-primary" href="06_geo_download.html">Step 06 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
