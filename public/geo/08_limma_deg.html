@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 08. limma 차등발현 분석</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 08</span>
+      <h1 class="display-5 fw-bold">limma 차등발현 분석</h1>
+      <p class="lead mb-0">분석 질문을 design과 contrast로 표현하고, Disease와 Control의 probe-level 발현 차이를 검정합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">차등발현 분석의 질문</h2>
+        <p>차등발현 분석은 각 probe에 대해 관찰된 Disease와 Control의 평균 발현차이가 표본 간 생물학적 변동과 측정오차를 고려한 뒤에도 충분히 큰지 검정합니다.</p>
+        <pre class="code-block"><code>H0: Disease와 Control의 평균 발현이 같다.
+H1: Disease와 Control의 평균 발현이 다르다.</code></pre>
+        <div class="concept-box rounded p-3"><strong>limma의 핵심:</strong> 각 probe에 선형모형을 적합한 뒤, probe 전체의 정보를 이용하는 empirical Bayes 방법으로 분산 추정을 안정화합니다. 표본 수가 많지 않은 microarray 연구에 특히 유용합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. Step 07 결과 불러오기</h2>
+        <pre class="code-block"><code>library(limma)
+
+expr_probe &lt;- readRDS(
+  "data_processed/expression_probe_processed.rds"
+)
+sample_info &lt;- read.csv(
+  "data_processed/sample_metadata_analysis.csv",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+probe_map &lt;- read.csv(
+  "data_processed/probe_to_gene_valid.csv",
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+
+stopifnot(
+  identical(
+    colnames(expr_probe),
+    sample_info$GSM
+  )
+)</code></pre>
+        <div class="warning-box rounded p-3"><strong>기본 분석은 probe 수준에서 수행합니다.</strong> Step 07의 <code>gene_matrix_mean.rds</code>와 <code>gene_matrix_maxvar.rds</code>는 heatmap이나 gene-level 활용을 위해 만든 객체입니다. Gene-level DEG를 수행하려면 병합 기준을 사전에 정해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. 그룹 factor 설정</h2>
+        <pre class="code-block"><code>sample_info$group &lt;- factor(
+  sample_info$group,
+  levels = c("Control", "Disease")
+)
+
+stopifnot(!anyNA(sample_info$group))
+table(sample_info$group)
+sample_info[, c("GSM", "group")]</code></pre>
+        <p>Factor level은 metadata의 범주 순서를 명확히 하는 역할을 합니다. 최종 logFC의 방향은 아래에서 정의하는 contrast가 결정합니다.</p>
+        <div class="tip-box rounded p-3"><strong>확인:</strong> 그룹별 sample 수가 GEO2R에서 배정한 수와 같고, 각 GSM의 실제 metadata와 일치해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. Design matrix</h2>
+        <pre class="code-block"><code>design &lt;- model.matrix(
+  ~ 0 + group,
+  data = sample_info
+)
+colnames(design) &lt;- sub(
+  "^group",
+  "",
+  colnames(design)
+)
+rownames(design) &lt;- sample_info$GSM
+
+design
+colSums(design)</code></pre>
+        <p>Design matrix의 행은 sample, 열은 모형에서 추정할 그룹입니다. Control sample은 Control 열에 1, Disease sample은 Disease 열에 1이 들어갑니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>GSM</th><th>Control</th><th>Disease</th></tr></thead>
+            <tbody>
+              <tr><td>Control sample</td><td>1</td><td>0</td></tr>
+              <tr><td>Disease sample</td><td>0</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. Contrast 방향</h2>
+        <pre class="code-block"><code>contrast_matrix &lt;- makeContrasts(
+  Disease_vs_Control = Disease - Control,
+  levels = design
+)
+
+contrast_matrix</code></pre>
+        <pre class="code-block"><code>logFC &gt; 0  → Disease에서 발현 증가
+logFC &lt; 0  → Disease에서 발현 감소</code></pre>
+        <div class="warning-box rounded p-3"><strong><code>Control - Disease</code>로 작성하면 부호가 반대가 됩니다.</strong> 분석 전에 contrast 이름, 수식과 행렬을 출력하고 연구 질문의 방향과 일치하는지 확인합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. limma 모형 적합</h2>
+        <pre class="code-block"><code>fit_base &lt;- lmFit(
+  expr_probe,
+  design
+)
+fit_contrast &lt;- contrasts.fit(
+  fit_base,
+  contrast_matrix
+)
+fit_ebayes &lt;- eBayes(
+  fit_contrast
+)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>함수</th><th>역할</th></tr></thead>
+            <tbody>
+              <tr><td><code>lmFit()</code></td><td>각 probe에 design matrix로 표현된 선형모형을 적합합니다.</td></tr>
+              <tr><td><code>contrasts.fit()</code></td><td>추정된 그룹 계수를 Disease − Control 비교로 변환합니다.</td></tr>
+              <tr><td><code>eBayes()</code></td><td>probe 간 정보를 이용해 분산을 안정화하고 moderated t, P-value와 B 값을 계산합니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mb-0"><code>eBayes(robust=TRUE)</code> 또는 <code>trend=TRUE</code>는 항상 더 좋은 설정이 아닙니다. 분산 이상치와 평균–분산 관계를 확인하고 분석 계획에 따라 선택합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. 모든 probe 결과 가져오기</h2>
+        <pre class="code-block"><code>deg_probe &lt;- topTable(
+  fit_ebayes,
+  coef = "Disease_vs_Control",
+  number = Inf,
+  adjust.method = "BH",
+  sort.by = "P"
+)
+
+deg_probe &lt;- data.frame(
+  PROBE_ID = rownames(deg_probe),
+  deg_probe,
+  row.names = NULL
+)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>열</th><th>의미</th></tr></thead>
+            <tbody>
+              <tr><td><code>logFC</code></td><td>Disease − Control의 log2 발현차이</td></tr>
+              <tr><td><code>AveExpr</code></td><td>전체 sample에서 해당 probe의 평균 발현량</td></tr>
+              <tr><td><code>t</code></td><td>limma의 moderated t-statistic</td></tr>
+              <tr><td><code>P.Value</code></td><td>다중검정 보정 전 P-value</td></tr>
+              <tr><td><code>adj.P.Val</code></td><td>Benjamini–Hochberg 방법으로 보정한 FDR</td></tr>
+              <tr><td><code>B</code></td><td>차등발현일 log-odds. 값이 클수록 DEG일 가능성이 높음</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. Gene symbol annotation 결합</h2>
+        <pre class="code-block"><code>map_index &lt;- match(
+  deg_probe$PROBE_ID,
+  probe_map$probe_id
+)
+
+deg_annotated &lt;- deg_probe
+deg_annotated$gene_symbol &lt;-
+  probe_map$gene_symbol[map_index]</code></pre>
+        <p><code>merge()</code>는 기본 설정에서 행 순서를 바꿀 수 있으므로, DEG 순위를 유지하려면 <code>match()</code>를 이용하는 것이 안전합니다.</p>
+        <div class="tip-box rounded p-3">Gene symbol이 없는 probe도 통계분석 결과에서는 유지합니다. 다만 GO·KEGG처럼 gene ID가 필요한 후속 분석에서는 annotation 가능한 항목만 사용합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. DEG 기준 설정</h2>
+        <pre class="code-block"><code>fdr_cutoff &lt;- 0.05
+lfc_cutoff &lt;- 1
+
+deg_annotated$status &lt;- "Not_significant"
+deg_annotated$status[
+  deg_annotated$adj.P.Val &lt; fdr_cutoff &amp;
+    deg_annotated$logFC &gt;= lfc_cutoff
+] &lt;- "Up"
+deg_annotated$status[
+  deg_annotated$adj.P.Val &lt; fdr_cutoff &amp;
+    deg_annotated$logFC &lt;= -lfc_cutoff
+] &lt;- "Down"
+
+table(deg_annotated$status)</code></pre>
+        <p><code>|logFC| ≥ 1</code>은 2배 이상의 발현차이를 의미하지만 모든 연구에 적용되는 절대 기준은 아닙니다. 조직, 플랫폼, 표본 수와 연구 목적을 고려해 분석 전에 정합니다.</p>
+        <div class="warning-box rounded p-3"><strong>FDR 유의 DEG가 없을 수도 있습니다.</strong> 이때 결과가 없다는 이유로 사후에 기준을 raw P-value로 변경하여 “유의한 DEG”라고 보고하면 다중검정 오류가 커집니다. 탐색적 nominal P-value 결과를 제시한다면 FDR을 통과하지 못했다는 사실을 명확히 구분해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">9. 단순 cutoff와 treat()의 차이</h2>
+        <p>일반적인 방법은 FDR을 먼저 계산한 뒤 결과표에서 <code>|logFC|</code> cutoff를 추가합니다. <code>treat()</code>는 발현차이가 지정한 최소 효과크기보다 큰지를 통계모형 안에서 직접 검정합니다.</p>
+        <pre class="code-block"><code>fit_treat &lt;- treat(
+  fit_contrast,
+  lfc = 1
+)
+
+treat_result &lt;- topTreat(
+  fit_treat,
+  coef = "Disease_vs_Control",
+  number = Inf,
+  sort.by = "p"
+)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>방법</th><th>질문</th></tr></thead>
+            <tbody>
+              <tr><td><code>eBayes()</code> + 결과표 cutoff</td><td>발현차이가 0과 다른가? 그중 |logFC| 기준도 만족하는가?</td></tr>
+              <tr><td><code>treat(lfc=1)</code></td><td>발현차이가 통계적으로 |logFC| 1보다 큰가?</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mb-0">두 결과는 동일하지 않을 수 있습니다. 논문에서는 사용한 방법과 기준을 정확히 명시합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">10. decideTests()는 무엇이 다른가?</h2>
+        <pre class="code-block"><code>decision &lt;- decideTests(
+  fit_ebayes,
+  adjust.method = "BH",
+  p.value = 0.05,
+  lfc = 1
+)
+
+summary(decision)</code></pre>
+        <p><code>decideTests()</code>는 각 contrast의 결과를 −1, 0, 1로 요약하므로 여러 contrast를 비교하거나 Venn diagram을 만들 때 편리합니다. 직접 만든 status 열은 각 probe의 annotation과 함께 CSV로 저장하기 편리합니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">11. 연령·성별·batch 보정</h2>
+        <pre class="code-block"><code>sample_info$age &lt;- as.numeric(
+  sample_info$age
+)
+sample_info$sex &lt;- factor(
+  sample_info$sex
+)
+sample_info$batch &lt;- factor(
+  sample_info$batch
+)
+
+complete_sample &lt;- complete.cases(
+  sample_info[, c(
+    "group", "age", "sex", "batch"
+  )]
+)
+
+meta_cov &lt;- droplevels(
+  sample_info[complete_sample, ]
+)
+expr_cov &lt;- expr_probe[
+  ,
+  complete_sample,
+  drop = FALSE
+]
+
+design_cov &lt;- model.matrix(
+  ~ 0 + group + age + sex + batch,
+  data = meta_cov
+)</code></pre>
+        <div class="warning-box rounded p-3"><strong>공변량을 많이 넣는다고 항상 좋은 것은 아닙니다.</strong> 표본 수에 비해 모형이 복잡하면 자유도가 부족해지고 추정이 불안정해집니다. 생물학적·임상적으로 필요한 변수를 사전에 선택합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">12. Full-rank 오류와 confounding</h2>
+        <pre class="code-block"><code>qr(design_cov)$rank
+ncol(design_cov)
+
+if (qr(design_cov)$rank &lt; ncol(design_cov)) {
+  stop("Design matrix가 full rank가 아닙니다.")
+}</code></pre>
+        <p><code>Coefficients not estimable</code> 또는 <code>design matrix not of full rank</code> 오류는 일부 변수가 다른 변수와 완전히 중복되어 독립적인 효과를 추정할 수 없을 때 발생합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>예시</th><th>문제</th></tr></thead>
+            <tbody>
+              <tr><td>모든 Disease는 batch 1, 모든 Control은 batch 2</td><td>Disease 효과와 batch 효과를 분리할 수 없음</td></tr>
+              <tr><td>sex 열과 male_indicator 열을 동시에 포함</td><td>동일한 정보를 중복 표현</td></tr>
+              <tr><td>표본 수보다 지나치게 많은 공변량</td><td>잔여 자유도 부족</td></tr>
+              <tr><td>한 수준만 남은 factor</td><td>해당 변수의 효과를 비교할 수 없음</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">13. Matched와 paired design 구분</h2>
+        <p><strong>Matched case-control</strong>은 연령·성별 등이 비슷한 서로 다른 사람을 선택한 설계일 수 있습니다. 반면 <strong>paired/repeated design</strong>은 같은 사람에게서 치료 전·후 또는 여러 시점의 sample을 측정한 설계입니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>설계</th><th>동일 subject?</th><th>분석</th></tr></thead>
+            <tbody>
+              <tr><td>나이·성별을 맞춘 Disease와 Control</td><td>아니오</td><td>독립표본 + 필요한 공변량</td></tr>
+              <tr><td>동일 환자의 치료 전·후</td><td>예</td><td>patient blocking 또는 paired model</td></tr>
+              <tr><td>동일 환자의 여러 조직·시점</td><td>예</td><td>반복측정 구조 반영</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="code-block"><code>block &lt;- factor(
+  sample_info$subject_id
+)
+
+corfit &lt;- duplicateCorrelation(
+  expr_probe,
+  design,
+  block = block
+)
+
+fit_pair &lt;- lmFit(
+  expr_probe,
+  design,
+  block = block,
+  correlation = corfit$consensus
+)</code></pre>
+        <div class="warning-box rounded p-3"><strong>제목에 “matched”가 있다는 이유만으로 paired analysis를 적용하지 않습니다.</strong> 동일 subject ID가 여러 GSM에 실제로 반복되는지 확인해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">14. 결과 저장과 재현성</h2>
+        <p>전체 스크립트는 다음 파일을 생성합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>파일</th><th>내용</th></tr></thead>
+            <tbody>
+              <tr><td><code>GSE54568_limma_all_probes.csv</code></td><td>전체 probe 통계 결과</td></tr>
+              <tr><td><code>GSE54568_limma_annotated.csv</code></td><td>Gene symbol과 status를 포함한 결과</td></tr>
+              <tr><td><code>GSE54568_DEG_significant.csv</code></td><td>사전에 정한 FDR·logFC 기준을 만족한 DEG</td></tr>
+              <tr><td><code>GSE54568_upregulated.csv</code></td><td>Disease에서 증가한 probe</td></tr>
+              <tr><td><code>GSE54568_downregulated.csv</code></td><td>Disease에서 감소한 probe</td></tr>
+              <tr><td><code>GSE54568_treat_logFC1.csv</code></td><td>treat로 최소 효과크기를 검정한 결과</td></tr>
+              <tr><td><code>GSE54568_threshold_sensitivity.csv</code></td><td>여러 사전 기준에서의 DEG 수 비교</td></tr>
+              <tr><td><code>GSE54568_design_matrix.csv</code></td><td>실제 분석에 사용한 design</td></tr>
+              <tr><td><code>GSE54568_contrast_matrix.csv</code></td><td>실제 분석에 사용한 contrast</td></tr>
+              <tr><td><code>GSE54568_limma_fit.rds</code></td><td>후속 그림에 사용할 limma fit 객체</td></tr>
+              <tr><td><code>DEG_analysis_record.txt</code></td><td>분석방법·기준·DEG 수 기록</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <a class="btn btn-outline-primary mt-2" href="scripts/08_limma_deg.R" download>전체 R script 다운로드</a>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">종합 실습</h2>
+        <ol class="step-list">
+          <li>Control과 Disease의 sample 수를 확인하고 design matrix를 직접 설명합니다.</li>
+          <li><code>Disease-Control</code> contrast에서 양수·음수 logFC의 의미를 작성합니다.</li>
+          <li>전체 probe 결과에 gene symbol을 붙이고 annotation 성공률을 계산합니다.</li>
+          <li>FDR 0.05와 <code>|logFC| ≥ 1</code>에서 Up·Down DEG 수를 기록합니다.</li>
+          <li>FDR 0.01·0.05·0.10과 logFC 0·0.5·1 조합에 따른 DEG 수를 비교합니다.</li>
+          <li><code>eBayes()</code> 결과표 cutoff와 <code>treat(lfc=1)</code> 결과가 다른 이유를 설명합니다.</li>
+          <li>사용 가능한 임상정보 중 design에 포함할 공변량과 그 이유를 제시합니다.</li>
+          <li>현재 자료가 독립표본인지 실제 paired/repeated design인지 근거를 작성합니다.</li>
+        </ol>
+        <h3 class="h5 mt-4">제출용 기록표</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tbody>
+              <tr><th class="table-light" style="width:38%">Control / Disease sample 수</th><td></td></tr>
+              <tr><th class="table-light">Design formula</th><td></td></tr>
+              <tr><th class="table-light">Contrast</th><td>Disease − Control</td></tr>
+              <tr><th class="table-light">FDR / |logFC| 기준</th><td></td></tr>
+              <tr><th class="table-light">Up / Down DEG 수</th><td></td></tr>
+              <tr><th class="table-light">Annotation 성공률</th><td></td></tr>
+              <tr><th class="table-light">treat 결과와의 차이</th><td></td></tr>
+              <tr><th class="table-light">보정할 공변량</th><td></td></tr>
+              <tr><th class="table-light">Full-rank 확인</th><td></td></tr>
+              <tr><th class="table-light">독립 / paired 설계 판단</th><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="07_preprocessing.html">← Step 07</a>
+      <a class="btn btn-primary" href="09_visualization.html">Step 09 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
