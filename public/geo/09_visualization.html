@@ -1,34 +1,251 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 09. 시각화</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="assets/css/geo-course.css"></head><body><nav class="navbar navbar-light bg-light border-bottom sticky-top"><div class="container"><a class="navbar-brand" href="index.html">GEO Microarray Analysis</a><a href="index.html">과정 목차</a></div></nav><header class="lesson-hero py-5"><div class="container" style="max-width:1000px"><span class="badge bg-light text-primary mb-3">Step 09</span><h1 class="display-5 fw-bold">PCA, Volcano와 Heatmap</h1><p class="lead">분석 품질과 차등발현 결과를 이해하기 쉬운 그림과 표로 저장합니다.</p></div></header><main class="container py-5" style="max-width:1000px"><section class="card content-card mb-4"><div class="card-body p-4"><h2>PCA</h2><pre class="code-block"><code>pca &lt;- prcomp(t(gene_matrix), scale. = FALSE)
-pca_df &lt;- data.frame(
-  PC1 = pca$x[, 1], PC2 = pca$x[, 2],
-  group = group
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 09. GO·KEGG 분석과 입력자료 준비</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 09</span>
+      <h1 class="display-5 fw-bold">GO·KEGG 분석과 입력자료 준비</h1>
+      <p class="lead mb-0">차등발현유전자 목록을 생물학적 기능과 pathway로 해석하기 위한 원리와 입력자료를 준비합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">왜 기능분석을 수행하는가?</h2>
+        <p>DEG 분석은 어떤 유전자가 변했는지를 알려주지만, 질환에서 어떤 생물학적 과정이 함께 변했는지는 유전자 목록만으로 파악하기 어렵습니다. 기능분석은 여러 DEG가 공통으로 참여하는 기능이나 pathway를 통계적으로 요약합니다.</p>
+        <div class="flow-row my-3">
+          <span class="flow-item">DEG</span><span class="flow-arrow">→</span>
+          <span class="flow-item">Gene ID 정리</span><span class="flow-arrow">→</span>
+          <span class="flow-item">GO·KEGG</span><span class="flow-arrow">→</span>
+          <span class="flow-item">생물학적 가설</span>
+        </div>
+        <div class="warning-box rounded p-3"><strong>기능분석은 결과를 자동으로 설명해 주는 과정이 아닙니다.</strong> 유의한 term과 pathway를 연구 설계, 조직, 질환과 기존 지식에 연결하여 해석해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. GO란?</h2>
+        <p><strong>Gene Ontology(GO)</strong>는 서로 다른 연구와 데이터베이스에서 유전자 기능을 일관된 용어로 설명하기 위한 체계입니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th style="width:21%">분류</th><th>질문</th><th>예</th></tr></thead>
+            <tbody>
+              <tr><td><strong>BP</strong><br>Biological Process</td><td>유전자가 어떤 생물학적 과정에 참여하는가?</td><td>immune response, cell cycle, apoptosis</td></tr>
+              <tr><td><strong>CC</strong><br>Cellular Component</td><td>유전자 산물이 세포의 어디에 존재하거나 작용하는가?</td><td>nucleus, mitochondrion, extracellular matrix</td></tr>
+              <tr><td><strong>MF</strong><br>Molecular Function</td><td>유전자 산물이 분자 수준에서 어떤 기능을 수행하는가?</td><td>kinase activity, DNA binding, receptor binding</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip-box rounded p-3"><strong>GO term은 계층구조입니다.</strong> 상위의 넓은 term과 하위의 구체적인 term이 같은 유전자를 공유하므로 유사한 결과가 반복해서 나타날 수 있습니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. KEGG pathway란?</h2>
+        <p><strong>KEGG</strong>는 대사, 신호전달, 질환과 세포 과정에 관련된 유전자·단백질의 관계를 pathway 형태로 정리합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>GO</th><th>KEGG</th></tr></thead>
+            <tbody>
+              <tr><td>유전자 기능을 표준 용어로 분류</td><td>유전자 간 기능적 관계를 pathway로 구성</td></tr>
+              <tr><td>BP·CC·MF의 계층구조</td><td>대사·신호전달·질환 pathway 중심</td></tr>
+              <tr><td>유사하거나 중복된 term이 많을 수 있음</td><td>하나의 유전자가 여러 pathway에 포함될 수 있음</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3"><strong>KEGG pathway가 유의하다고 pathway 전체가 활성화됐다는 뜻은 아닙니다.</strong> 입력한 DEG가 해당 pathway에 기대보다 많이 포함되었다는 의미이며, 방향성과 구성 유전자를 별도로 확인해야 합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. ORA의 기본 원리</h2>
+        <p><strong>Over-representation analysis(ORA)</strong>는 선택한 DEG 목록에 특정 GO term 또는 pathway 유전자가 background에서 기대되는 비율보다 많이 포함되어 있는지를 검정합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center align-middle">
+            <thead class="table-light"><tr><th></th><th>특정 pathway 포함</th><th>특정 pathway 미포함</th></tr></thead>
+            <tbody>
+              <tr><th>DEG</th><td>관찰된 DEG 수</td><td>나머지 DEG</td></tr>
+              <tr><th>Background의 비-DEG</th><td>pathway의 비-DEG</td><td>나머지 유전자</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>일반적으로 Fisher’s exact test 또는 동등한 hypergeometric test를 사용하며, 여러 term을 동시에 검정하기 때문에 결과의 FDR을 확인합니다.</p>
+        <div class="concept-box rounded p-3"><strong>ORA의 입력은 두 가지입니다.</strong> 관심 유전자 목록(DEG)과 그 유전자들이 선택될 수 있었던 전체 background입니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. Up과 Down을 분리하는 이유</h2>
+        <pre class="code-block"><code>up_symbols &lt;- unique(
+  deg$gene_symbol[deg$status == "Up"]
 )
+down_symbols &lt;- unique(
+  deg$gene_symbol[deg$status == "Down"]
+)</code></pre>
+        <p>Up과 Down을 합치면 특정 기능과 관련된 유전자가 DEG에 많다는 사실은 알 수 있지만, 그 기능이 Disease에서 어느 방향으로 변했는지는 잃게 됩니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>입력</th><th>해석</th></tr></thead>
+            <tbody>
+              <tr><td>Up DEG</td><td>Disease에서 증가한 유전자에 과대표현된 기능</td></tr>
+              <tr><td>Down DEG</td><td>Disease에서 감소한 유전자에 과대표현된 기능</td></tr>
+              <tr><td>Up + Down</td><td>방향을 구분하지 않은 전체 DEG의 관련 기능</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3"><strong>ORA만으로 pathway 활성·억제를 확정하지 않습니다.</strong> Up ORA와 Down ORA의 분리 결과, pathway 구성 유전자와 후속 GSEA의 NES 방향을 함께 검토합니다.</div>
+      </div>
+    </section>
 
-ggplot2::ggplot(pca_df, ggplot2::aes(PC1, PC2, color = group)) +
-  ggplot2::geom_point(size = 3) +
-  ggplot2::theme_classic()</code></pre><p>PCA 분리는 생물학적 그룹뿐 아니라 batch, 조직과 outlier에 의해 생길 수 있습니다.</p></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>Volcano plot</h2><pre class="code-block"><code>deg_result$gene &lt;- rownames(deg_result)
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. Background가 중요한 이유</h2>
+        <p>Background는 DEG가 선택될 수 있었던 전체 유전자 집합입니다. Microarray 분석에서는 해당 플랫폼에서 실제로 측정되고 전처리와 annotation을 통과한 유전자를 사용하는 것이 원칙적으로 더 적절합니다.</p>
+        <pre class="code-block"><code>background_symbols &lt;- sort(unique(
+  probe_map$gene_symbol[
+    probe_map$probe_id %in% deg$PROBE_ID
+  ]
+))</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>Background</th><th>문제 또는 장점</th></tr></thead>
+            <tbody>
+              <tr><td>전체 인간 유전체</td><td>Microarray에서 측정되지 않은 유전자까지 포함되어 enrichment가 편향될 수 있음</td></tr>
+              <tr><td>플랫폼의 모든 annotation 유전자</td><td>실제로 분석에서 제거된 probe가 포함될 수 있음</td></tr>
+              <tr><td>실제 분석된 유효 probe의 고유 유전자</td><td>현재 DEG가 선택될 수 있었던 범위와 가장 직접적으로 대응</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-p_volcano &lt;- ggplot2::ggplot(
-  deg_result,
-  ggplot2::aes(logFC, -log10(adj.P.Val), color = status)
-) +
-  ggplot2::geom_point(alpha = 0.65) +
-  ggplot2::scale_color_manual(values = c(
-    Down = "#2166AC", `Not significant` = "grey75", Up = "#B2182B"
-  )) + ggplot2::theme_classic()</code></pre></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>Top DEG heatmap</h2><pre class="code-block"><code>top_genes &lt;- head(rownames(deg_result), 50)
-heatmap_matrix &lt;- gene_matrix[top_genes, , drop = FALSE]
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. 여러 probe가 같은 gene에 대응하는 문제</h2>
+        <p>ORA의 단위는 일반적으로 gene이므로 하나의 gene symbol이 여러 probe에서 DEG로 나타나도 입력 목록에는 한 번만 포함합니다.</p>
+        <pre class="code-block"><code>up_symbols &lt;- sort(unique(
+  stats::na.omit(up_symbols)
+))</code></pre>
+        <p>동일 gene의 일부 probe는 Up, 다른 probe는 Down으로 분류될 수 있습니다. 제공 스크립트는 이런 gene을 <code>opposite_direction_probe_conflicts.csv</code>에 기록하고 입문 ORA의 Up·Down 목록에서는 보수적으로 제외합니다.</p>
+        <div class="tip-box rounded p-3"><strong>반대 방향 probe는 오류라고 단정할 수 없습니다.</strong> 서로 다른 transcript, probe 위치, cross-hybridization 또는 품질 문제일 수 있으므로 중요한 후보는 플랫폼 annotation과 probe-level 결과를 확인합니다.</div>
+      </div>
+    </section>
 
-pheatmap::pheatmap(
-  heatmap_matrix,
-  scale = "row",
-  annotation_col = data.frame(Group = group)
-)</code></pre><div class="tip-box rounded p-3">Heatmap의 row scaling은 유전자별 상대 발현 패턴을 보여주며 유전자 간 절대 발현량 비교에는 사용하지 않습니다.</div></div></section><section class="card content-card mb-5"><div class="card-body p-4"><h2>결과 저장</h2><pre class="code-block"><code>ggplot2::ggsave("figures/volcano.pdf", p_volcano,
-                width = 7, height = 6)
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. Gene symbol과 Entrez ID</h2>
+        <p>DAVID와 pathway 도구는 여러 identifier를 지원하지만, identifier 종류를 명확히 지정해야 합니다. 이번 스크립트는 human gene symbol을 <code>org.Hs.eg.db</code>로 Entrez ID에 변환합니다.</p>
+        <pre class="code-block"><code>converted &lt;- AnnotationDbi::select(
+  org.Hs.eg.db,
+  keys = up_symbols,
+  keytype = "SYMBOL",
+  columns = "ENTREZID"
+)</code></pre>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>현상</th><th>의미</th><th>처리</th></tr></thead>
+            <tbody>
+              <tr><td>Symbol이 Entrez로 변환되지 않음</td><td>옛 symbol, 비표준 ID, lncRNA 또는 annotation 차이</td><td>원 ID와 mapping report 확인</td></tr>
+              <tr><td>하나의 symbol에 여러 Entrez ID</td><td>일대다 mapping</td><td>임의로 첫 ID만 고르지 않고 변환표에 모두 기록</td></tr>
+              <tr><td>여러 symbol이 같은 Entrez ID</td><td>동의어 또는 annotation 변경 가능성</td><td>Entrez 입력에서는 중복 제거</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-# Windows Excel에서 한글이 깨지지 않는 CSV
-write.csv(
-  deg_result,
-  file = "results/DEG_Disease_vs_Control.csv",
-  row.names = FALSE,
-  fileEncoding = "UTF-8-BOM"
-)</code></pre><a class="btn btn-outline-primary" href="scripts/09_visualization.R" download>전체 R script 다운로드</a></div></section><div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="08_limma_deg.html">← Step 08</a><a class="btn btn-primary" href="10_david.html">Step 10 →</a></div></main></body></html>
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. FDR 유의 DEG가 없을 때</h2>
+        <p>GSE54568처럼 표본 변동이 크거나 효과가 작으면 FDR 기준을 통과하는 DEG가 없을 수 있습니다. 이 경우 빈 gene list가 생성되는 것은 코드 오류가 아니라 분석 결과입니다.</p>
+        <div class="warning-box rounded p-3">
+          <strong>결과를 만들기 위해 cutoff를 임의로 완화하지 않습니다.</strong> 탐색적으로 raw P-value 목록을 사용할 수는 있지만 FDR 유의 DEG와 구분하여 표시해야 하며, 확인적 ORA의 근거로 과도하게 해석해서는 안 됩니다.
+        </div>
+        <p class="mt-3 mb-0">명확한 DEG cutoff가 없거나 많은 유전자가 작은 방향성 변화를 보이는 경우에는 전체 유전자 순위를 사용하는 Step 12의 GSEA가 더 적절할 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">9. 생성되는 DAVID 입력자료</h2>
+        <p>전체 R 스크립트를 실행하면 다음 파일이 생성됩니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>파일</th><th>내용</th></tr></thead>
+            <tbody>
+              <tr><td><code>up_gene_symbols.txt</code></td><td>중복과 반대방향 충돌을 제거한 Up gene symbol</td></tr>
+              <tr><td><code>down_gene_symbols.txt</code></td><td>중복과 반대방향 충돌을 제거한 Down gene symbol</td></tr>
+              <tr><td><code>all_deg_gene_symbols.txt</code></td><td>방향을 구분하지 않은 전체 고유 DEG symbol</td></tr>
+              <tr><td><code>background_gene_symbols.txt</code></td><td>실제 분석된 유효 probe의 전체 고유 gene symbol</td></tr>
+              <tr><td><code>up_entrez_ids.txt</code></td><td>Entrez ID로 변환된 Up 유전자</td></tr>
+              <tr><td><code>down_entrez_ids.txt</code></td><td>Entrez ID로 변환된 Down 유전자</td></tr>
+              <tr><td><code>background_entrez_ids.txt</code></td><td>Entrez ID로 변환된 background</td></tr>
+              <tr><td><code>gene_id_conversion_report.csv</code></td><td>Symbol–Entrez ID 전체 변환표</td></tr>
+              <tr><td><code>gene_id_mapping_summary.csv</code></td><td>목록별 변환 성공률과 고유 ID 수</td></tr>
+              <tr><td><code>opposite_direction_probe_conflicts.csv</code></td><td>동일 symbol의 probe가 Up·Down으로 충돌한 결과</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <a class="btn btn-outline-primary mt-2" href="scripts/09_visualization.R" download>전체 R script 다운로드</a>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">종합 실습</h2>
+        <ol class="step-list">
+          <li>GO BP·CC·MF와 KEGG pathway의 차이를 각각 한 문장으로 설명합니다.</li>
+          <li>Up·Down DEG의 고유 gene symbol 수를 계산합니다.</li>
+          <li>동일 gene symbol이 Up과 Down에 모두 포함되는지 확인하고 관련 probe를 조사합니다.</li>
+          <li>분석 background를 전체 인간 유전체가 아니라 현재 microarray의 분석 유전자로 정의합니다.</li>
+          <li>Gene symbol을 Entrez ID로 변환하고 목록별 mapping rate를 계산합니다.</li>
+          <li>변환되지 않은 유전자를 찾아 원래 probe annotation을 확인합니다.</li>
+          <li>DAVID에 사용할 identifier와 species를 기록합니다.</li>
+          <li>유의 DEG가 없다면 ORA를 수행할지, GSEA로 넘어갈지 근거를 작성합니다.</li>
+        </ol>
+        <h3 class="h5 mt-4">제출용 기록표</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tbody>
+              <tr><th class="table-light" style="width:39%">Up / Down gene symbol 수</th><td></td></tr>
+              <tr><th class="table-light">반대방향 conflict gene 수</th><td></td></tr>
+              <tr><th class="table-light">Background gene 수</th><td></td></tr>
+              <tr><th class="table-light">Up / Down Entrez ID 수</th><td></td></tr>
+              <tr><th class="table-light">ID mapping rate</th><td></td></tr>
+              <tr><th class="table-light">DAVID identifier</th><td></td></tr>
+              <tr><th class="table-light">Species</th><td>Homo sapiens</td></tr>
+              <tr><th class="table-light">ORA 가능 여부와 근거</th><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="08_limma_deg.html">← Step 08</a>
+      <a class="btn btn-primary" href="10_david.html">Step 10 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

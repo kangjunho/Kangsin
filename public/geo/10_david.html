@@ -1,6 +1,179 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 10. DAVID</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="assets/css/geo-course.css"></head><body><nav class="navbar navbar-light bg-light border-bottom sticky-top"><div class="container"><a class="navbar-brand" href="index.html">GEO Microarray Analysis</a><a href="index.html">과정 목차</a></div></nav><header class="lesson-hero py-5"><div class="container" style="max-width:1000px"><span class="badge bg-light text-primary mb-3">Step 10</span><h1 class="display-5 fw-bold">DAVID를 이용한 GO·Pathway 분석</h1><p class="lead">유의한 DEG 목록에서 과대표현된 기능과 경로를 탐색합니다.</p></div></header><main class="container py-5" style="max-width:1000px"><section class="card content-card mb-4"><div class="card-body p-4"><h2>DAVID와 ORA</h2><p>DAVID는 입력한 gene list에 특정 annotation이 기대보다 많이 포함되는지 평가하는 기능 주석 도구입니다. 이 과정에서는 GO와 pathway의 over-representation analysis(ORA)를 수행합니다.</p><a class="btn btn-primary external-link" href="https://davidbioinformatics.nih.gov/" target="_blank">DAVID 공식 홈페이지</a></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>입력 유전자 준비</h2><pre class="code-block"><code>up_genes &lt;- deg_result$gene[deg_result$status == "Up"]
-down_genes &lt;- deg_result$gene[deg_result$status == "Down"]
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 10. DAVID GO·KEGG 실습</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
 
-writeLines(up_genes, "results/up_genes.txt")
-writeLines(down_genes, "results/down_genes.txt")</code></pre><div class="tip-box rounded p-3">Up과 Down을 합치면 방향성이 사라지므로 각각 분석합니다.</div></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>웹 실습 순서</h2><div class="flow-row"><span class="flow-item">Gene list</span><span class="flow-arrow">→</span><span class="flow-item">Identifier</span><span class="flow-arrow">→</span><span class="flow-item">Species</span><span class="flow-arrow">→</span><span class="flow-item">Functional Annotation</span><span class="flow-arrow">→</span><span class="flow-item">Export</span></div><ol class="mt-3"><li>Gene symbol 또는 Entrez ID를 한 줄에 하나씩 입력합니다.</li><li>Identifier와 Gene List를 선택합니다.</li><li>Homo sapiens 등 올바른 종을 확인합니다.</li><li>GO Biological Process와 pathway 결과를 확인합니다.</li><li>Count, fold enrichment, P-value와 FDR을 내려받습니다.</li></ol></div></section><section class="card content-card mb-4"><div class="card-body p-4"><h2>Background가 중요한 이유</h2><p>가능하면 전체 인간 유전체가 아니라 해당 microarray 플랫폼에서 실제로 검출·분석된 전체 유전자를 background로 사용합니다.</p><pre class="code-block"><code>background_genes &lt;- rownames(gene_matrix)
-writeLines(background_genes, "results/background_genes.txt")</code></pre></div></section><section class="card content-card mb-5"><div class="card-body p-4"><h2>해석 주의점</h2><ul><li>FDR을 우선 확인합니다.</li><li>GO term은 계층 구조 때문에 서로 중복됩니다.</li><li>유전자 수가 매우 적거나 많으면 결과가 불안정할 수 있습니다.</li><li>경로가 유의하다는 것은 해당 경로 전체가 활성화됐다는 뜻은 아닙니다.</li><li>DAVID 화면은 업데이트에 따라 달라질 수 있습니다.</li></ul></div></section><div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="09_visualization.html">← Step 09</a><a class="btn btn-primary" href="11_string.html">Step 11 →</a></div></main></body></html>
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 10</span>
+      <h1 class="display-5 fw-bold">DAVID를 이용한 GO·KEGG 분석</h1>
+      <p class="lead mb-0">Step 09에서 준비한 Up·Down·background 목록으로 과대표현분석을 수행합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">DAVID에서 수행할 분석</h2>
+        <p>DAVID는 입력 유전자 목록에 특정 기능 annotation이 background에 비해 과대표현되어 있는지 평가하는 웹 기반 기능 주석 도구입니다.</p>
+        <div class="flow-row my-3">
+          <span class="flow-item">Up genes</span><span class="flow-arrow">→</span>
+          <span class="flow-item">GO·KEGG ORA</span>
+          <span class="flow-item">Down genes</span><span class="flow-arrow">→</span>
+          <span class="flow-item">GO·KEGG ORA</span>
+        </div>
+        <a class="btn btn-primary external-link" href="https://davidbioinformatics.nih.gov/" target="_blank" rel="noopener">DAVID 공식 홈페이지</a>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. 입력 파일 확인</h2>
+        <pre class="code-block"><code>input_dir &lt;- "results/enrichment_input"
+
+up_genes &lt;- readLines(
+  file.path(input_dir, "up_gene_symbols.txt")
+)
+down_genes &lt;- readLines(
+  file.path(input_dir, "down_gene_symbols.txt")
+)
+background_genes &lt;- readLines(
+  file.path(input_dir, "background_gene_symbols.txt")
+)
+
+length(up_genes)
+length(down_genes)
+length(background_genes)</code></pre>
+        <p>Gene symbol 대신 Entrez ID를 사용할 경우 각각 <code>up_entrez_ids.txt</code>, <code>down_entrez_ids.txt</code>, <code>background_entrez_ids.txt</code>를 사용합니다.</p>
+        <div class="warning-box rounded p-3"><strong>목록이 비어 있다면 DAVID 분석을 강제로 진행하지 않습니다.</strong> Step 08의 DEG 기준과 Step 09의 conflict·mapping report를 확인하고, 유의 DEG가 없다면 GSEA를 고려합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. Gene list 업로드</h2>
+        <ol class="step-list">
+          <li>DAVID의 Functional Annotation 도구를 엽니다.</li>
+          <li><code>up_gene_symbols.txt</code>의 내용을 한 줄에 하나씩 붙여넣거나 파일을 업로드합니다.</li>
+          <li>Identifier를 <strong>OFFICIAL_GENE_SYMBOL</strong>로 지정합니다.</li>
+          <li>List Type을 <strong>Gene List</strong>로 선택합니다.</li>
+          <li>Species가 <strong>Homo sapiens</strong>인지 확인합니다.</li>
+        </ol>
+        <div class="tip-box rounded p-3">Entrez 파일을 사용한다면 Identifier도 <strong>ENTREZ_GENE_ID</strong>로 변경해야 합니다. 파일의 ID 종류와 DAVID의 Identifier 선택이 다르면 mapping rate가 낮아집니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. 사용자 background 등록</h2>
+        <p><code>background_gene_symbols.txt</code> 또는 <code>background_entrez_ids.txt</code>를 background 목록으로 등록합니다. Gene List와 background는 같은 ID 체계를 사용해야 합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>Gene List</th><th>Background</th><th>Identifier</th></tr></thead>
+            <tbody>
+              <tr><td><code>up_gene_symbols.txt</code></td><td><code>background_gene_symbols.txt</code></td><td>OFFICIAL_GENE_SYMBOL</td></tr>
+              <tr><td><code>up_entrez_ids.txt</code></td><td><code>background_entrez_ids.txt</code></td><td>ENTREZ_GENE_ID</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3"><strong>Up은 Up background, Down은 Down background를 사용하는 것이 아닙니다.</strong> 두 분석 모두 실제 DEG가 선택될 수 있었던 동일한 전체 분석 유전자 background를 사용합니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. GO와 KEGG 결과 확인</h2>
+        <p>Functional Annotation 결과에서 다음 범주를 확인합니다.</p>
+        <ul>
+          <li>Gene Ontology Biological Process</li>
+          <li>Gene Ontology Cellular Component</li>
+          <li>Gene Ontology Molecular Function</li>
+          <li>KEGG Pathway</li>
+        </ul>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>결과 열</th><th>의미</th></tr></thead>
+            <tbody>
+              <tr><td>Count</td><td>입력 목록에서 해당 term에 포함된 유전자 수</td></tr>
+              <tr><td>%</td><td>입력 목록 중 해당 term 유전자의 비율</td></tr>
+              <tr><td>P-value</td><td>과대표현에 대한 보정 전 유의확률</td></tr>
+              <tr><td>Fold Enrichment</td><td>background의 기대 비율과 비교한 과대표현 정도</td></tr>
+              <tr><td>Benjamini</td><td>다중검정을 고려한 FDR 계열 보정값</td></tr>
+              <tr><td>Genes</td><td>해당 term을 유의하게 만든 입력 유전자</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. Up과 Down을 각각 반복 분석</h2>
+        <ol class="step-list">
+          <li>Up 목록과 전체 background로 분석하고 결과를 내려받습니다.</li>
+          <li>현재 Gene List를 Down 목록으로 교체합니다.</li>
+          <li>동일한 ID 체계와 동일한 background를 유지합니다.</li>
+          <li>GO BP·CC·MF와 KEGG 결과를 각각 내려받습니다.</li>
+          <li>Up과 Down 결과에서 공유되거나 반대 방향으로 나타나는 기능을 비교합니다.</li>
+        </ol>
+        <pre class="code-block"><code>results/enrichment/
+├─ DAVID_up_GO_BP.csv
+├─ DAVID_up_GO_CC.csv
+├─ DAVID_up_GO_MF.csv
+├─ DAVID_up_KEGG.csv
+├─ DAVID_down_GO_BP.csv
+├─ DAVID_down_GO_CC.csv
+├─ DAVID_down_GO_MF.csv
+└─ DAVID_down_KEGG.csv</code></pre>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. 결과 해석 시 주의사항</h2>
+        <ul>
+          <li>P-value만 보지 않고 Benjamini 등 다중검정 보정값을 우선 확인합니다.</li>
+          <li>Count가 매우 작은 term은 일부 유전자에 의해 결과가 좌우될 수 있습니다.</li>
+          <li>GO term은 계층구조와 유전자 공유 때문에 서로 중복됩니다.</li>
+          <li>Fold Enrichment가 크더라도 유전자 수와 FDR이 불충분할 수 있습니다.</li>
+          <li>같은 유전자가 여러 term과 pathway를 동시에 유의하게 만들 수 있습니다.</li>
+          <li>Pathway 이름만 보고 활성·억제를 결정하지 않고 포함 유전자를 확인합니다.</li>
+          <li>DAVID의 데이터베이스 버전과 분석 날짜를 기록합니다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">실습 문제</h2>
+        <ol class="step-list">
+          <li>Up과 Down 분석에 사용한 gene 수, background 수와 mapping rate를 기록합니다.</li>
+          <li>Up GO BP와 Down GO BP에서 FDR이 가장 작은 term 5개를 정리합니다.</li>
+          <li>Up과 Down에 공통으로 나타나는 term이 있다면 구성 유전자를 비교합니다.</li>
+          <li>KEGG 결과에서 Count, Fold Enrichment와 FDR을 함께 고려해 후보 pathway를 선택합니다.</li>
+          <li>선택한 pathway가 활성화 또는 억제되었다고 단정할 수 있는지 근거를 작성합니다.</li>
+        </ol>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="09_visualization.html">← Step 09</a>
+      <a class="btn btn-primary" href="11_string.html">Step 11 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
