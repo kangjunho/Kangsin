@@ -1,4 +1,4 @@
-# Step 05. GSE69657 직접 전처리와 gene-level limma 분석
+# Step 05. GSE69657 Probe ID to Gene Symbol and limma analysis
 
 # 1. 패키지와 폴더 -----------------------------------------------------------
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
@@ -21,11 +21,12 @@ dir.create("data_raw", showWarnings = FALSE)
 dir.create("results", showWarnings = FALSE)
 options(timeout = 600)
 
-# 2. GSE69657 Series Matrix ---------------------------------------------------
+# 2. GSE69657 다운로드 --------------------------------------------------------
 gset_list <- getGEO(
   "GSE69657",
   GSEMatrix = TRUE,
   AnnotGPL = TRUE,
+  parseCharacteristics = TRUE,
   destdir = "data_raw"
 )
 
@@ -34,7 +35,7 @@ gset <- gset_list[[1]]
 print(annotation(gset))
 print(gset)
 
-# 3. exprs, pData, fData ------------------------------------------------------
+# 3. 발현값, 임상정보, probe annotation --------------------------------------
 expression_data <- exprs(gset)
 sample_metadata <- pData(gset)
 probe_annotation <- fData(gset)
@@ -64,42 +65,25 @@ write.csv(
   fileEncoding = "CP949"
 )
 
-# 4. chemoresponse 그룹 -------------------------------------------------------
-# GEO 화면의 chemoresponse:ch1 정보는 GEOquery에서
-# characteristics_ch1.3 같은 이름으로 표시될 수 있습니다.
-response_candidates <- colnames(sample_metadata)[
-  vapply(
-    sample_metadata,
-    function(x) {
-      any(grepl(
-        "^chemoresponse:",
-        as.character(x),
-        ignore.case = TRUE
-      ))
-    },
-    logical(1)
-  )
-]
+# 4. pData를 직접 확인하고 그룹 열 선택 --------------------------------------
+print(colnames(sample_metadata))
+View(sample_metadata)
 
-print(response_candidates)
+# GSE 설명과 pData를 직접 확인한 뒤 선택한 열입니다.
+group_column <- "chemoresponse:ch1"
 
-if (length(response_candidates) != 1) {
+if (!group_column %in% colnames(sample_metadata)) {
   stop(
-    "chemoresponse 후보 열이 하나가 아닙니다. ",
-    "colnames(sample_metadata)와 unique() 값을 확인하세요."
+    "chemoresponse:ch1 열이 없습니다. ",
+    "parseCharacteristics=TRUE로 다시 받고 colnames(sample_metadata)를 확인하세요."
   )
 }
 
-response_col <- response_candidates[1]
-print(unique(sample_metadata[[response_col]]))
+print(unique(sample_metadata[[group_column]]))
+print(table(sample_metadata[[group_column]], useNA = "ifany"))
 
-chemoresponse <- trimws(
-  sub(
-    "^chemoresponse:\\s*",
-    "",
-    sample_metadata[[response_col]],
-    ignore.case = TRUE
-  )
+chemoresponse <- tolower(
+  trimws(as.character(sample_metadata[[group_column]]))
 )
 
 group <- factor(
@@ -110,12 +94,15 @@ group <- factor(
 print(table(group, useNA = "ifany"))
 
 if (anyNA(group)) {
-  stop("group에 NA가 있습니다. chemoresponse의 실제 철자를 확인하세요.")
+  stop(
+    "group에 NA가 있습니다. ",
+    "unique(sample_metadata[[group_column]])로 실제 값을 확인하세요."
+  )
 }
 
 sample_info <- data.frame(
   GSM = rownames(sample_metadata),
-  chemoresponse_original = sample_metadata[[response_col]],
+  chemoresponse_original = sample_metadata[[group_column]],
   group = group,
   stringsAsFactors = FALSE
 )
@@ -127,7 +114,7 @@ write.csv(
   fileEncoding = "CP949"
 )
 
-# 5. 30개 Series Matrix 전처리 -----------------------------------------------
+# 5. 발현값 범위 확인과 log2 변환 --------------------------------------------
 ex <- expression_data
 
 print(
@@ -138,38 +125,36 @@ print(
   )
 )
 
+# GSE69657의 값은 수백~수천 범위이므로 log2 변환합니다.
 ex[ex <= 0] <- NA_real_
 ex_log2 <- log2(ex)
 
 keep_complete <- rowSums(is.na(ex_log2)) == 0
 ex_log2 <- ex_log2[keep_complete, , drop = FALSE]
 
-ex_normalized <- normalizeBetweenArrays(
-  ex_log2,
-  method = "quantile"
-)
-
 pdf(
-  "results/GSE69657_normalization_boxplots.pdf",
+  "results/GSE69657_log2_boxplots.pdf",
   width = 12,
   height = 7
 )
 par(mfrow = c(2, 1), mar = c(7, 4, 3, 1))
 boxplot(
+  ex,
+  outline = FALSE,
+  las = 2,
+  main = "Original expression values"
+)
+boxplot(
   ex_log2,
   outline = FALSE,
   las = 2,
-  main = "Before quantile normalization"
-)
-boxplot(
-  ex_normalized,
-  outline = FALSE,
-  las = 2,
-  main = "After quantile normalization"
+  main = "Log2-transformed expression values"
 )
 dev.off()
 
-# 6. Probe ID를 gene symbol로 평균 통합 --------------------------------------
+# 6. Probe ID를 Gene symbol로 변환 -------------------------------------------
+print(colnames(probe_annotation))
+
 if (!"Gene.symbol" %in% colnames(probe_annotation)) {
   stop(
     "fData에 Gene.symbol 열이 없습니다. ",
@@ -179,16 +164,19 @@ if (!"Gene.symbol" %in% colnames(probe_annotation)) {
 }
 
 gene_symbol <- as.character(
-  probe_annotation[rownames(ex_normalized), "Gene.symbol"]
+  probe_annotation[rownames(ex_log2), "Gene.symbol"]
 )
+
+# 여러 symbol이 ///로 연결된 경우 첫 번째 symbol을 대표값으로 사용합니다.
 gene_symbol <- trimws(sub("///.*$", "", gene_symbol))
 
 expression_with_symbol <- data.frame(
   Gene.symbol = gene_symbol,
-  ex_normalized,
+  ex_log2,
   check.names = FALSE
 )
 
+# Gene symbol이 없는 probe는 제외합니다.
 keep_symbol <-
   !is.na(expression_with_symbol$Gene.symbol) &
   expression_with_symbol$Gene.symbol != "" &
@@ -197,6 +185,7 @@ keep_symbol <-
 expression_with_symbol <-
   expression_with_symbol[keep_symbol, , drop = FALSE]
 
+# 같은 Gene symbol에 대응하는 여러 probe의 sample별 평균을 계산합니다.
 gene_expression_df <- aggregate(
   . ~ Gene.symbol,
   data = expression_with_symbol,
@@ -210,21 +199,22 @@ gene_expression <- as.matrix(
 )
 storage.mode(gene_expression) <- "numeric"
 
-print(dim(ex_normalized))
+print(dim(ex_log2))
 print(dim(gene_expression))
+print(head(gene_expression))
+View(gene_expression)
+
+stopifnot(
+  identical(colnames(gene_expression), rownames(sample_metadata))
+)
 
 write.csv(
   gene_expression,
-  "results/GSE69657_gene_expression_normalized.csv",
+  "results/GSE69657_gene_symbol_expression.csv",
   fileEncoding = "CP949"
 )
 
-# 7. Gene-level limma ---------------------------------------------------------
-stopifnot(
-  identical(colnames(gene_expression), rownames(sample_metadata)),
-  length(group) == ncol(gene_expression)
-)
-
+# 7. Gene symbol 발현행렬로 limma 분석 ---------------------------------------
 design <- model.matrix(~ 0 + group)
 colnames(design) <- c("Responder", "Nonresponder")
 rownames(design) <- colnames(gene_expression)
@@ -250,6 +240,7 @@ deg_results <- topTable(
   sort.by = "P",
   number = Inf
 )
+
 deg_results$Gene.symbol <- rownames(deg_results)
 
 up_degs <- deg_results[
@@ -285,84 +276,7 @@ write.csv(
   fileEncoding = "CP949"
 )
 
-# 8. 선택 실습: 16개 raw CEL에 RMA -------------------------------------------
-# 주의: GSE69657의 30개 sample 중 CEL 파일은 16개만 제공됩니다.
-# 아래 분석은 30개 Series Matrix 분석과 별도의 부분집합 분석입니다.
-#
-# BiocManager::install(c("affy", "hgu133plus2cdf"))
-# install.packages("R.utils")
-# library(affy)
-# library(R.utils)
-#
-# getGEOSuppFiles(
-#   "GSE69657",
-#   makeDirectory = TRUE,
-#   baseDir = "data_raw"
-# )
-#
-# untar(
-#   "data_raw/GSE69657/GSE69657_RAW.tar",
-#   exdir = "data_raw/GSE69657/CEL"
-# )
-#
-# cel_gz <- list.files(
-#   "data_raw/GSE69657/CEL",
-#   pattern = "\\.CEL\\.gz$",
-#   full.names = TRUE,
-#   ignore.case = TRUE
-# )
-#
-# vapply(
-#   cel_gz,
-#   gunzip,
-#   FUN.VALUE = character(1),
-#   remove = FALSE,
-#   overwrite = TRUE
-# )
-#
-# cel_files <- list.files(
-#   "data_raw/GSE69657/CEL",
-#   pattern = "\\.CEL$",
-#   full.names = TRUE,
-#   ignore.case = TRUE
-# )
-# stopifnot(length(cel_files) == 16)
-#
-# raw_affy <- ReadAffy(filenames = cel_files)
-# rma_eset <- rma(raw_affy)
-# rma_expression <- exprs(rma_eset)
-# print(dim(rma_expression))
-#
-# rma_gene_symbol <- as.character(
-#   probe_annotation[rownames(rma_expression), "Gene.symbol"]
-# )
-# rma_gene_symbol <- trimws(sub("///.*$", "", rma_gene_symbol))
-#
-# rma_with_symbol <- data.frame(
-#   Gene.symbol = rma_gene_symbol,
-#   rma_expression,
-#   check.names = FALSE
-# )
-# rma_with_symbol <- rma_with_symbol[
-#   !is.na(rma_with_symbol$Gene.symbol) &
-#     rma_with_symbol$Gene.symbol != "" &
-#     rma_with_symbol$Gene.symbol != "---",
-#   ,
-#   drop = FALSE
-# ]
-#
-# rma_gene_df <- aggregate(
-#   . ~ Gene.symbol,
-#   data = rma_with_symbol,
-#   FUN = mean,
-#   na.rm = TRUE
-# )
-# rownames(rma_gene_df) <- rma_gene_df$Gene.symbol
-# rma_gene_expression <- as.matrix(
-#   rma_gene_df[, -1, drop = FALSE]
-# )
-
-# 9. 분석 환경 기록 ----------------------------------------------------------
+# 8. 분석 환경 기록 ----------------------------------------------------------
 capture.output(
   sessionInfo(),
   file = "results/GSE69657_sessionInfo.txt"
