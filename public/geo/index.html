@@ -126,50 +126,17 @@
             <div class="card-body p-4">
               <span class="step-number mb-3">05</span>
               <h3 class="h5">직접 분석과 GEO2R 비교</h3>
-              <p class="text-muted">발현값·sample metadata·probe annotation을 직접 분석하고 GEO2R 결과와 검산합니다.</p>
+              <p class="text-muted">발현값·임상정보·probe annotation을 분리하고 quantile normalization과 RMA를 실습합니다.</p>
               <a href="05_geo2r_script.html" class="btn btn-primary">실습 시작</a>
             </div>
           </div>
         </div>
 
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">06</span>
-              <h3 class="h5">GEOquery 다운로드</h3>
-              <p class="text-muted">발현행렬, sample metadata와 probe annotation을 R로 가져옵니다.</p>
-              <a href="06_geo_download.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">07</span>
-              <h3 class="h5">전처리와 QC</h3>
-              <p class="text-muted">분포, PCA, 상관성과 probe annotation을 점검합니다.</p>
-              <a href="07_preprocessing.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">08</span>
-              <h3 class="h5">limma DEG</h3>
-              <p class="text-muted">Design과 contrast를 구성하고 차등발현 유전자를 선별합니다.</p>
-              <a href="08_limma_deg.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">09</span><h3 class="h5">GO·KEGG 준비</h3><p class="text-muted">기능분석의 원리를 이해하고 Up·Down·background 유전자 목록을 준비합니다.</p><a href="09_visualization.html" class="btn btn-primary">실습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">10</span><h3 class="h5">DAVID GO·Pathway</h3><p class="text-muted">Up·Down DEG에서 과대표현된 기능과 경로를 탐색합니다.</p><a href="10_david.html" class="btn btn-primary">실습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">11</span><h3 class="h5">STRING 기능분석</h3><p class="text-muted">단백질 연관 network, PPI enrichment와 GO·pathway 결과를 해석합니다.</p><a href="11_string.html" class="btn btn-primary">실습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">12</span><h3 class="h5">GSEA·MSigDB</h3><p class="text-muted">전체 유전자 순위에서 일관된 pathway 변화를 찾습니다.</p><a href="12_gsea.html" class="btn btn-primary">실습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">13</span><h3 class="h5">Cytoscape 네트워크</h3><p class="text-muted">stringApp·MCODE·cytoHubba로 module과 hub gene 후보를 탐색합니다.</p><a href="13_reporting.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">06</span><h3 class="h5">GO·KEGG 준비</h3><p class="text-muted">기능분석의 원리를 이해하고 Up·Down·background 유전자 목록을 준비합니다.</p><a href="09_visualization.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">07</span><h3 class="h5">DAVID GO·Pathway</h3><p class="text-muted">Up·Down DEG에서 과대표현된 기능과 경로를 탐색합니다.</p><a href="10_david.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">08</span><h3 class="h5">STRING 기능분석</h3><p class="text-muted">단백질 연관 network, PPI enrichment와 GO·pathway 결과를 해석합니다.</p><a href="11_string.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">09</span><h3 class="h5">GSEA·MSigDB</h3><p class="text-muted">전체 유전자 순위에서 일관된 pathway 변화를 찾습니다.</p><a href="12_gsea.html" class="btn btn-primary">실습 시작</a></div></div></div>
+        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">10</span><h3 class="h5">Cytoscape 네트워크</h3><p class="text-muted">stringApp·MCODE·cytoHubba로 module과 hub gene 후보를 탐색합니다.</p><a href="13_reporting.html" class="btn btn-primary">실습 시작</a></div></div></div>
       </div>
     </section>
 
