@@ -72,6 +72,12 @@
         </div>
         <a class="btn btn-primary external-link me-2 mb-2" href="https://cytoscape.org/download.html" target="_blank" rel="noopener">Cytoscape 다운로드</a>
         <a class="btn btn-outline-primary external-link mb-2" href="https://cytoscape.org/download-platforms.html" target="_blank" rel="noopener">운영체제별 설치 파일</a>
+        <figure class="figure-card mt-3">
+          <a href="assets/images/cytoscape-download-windows.png" target="_blank">
+            <img class="lesson-img" src="assets/images/cytoscape-download-windows.png" alt="Cytoscape Windows 64-bit 다운로드 화면">
+          </a>
+          <figcaption class="img-caption">그림 1. 공식 다운로드 페이지에서 Windows 64-bit 설치 파일을 선택합니다. 화면의 버전 번호는 접속 시점에 따라 달라질 수 있습니다.</figcaption>
+        </figure>
         <div class="warning-box rounded p-3 mt-3">
           <strong>실행되지 않을 때:</strong> 구형 Cytoscape 또는 Java 경로 충돌, 기관 PC의 설치 권한, 백신 프로그램 차단 여부를 확인합니다. 수업 전 모든 PC에서 Cytoscape가 실제로 실행되는지 점검하는 것이 좋습니다.
         </div>
@@ -97,6 +103,12 @@
         <div class="tip-box rounded p-3">
           패널이 보이지 않는 경우 상단의 <strong>View</strong> 메뉴에서 해당 panel을 다시 표시할 수 있습니다. 앱과 Cytoscape 버전에 따라 위치나 명칭이 조금 다를 수 있습니다.
         </div>
+        <figure class="figure-card mt-3">
+          <a href="assets/images/cytoscape-main-screen.png" target="_blank">
+            <img class="lesson-img" src="assets/images/cytoscape-main-screen.png" alt="Cytoscape 실행 직후 기본 화면">
+          </a>
+          <figcaption class="img-caption">그림 2. Cytoscape 기본 화면. 왼쪽은 Network·Style·Filter, 가운데는 네트워크, 아래는 Node/Edge Table, 오른쪽에는 앱 결과 패널이 표시됩니다.</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -137,6 +149,35 @@
         <div class="warning-box rounded p-3 mt-3">
           App Store 웹페이지의 Install 버튼이 작동하지 않으면 Cytoscape 내부의 App Manager에서 설치합니다. 기관 네트워크나 보안 프로그램 때문에 설치가 실패할 수도 있습니다.
         </div>
+        <div class="row g-3 mt-1">
+          <div class="col-lg-4">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-stringapp-install.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-stringapp-install.png" alt="Cytoscape App Store stringApp 화면">
+              </a>
+              <figcaption class="img-caption">그림 3. <strong>stringApp</strong>: gene symbol을 STRING 데이터베이스에 질의하여 단백질 기능 연관 및 PPI network를 불러옵니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-lg-4">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-mcode-install.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-mcode-install.png" alt="Cytoscape App Store MCODE 화면">
+              </a>
+              <figcaption class="img-caption">그림 4. <strong>MCODE</strong>: 연결이 밀집된 부분을 찾아 기능적 module 또는 protein complex 후보를 제시합니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-lg-4">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-cytohubba-install.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-cytohubba-install.png" alt="Cytoscape App Store cytoHubba 화면">
+              </a>
+              <figcaption class="img-caption">그림 5. <strong>cytoHubba</strong>: Degree, MCC 등으로 node를 순위화하여 hub 후보를 탐색합니다.</figcaption>
+            </figure>
+          </div>
+        </div>
+        <div class="tip-box rounded p-3 mt-3">
+          설치 후 왼쪽 또는 오른쪽에 STRING·MCODE·cytoHubba 탭이 보이지 않으면 <strong>Apps → App Manager → Installed</strong>를 확인한 뒤 Cytoscape를 다시 실행합니다.
+        </div>
       </div>
     </section>
 
@@ -162,6 +203,12 @@ KLF4,-1.07,0.018,Down</code></pre>
         <div class="warning-box rounded p-3">
           Probe ID가 아니라 공식 gene symbol을 사용합니다. 중복 gene symbol은 Step 05에서 정한 기준으로 하나의 대표값으로 정리해야 합니다.
         </div>
+        <figure class="figure-card mt-3">
+          <a href="assets/images/cytoscape-up-deg-excel.png" target="_blank">
+            <img class="lesson-img" src="assets/images/cytoscape-up-deg-excel.png" alt="Excel에서 확인한 상향조절 DEG 표">
+          </a>
+          <figcaption class="img-caption">그림 6. Step 05에서 저장한 Up DEG 표의 예. STRING 검색에는 <code>Gene.symbol</code> 열만 복사하여 한 줄에 하나씩 입력합니다.</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -184,44 +231,166 @@ KLF4,-1.07,0.018,Down</code></pre>
         <div class="tip-box rounded p-3 mt-3">
           Up과 Down network를 별도로 만들고 이름을 <code>STRING_Up</code>, <code>STRING_Down</code>처럼 변경해 두면 이후 분석에서 혼동을 줄일 수 있습니다.
         </div>
-      </div>
-    </section>
-
-    <section class="card content-card mb-4">
-      <div class="card-body p-4">
-        <h2 class="h3">6. DEG 통계값을 Node Table에 결합</h2>
-        <p>Node 색상을 logFC에 따라 표시하려면 <code>DEG_for_Cytoscape.csv</code>를 현재 network의 node table에 결합합니다.</p>
-        <div class="click-path mb-3"><strong>클릭 순서:</strong> File → Import → Table from File</div>
-        <ol class="step-list">
-          <li><code>DEG_for_Cytoscape.csv</code>를 선택합니다.</li>
-          <li>현재 STRING network의 node table에 가져오도록 설정합니다.</li>
-          <li>CSV의 key column으로 <code>gene</code>을 선택합니다.</li>
-          <li>Network table의 매칭 열로 실제 gene symbol이 들어 있는 열을 선택합니다.</li>
-          <li>미리보기에서 logFC와 adj.P.Val이 숫자형인지 확인한 뒤 Import합니다.</li>
-        </ol>
-        <div class="warning-box rounded p-3">
-          STRING network의 열 이름은 버전에 따라 <code>name</code>, <code>display name</code>, <code>query term</code> 등으로 다를 수 있습니다. 열 이름을 외우기보다 Node Table에서 실제 gene symbol이 들어 있는 열을 확인해서 key로 선택합니다.
+        <div class="row g-3 mt-1">
+          <div class="col-md-5">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-string-query.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-string-query.png" alt="Cytoscape STRING 검색창에 유전자 목록 입력">
+              </a>
+              <figcaption class="img-caption">그림 7. STRING 입력창에 <code>Gene.symbol</code> 목록을 붙여넣습니다. 첫 행의 열 이름은 입력하지 않습니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-md-7">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-string-network.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-string-network.png" alt="Cytoscape에 생성된 STRING 네트워크">
+              </a>
+              <figcaption class="img-caption">그림 8. 불러온 STRING network. 아래 Node Table에는 각 node의 identifier와 annotation 정보가 함께 표시됩니다.</figcaption>
+            </figure>
+          </div>
         </div>
-        <p class="mt-3 mb-0">결합 후 Node Table에서 <code>logFC</code>, <code>adj.P.Val</code>, <code>regulation</code> 열이 추가되었는지 확인합니다. 값이 전부 비어 있다면 key column이 맞지 않은 것입니다.</p>
       </div>
     </section>
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">7. Style에서 발현 방향 시각화</h2>
+        <h2 class="h3">6. Node Table에 Up·Down 정보 결합</h2>
+        <p>STRING network가 만들어지면 각 node에는 STRING protein ID, gene symbol과 annotation이 저장됩니다. 이 Node Table을 먼저 내보낸 뒤 <code>degs</code> 열을 추가하고 다시 가져오면 Up·Down 정보를 정확하게 network에 연결할 수 있습니다.</p>
+
+        <h3 class="h5 mt-4">6-1. 현재 Node Table 내보내기</h3>
         <ol class="step-list">
-          <li>왼쪽의 <strong>Style</strong> panel을 엽니다.</li>
-          <li><strong>Fill Color</strong>의 Column을 <code>logFC</code>로 설정합니다.</li>
-          <li>Mapping Type을 <strong>Continuous Mapping</strong>으로 설정합니다.</li>
-          <li>음수는 파란색, 0은 흰색, 양수는 빨간색으로 지정합니다.</li>
-          <li><strong>Label</strong>을 gene symbol 열에 연결합니다.</li>
-          <li>필요하면 node 크기를 degree 또는 <code>-log10(adj.P.Val)</code>에 연결합니다.</li>
+          <li>화면 아래의 <strong>Node Table</strong>을 선택합니다.</li>
+          <li>Table 위쪽의 <strong>Export Table</strong> 아이콘을 누릅니다.</li>
+          <li>파일 이름과 저장 위치를 지정하고 CSV 형식으로 저장합니다.</li>
         </ol>
-        <div class="tip-box rounded p-3">
-          Up과 Down을 별도 network로 분석하더라도 동일한 색상 범위와 node 크기 범위를 사용하면 결과를 비교하기 쉽습니다.
+        <div class="row g-3">
+          <div class="col-md-7">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-export-node-table-button.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-export-node-table-button.png" alt="Cytoscape Node Table 내보내기 버튼">
+              </a>
+              <figcaption class="img-caption">그림 9. Node Table의 Export Table 버튼. 오른쪽 방향 화살표가 있는 아이콘을 선택합니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-md-5">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-export-node-table-save.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-export-node-table-save.png" alt="Cytoscape Node Table CSV 저장 창">
+              </a>
+              <figcaption class="img-caption">그림 10. 내보낼 Node Table의 파일 이름과 저장 위치를 지정합니다.</figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <h3 class="h5 mt-4">6-2. Excel에서 <code>degs</code> 열 추가</h3>
+        <p>내보낸 CSV를 Excel에서 열고 새로운 열 이름을 <code>degs</code>로 지정합니다. 각 gene이 상향조절 유전자이면 <code>up</code>, 하향조절 유전자이면 <code>down</code>을 입력합니다.</p>
+        <ol class="step-list">
+          <li><code>display name</code> 또는 <code>query term</code> 열에서 gene symbol을 확인합니다.</li>
+          <li>Step 05에서 저장한 Up·Down DEG 목록과 비교해 <code>degs</code> 열을 작성합니다.</li>
+          <li>기존 <code>@id</code> 열의 값과 행 순서는 변경하지 않습니다.</li>
+          <li>CSV 형식으로 다시 저장합니다.</li>
+        </ol>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-node-table-excel.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-node-table-excel.png" alt="Excel로 연 Cytoscape Node Table">
+              </a>
+              <figcaption class="img-caption">그림 11. Cytoscape에서 내보낸 Node Table. <code>@id</code>와 <code>display name</code>을 확인합니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-md-6">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-add-degs-column.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-add-degs-column.png" alt="Node Table에 degs 열과 up 값을 추가한 Excel 화면">
+              </a>
+              <figcaption class="img-caption">그림 12. 새로운 <code>degs</code> 열을 만들고 각 node에 <code>up</code> 또는 <code>down</code>을 입력한 예.</figcaption>
+            </figure>
+          </div>
         </div>
         <div class="warning-box rounded p-3 mt-3">
-          Node 크기를 degree로 지정하면 네트워크 중심성을, 유의확률로 지정하면 DEG 통계적 유의성을 표현합니다. 무엇을 표현했는지 figure legend에 명확히 기록합니다.
+          <strong><code>@id</code>를 변경하지 마세요.</strong> <code>@id</code>는 Cytoscape network의 각 node를 구분하는 고유한 key입니다. 이 값이 삭제되거나 바뀌면 수정한 표를 기존 node에 정확히 연결할 수 없습니다.
+        </div>
+
+        <h3 class="h5 mt-4">6-3. 수정한 표를 Node Table로 가져오기</h3>
+        <ol class="step-list">
+          <li>Node Table 위쪽의 <strong>Import Table</strong> 아이콘을 누릅니다.</li>
+          <li>수정하여 저장한 CSV 파일을 선택합니다.</li>
+          <li><strong>Import Data as</strong>를 <strong>Node Table Columns</strong>로 지정합니다.</li>
+          <li><strong>Key Column for Network</strong>를 <code>@id</code>로 지정합니다.</li>
+          <li>가져올 표의 key도 <code>@id</code>인지 확인한 뒤 <strong>OK</strong>를 누릅니다.</li>
+        </ol>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-import-table-button.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-import-table-button.png" alt="Cytoscape Node Table 가져오기 버튼">
+              </a>
+              <figcaption class="img-caption">그림 13. Node Table의 Import Table 버튼. 왼쪽 방향 화살표가 있는 아이콘을 선택합니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-md-6">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-select-import-table.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-select-import-table.png" alt="수정한 CSV 파일 선택 화면">
+              </a>
+              <figcaption class="img-caption">그림 14. <code>degs</code> 열을 추가하여 저장한 CSV 파일을 선택합니다.</figcaption>
+            </figure>
+          </div>
+        </div>
+        <figure class="figure-card mt-3">
+          <a href="assets/images/cytoscape-key-column-network-id.png" target="_blank">
+            <img class="lesson-img" src="assets/images/cytoscape-key-column-network-id.png" alt="Key Column for Network를 @id로 지정한 화면">
+          </a>
+          <figcaption class="img-caption">그림 15. 가장 중요한 설정입니다. Network와 입력 표에서 동일한 <code>@id</code>를 key로 사용해야 각 행의 <code>degs</code> 정보가 올바른 node에 연결됩니다.</figcaption>
+        </figure>
+        <div class="warning-box rounded p-3 mt-3">
+          <strong>Key Column for Network를 맞추는 것이 핵심입니다.</strong> 가져온 <code>degs</code> 값이 모두 비어 있거나 일부 node에 잘못 연결된다면 분석을 계속하지 말고 network와 입력 파일의 key 열 및 실제 값이 동일한지 먼저 확인하세요. 영문 대·소문자를 구분하도록 설정한 경우 값의 대·소문자도 같아야 합니다.
+        </div>
+        <figure class="figure-card mt-3">
+          <a href="assets/images/cytoscape-degs-column-imported.png" target="_blank">
+            <img class="lesson-img" src="assets/images/cytoscape-degs-column-imported.png" alt="Node Table에 degs 열이 추가된 화면">
+          </a>
+          <figcaption class="img-caption">그림 16. 가져오기가 완료되면 Node Table 끝부분에 <code>degs</code> 열과 <code>up</code>/<code>down</code> 값이 표시됩니다.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. Up·Down 유전자의 색상 변경</h2>
+        <p>Node Table에 추가한 <code>degs</code> 열을 Style의 Fill Color에 연결하면 상향조절 유전자와 하향조절 유전자를 서로 다른 색으로 표시할 수 있습니다.</p>
+        <ol class="step-list">
+          <li>왼쪽의 <strong>Style</strong> panel을 엽니다.</li>
+          <li>Node 속성의 <strong>Fill Color</strong>를 펼칩니다.</li>
+          <li>Column을 <code>degs</code>로 선택합니다.</li>
+          <li>Mapping Type을 <strong>Discrete Mapping</strong>으로 설정합니다.</li>
+          <li><code>up</code>은 빨간색, <code>down</code>은 파란색처럼 원하는 색을 지정합니다.</li>
+          <li><strong>Label</strong>의 Column을 <code>display name</code>으로 지정해 gene symbol을 표시합니다.</li>
+        </ol>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-style-fill-degs.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-style-fill-degs.png" alt="Style Fill Color에서 degs 열을 선택하는 화면">
+              </a>
+              <figcaption class="img-caption">그림 17. Style → Fill Color에서 Column을 <code>degs</code>로 선택합니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-md-6">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-up-down-colors.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-up-down-colors.png" alt="Up과 Down에 서로 다른 node 색상을 지정한 네트워크">
+              </a>
+              <figcaption class="img-caption">그림 18. Discrete Mapping에서 <code>up</code>과 <code>down</code>에 서로 다른 색을 지정한 예. Up DEG만 입력한 network에서는 Up 색상만 나타납니다.</figcaption>
+            </figure>
+          </div>
+        </div>
+        <div class="tip-box rounded p-3">
+          색상에는 정해진 규칙이 없지만 일반적으로 Up은 빨간색, Down은 파란색을 많이 사용합니다. 그림 설명에 각 색상이 의미하는 발현 방향을 반드시 기록합니다.
+        </div>
+        <div class="warning-box rounded p-3 mt-3">
+          이번 방식은 <code>up</code>/<code>down</code>이라는 범주를 색으로 구분하므로 <strong>Discrete Mapping</strong>을 사용합니다. logFC의 연속적인 크기를 색 농도로 표현하려는 경우에만 <strong>Continuous Mapping</strong>을 사용합니다.
         </div>
       </div>
     </section>
@@ -249,6 +418,24 @@ KLF4,-1.07,0.018,Down</code></pre>
         <div class="tip-box rounded p-3 mt-3">
           각 MCODE module의 gene 목록을 내보내 DAVID 또는 STRING functional enrichment에 다시 입력하면 module별 생물학적 기능을 확인할 수 있습니다.
         </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-5">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-mcode-settings.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-mcode-settings.png" alt="MCODE 분석 설정 화면">
+              </a>
+              <figcaption class="img-caption">그림 19. MCODE 설정 예. 처음에는 Degree Cutoff 2, Node Score Cutoff 0.2, K-Core 2, Max Depth 100으로 실행합니다.</figcaption>
+            </figure>
+          </div>
+          <div class="col-md-7">
+            <figure class="figure-card h-100">
+              <a href="assets/images/cytoscape-mcode-result.png" target="_blank">
+                <img class="lesson-img" src="assets/images/cytoscape-mcode-result.png" alt="MCODE 상위 클러스터 결과">
+              </a>
+              <figcaption class="img-caption">그림 20. MCODE 결과 예. 왼쪽 cluster 목록에서 score와 구성 node 수를 확인하고 선택한 module을 별도로 해석합니다.</figcaption>
+            </figure>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -270,12 +457,31 @@ KLF4,-1.07,0.018,Down</code></pre>
           </table>
         </div>
         <ol class="step-list">
-          <li>먼저 <strong>MCC</strong>를 선택해 Top 10 node를 확인합니다.</li>
-          <li>같은 network에서 <strong>Degree</strong> Top 10을 확인합니다.</li>
+          <li>처음 실습에서는 직관적인 <strong>Degree</strong>를 선택해 Top 10 node를 확인합니다.</li>
+          <li>같은 network에서 <strong>MCC</strong> Top 10도 확인합니다.</li>
           <li>두 결과에 공통으로 포함된 gene을 확인합니다.</li>
           <li>필요하면 Betweenness 결과를 추가해 module 연결 후보를 확인합니다.</li>
           <li>순위 결과를 table로 저장합니다.</li>
         </ol>
+        <h3 class="h5 mt-4">STRING ID 대신 gene symbol 표시하기</h3>
+        <p>cytoHubba 결과의 node label이 <code>9606.ENSP...</code> 형태로 보일 수 있습니다. 이 값은 STRING protein identifier이며 분석 오류가 아닙니다. 다음 순서로 표시 열을 바꿉니다.</p>
+        <div class="click-path mb-3"><strong>클릭 순서:</strong> Style → Node → Label → Column → <code>display name</code></div>
+        <ol class="step-list">
+          <li>왼쪽 <strong>Style</strong> panel을 열고 <strong>Node</strong> 속성을 선택합니다.</li>
+          <li><strong>Label</strong> 항목을 펼칩니다.</li>
+          <li>Column을 <code>display name</code>으로 선택합니다.</li>
+          <li>Mapping Type은 <strong>Passthrough Mapping</strong>으로 설정합니다.</li>
+          <li>네트워크 node가 <code>CCL2</code>, <code>IL6</code> 같은 gene symbol로 표시되는지 확인합니다.</li>
+        </ol>
+        <figure class="figure-card mt-3">
+          <a href="assets/images/cytoscape-cytohubba-display-name.png" target="_blank">
+            <img class="lesson-img" src="assets/images/cytoscape-cytohubba-display-name.png" alt="cytoHubba 결과의 Label을 display name으로 변경한 화면">
+          </a>
+          <figcaption class="img-caption">그림 21. cytoHubba Degree Top 10 결과에서 Label의 Column을 <code>display name</code>으로 바꾸면 node에 gene symbol이 표시됩니다.</figcaption>
+        </figure>
+        <div class="tip-box rounded p-3 mt-3">
+          <code>display name</code> 열이 보이지 않으면 아래 Node Table에서 gene symbol이 실제로 들어 있는 열을 먼저 확인하세요. Cytoscape와 stringApp 버전에 따라 <code>display name</code>, <code>query term</code>, <code>name</code> 등 열 이름이 달라질 수 있습니다.
+        </div>
         <div class="warning-box rounded p-3">
           <strong>Hub gene ≠ 원인 유전자:</strong> Hub 순위는 STRING의 자료 편향, network score, 추가 interactor와 선택 알고리즘에 영향을 받습니다. DEG의 logFC·FDR, MCODE module, pathway 및 외부 검증을 함께 확인해야 합니다.
         </div>
