@@ -20,7 +20,7 @@
     <div class="container" style="max-width:1000px">
       <span class="badge bg-light text-primary mb-3">Step 05</span>
       <h1 class="display-5 fw-bold">GEO 데이터 직접 전처리와 DEG 분석</h1>
-      <p class="lead mb-0">GSE69657의 발현값·임상정보·probe annotation을 직접 분리하고, GEO2R와 다른 전처리 흐름으로 차등발현 분석을 수행합니다.</p>
+      <p class="lead mb-0">GSE69657의 발현값·임상정보·probe annotation을 직접 분리하고, gene-level 차등발현 분석을 수행한 뒤 GEO2R 결과와 비교합니다.</p>
     </div>
   </header>
 
@@ -33,7 +33,7 @@
           <span class="flow-item">exprs·pData·fData</span><span class="flow-arrow">→</span>
           <span class="flow-item">전처리</span><span class="flow-arrow">→</span>
           <span class="flow-item">Probe→Gene</span><span class="flow-arrow">→</span>
-          <span class="flow-item">limma</span>
+          <span class="flow-item">limma·GEO2R 비교</span>
         </div>
         <ol class="step-list mb-0">
           <li>30개 sample의 Series Matrix를 내려받고 ExpressionSet 구조를 이해합니다.</li>
@@ -41,40 +41,20 @@
           <li>발현값의 범위를 확인한 뒤 필요한 경우 log2 변환합니다.</li>
           <li>Probe ID를 gene symbol로 변환하고 중복 symbol은 <code>aggregate()</code>로 평균을 계산합니다.</li>
           <li>Gene symbol로 구성된 발현행렬을 이용해 limma 분석을 수행합니다.</li>
+          <li>GEO2R의 probe-level 결과와 직접 분석한 gene-level DEG 결과를 비교합니다.</li>
         </ol>
       </div>
     </section>
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">1. 패키지와 폴더 준비</h2>
-        <pre class="code-block"><code>if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
-}
-
-needed &lt;- c("GEOquery", "Biobase", "limma")
-missing &lt;- needed[
-  !vapply(needed, requireNamespace, logical(1), quietly = TRUE)
-]
-if (length(missing) &gt; 0) {
-  BiocManager::install(missing, ask = FALSE, update = FALSE)
-}
-
-library(GEOquery)
+        <h2 class="h3">1. GSE69657 내려받기</h2>
+        <p>Step 01에서 설치한 패키지를 불러온 뒤 바로 데이터를 내려받습니다.</p>
+        <pre class="code-block"><code>library(GEOquery)
 library(Biobase)
 library(limma)
 
-dir.create("data_raw", showWarnings = FALSE)
-dir.create("results", showWarnings = FALSE)
-options(timeout = 600)</code></pre>
-        <a class="btn btn-primary mt-2" href="scripts/05_geo2r_local.R" download>Step 05 전체 R script 다운로드</a>
-      </div>
-    </section>
-
-    <section class="card content-card mb-4">
-      <div class="card-body p-4">
-        <h2 class="h3">2. GSE69657 내려받기</h2>
-        <pre class="code-block"><code>gset_list &lt;- getGEO(
+gset_list &lt;- getGEO(
   "GSE69657",
   GSEMatrix = TRUE,
   AnnotGPL = TRUE,
@@ -87,6 +67,7 @@ gset &lt;- gset_list[[1]]
 
 annotation(gset)
 gset</code></pre>
+        <a class="btn btn-primary mt-2 mb-3" href="scripts/05_geo2r_gse69657.R" download>Step 05 전체 R script 다운로드</a>
         <p>GSE69657은 30개의 colorectal cancer 조직을 GPL570 Affymetrix Human Genome U133 Plus 2.0 Array로 측정한 자료입니다.</p>
         <div class="tip-box rounded p-3"><strong>parseCharacteristics = TRUE:</strong> sample 특성을 가능한 경우 <code>gender:ch1</code>, <code>age:ch1</code>, <code>chemoresponse:ch1</code>처럼 의미 있는 열로 분리합니다.</div>
       </div>
@@ -94,7 +75,7 @@ gset</code></pre>
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">3. exprs(), pData(), fData() 이해하기</h2>
+        <h2 class="h3">2. exprs(), pData(), fData() 이해하기</h2>
         <p><code>getGEO()</code>가 반환한 ExpressionSet에는 서로 연결된 세 개의 데이터 표가 들어 있습니다. 정확히는 <code>exprs()</code>는 숫자형 matrix이고, <code>pData()</code>와 <code>fData()</code>는 data.frame입니다.</p>
         <div class="table-responsive">
           <table class="table table-bordered align-middle">
@@ -169,7 +150,7 @@ identical(rownames(expression_data), rownames(probe_annotation))</code></pre>
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">4. 세 데이터프레임 저장하기</h2>
+        <h2 class="h3">3. 세 데이터프레임 저장하기</h2>
         <p>Windows의 한글 Excel에서 바로 열 때는 <code>CP949</code> 인코딩을 사용할 수 있습니다.</p>
         <pre class="code-block"><code>write.csv(
   expression_data,
@@ -196,7 +177,7 @@ write.csv(
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">5. pData를 직접 확인하고 그룹 열 선택하기</h2>
+        <h2 class="h3">4. pData를 직접 확인하고 그룹 열 선택하기</h2>
         <p>먼저 임상정보 표를 직접 열어 어떤 열이 연구 질문에 적합한지 확인합니다. 이번 데이터에서는 항암치료 반응 여부를 비교하므로 <code>chemoresponse:ch1</code>을 그룹 열로 선택합니다.</p>
         <pre class="code-block"><code>colnames(sample_metadata)
 View(sample_metadata)
@@ -217,7 +198,7 @@ table(sample_metadata[[group_column]], useNA = "ifany")</code></pre>
 
 group &lt;- factor(
   chemoresponse,
-  levels = c("responder", "nonresponder")
+  levels = c("responder", "noresponder")
 )
 
 table(group, useNA = "ifany")
@@ -228,13 +209,13 @@ sample_info &lt;- data.frame(
   group = group
 )
 head(sample_info)</code></pre>
-        <div class="warning-box rounded p-3"><strong>NA가 있으면 분석을 중단합니다.</strong> <code>unique(sample_metadata[[group_column]])</code>로 실제 철자와 공백을 확인한 뒤 그룹 코드를 수정합니다.</div>
+        <div class="warning-box rounded p-3"><strong>실제 값은 <code>responder</code>와 <code>noresponder</code>입니다.</strong> 처음 예상한 <code>nonresponder</code>를 사용하면 17개 sample이 NA가 됩니다. NA가 있으면 <code>unique(sample_metadata[[group_column]])</code>로 실제 철자와 공백을 먼저 확인합니다.</div>
       </div>
     </section>
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">6. 발현값 범위 확인과 log2 변환</h2>
+        <h2 class="h3">5. 발현값 범위 확인과 log2 변환</h2>
         <p>Series Matrix의 값이 이미 log2 scale인지 먼저 확인합니다. 이번 GSE69657 발현값은 수백에서 수천 범위이므로 log2 변환한 값을 사용합니다.</p>
         <pre class="code-block"><code>ex &lt;- expression_data
 
@@ -268,13 +249,13 @@ boxplot(
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">7. Probe ID를 gene symbol로 합치기</h2>
+        <h2 class="h3">6. Probe ID를 gene symbol로 합치기</h2>
         <p>Affymetrix에서는 하나의 유전자를 여러 probe set이 측정할 수 있습니다. log2 변환된 probe 발현값에 gene symbol을 붙이고, 같은 gene symbol에 속하는 probe들의 평균을 계산합니다.</p>
         <pre class="code-block"><code>colnames(probe_annotation)
 
-# GPL570 fData에서 gene symbol 열 사용
+# GPL570 fData에서 실제 열 이름은 "Gene symbol"입니다.
 gene_symbol &lt;- as.character(
-  probe_annotation[rownames(ex_log2), "Gene.symbol"]
+  probe_annotation[rownames(ex_log2), "Gene symbol"]
 )
 
 # "DDR1 /// MIR4640"처럼 여러 symbol이 있으면 첫 symbol 사용
@@ -319,14 +300,14 @@ View(gene_expression)</code></pre>
 
     <section class="card content-card mb-4">
       <div class="card-body p-4">
-        <h2 class="h3">8. Gene-level limma 분석</h2>
+        <h2 class="h3">7. Gene-level limma 분석</h2>
         <pre class="code-block"><code>design &lt;- model.matrix(~ 0 + group)
-colnames(design) &lt;- c("Responder", "Nonresponder")
+colnames(design) &lt;- c("Responder", "Noresponder")
 rownames(design) &lt;- colnames(gene_expression)
 
 contrast_matrix &lt;- makeContrasts(
-  Responder_vs_Nonresponder =
-    Responder - Nonresponder,
+  Responder_vs_Noresponder =
+    Responder - Noresponder,
   levels = design
 )
 
@@ -336,7 +317,7 @@ fit2 &lt;- eBayes(fit2)
 
 deg_results &lt;- topTable(
   fit2,
-  coef = "Responder_vs_Nonresponder",
+  coef = "Responder_vs_Noresponder",
   adjust.method = "BH",
   sort.by = "P",
   number = Inf
@@ -371,7 +352,66 @@ write.csv(
   row.names = FALSE,
   fileEncoding = "CP949"
 )</code></pre>
-        <div class="tip-box rounded p-3"><strong>logFC 방향:</strong> 현재 contrast는 Responder − Nonresponder입니다. logFC가 양수이면 responder에서 높고, 음수이면 nonresponder에서 높습니다.</div>
+        <div class="tip-box rounded p-3"><strong>logFC 방향:</strong> 현재 contrast는 Responder − Noresponder입니다. logFC가 양수이면 responder에서 높고, 음수이면 noresponder에서 높습니다.</div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. GEO2R 결과와 직접 분석 결과 비교</h2>
+        <p>두 결과는 바로 행끼리 비교할 수 없습니다. GEO2R 결과의 한 행은 <strong>probe</strong>이고, 직접 분석 결과의 한 행은 중복 probe를 평균낸 <strong>gene symbol</strong>이기 때문입니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>결과</th><th>분석 단위</th><th>중복 probe 처리</th></tr></thead>
+            <tbody>
+              <tr><td>GEO2R 재현 결과</td><td>Probe ID</td><td>각 probe를 별도로 검정</td></tr>
+              <tr><td>직접 분석 결과</td><td>Gene symbol</td><td>같은 symbol의 발현값을 먼저 평균</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>비교할 때는 GEO2R 결과에서 같은 gene symbol을 가진 probe 중 <code>P.Value</code>가 가장 작은 probe를 대표로 선택합니다. 이는 비교를 위한 규칙이며, 두 분석을 동일하게 만드는 과정은 아닙니다.</p>
+        <pre class="code-block"><code># GEO2R probe 결과에서 유전자별 대표 probe 선택
+geo2r_gene &lt;- geo2r_results[
+  !is.na(geo2r_results$Gene.symbol) &amp;
+    geo2r_results$Gene.symbol != "" &amp;
+    geo2r_results$Gene.symbol != "---",
+]
+
+geo2r_gene &lt;- geo2r_gene[
+  order(geo2r_gene$Gene.symbol, geo2r_gene$P.Value),
+]
+geo2r_gene &lt;- geo2r_gene[
+  !duplicated(geo2r_gene$Gene.symbol),
+]
+
+# 두 결과를 Gene.symbol로 결합
+comparison &lt;- merge(
+  geo2r_gene,
+  deg_results,
+  by = "Gene.symbol",
+  suffixes = c(".GEO2R", ".Direct")
+)
+
+# logFC 방향과 크기 비교
+cor(
+  comparison$logFC.GEO2R,
+  comparison$logFC.Direct,
+  use = "complete.obs"
+)
+
+mean(
+  sign(comparison$logFC.GEO2R) ==
+    sign(comparison$logFC.Direct),
+  na.rm = TRUE
+)</code></pre>
+        <h3 class="h5 mt-4">비교 결과에서 확인할 항목</h3>
+        <ul>
+          <li><strong>logFC 상관계수:</strong> 두 분석에서 변화량의 크기가 얼마나 비슷한지 확인합니다.</li>
+          <li><strong>방향 일치율:</strong> responder에서 증가·감소하는 방향이 같은지 확인합니다.</li>
+          <li><strong>Up/Down 공통 유전자 수:</strong> 동일한 기준(<code>P.Value &lt; 0.05</code>, <code>|logFC| &gt; 1</code>)으로 분류한 뒤 교집합을 확인합니다.</li>
+          <li><strong>Jaccard index:</strong> 두 DEG 집합의 겹침 정도를 0–1 사이 값으로 확인합니다.</li>
+        </ul>
+        <div class="warning-box rounded p-3"><strong>결과가 완전히 같지 않은 것이 정상입니다.</strong> GEO2R는 probe별 모델을 적합하지만 직접 분석은 probe 평균 후 gene별 모델을 적합합니다. 비교 목적은 어느 쪽이 “정답”인지 판정하는 것이 아니라, 전처리와 probe 통합 방법이 결과에 미치는 영향을 이해하는 것입니다.</div>
       </div>
     </section>
 
@@ -382,12 +422,13 @@ write.csv(
           <li><code>expression_data</code>, <code>sample_metadata</code>, <code>probe_annotation</code>의 행과 열이 각각 무엇을 의미하는지 설명합니다.</li>
           <li><code>pData()</code>를 직접 열고 그룹으로 사용할 수 있는 임상정보 열을 확인합니다.</li>
           <li>이번 분석에서 <code>chemoresponse:ch1</code>을 선택한 이유를 설명합니다.</li>
-          <li>responder와 nonresponder의 sample 수를 계산하고 NA가 없는지 확인합니다.</li>
+          <li>responder와 noresponder의 sample 수를 계산하고 NA가 없는지 확인합니다.</li>
           <li>Series Matrix의 값 범위를 확인하고 log2 변환 전후 boxplot을 비교합니다.</li>
           <li>한 gene symbol에 대응하는 probe가 몇 개인지 한 유전자를 선택해 확인합니다.</li>
           <li><code>aggregate()</code> 전후의 행 수가 감소한 이유를 설명합니다.</li>
           <li><code>gene_expression</code>의 행 이름이 Probe ID가 아니라 gene symbol인지 확인합니다.</li>
-          <li>Responder − Nonresponder 방향의 DEG 결과와 Up·Down 목록을 저장합니다.</li>
+          <li>Responder − Noresponder 방향의 DEG 결과와 Up·Down 목록을 저장합니다.</li>
+          <li>GEO2R와 직접 분석 결과의 logFC 상관계수, 방향 일치율, 공통 Up·Down 유전자 수를 확인합니다.</li>
         </ol>
       </div>
     </section>
