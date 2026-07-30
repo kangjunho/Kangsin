@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Step 08. STRING 웹 기반 기능분석</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/geo-course.css">
+  <style>
+    .lesson-figure {
+      border: 1px solid #d9e2ec;
+      border-radius: .75rem;
+      background: #fff;
+      padding: .5rem;
+    }
+    .lesson-figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: .4rem;
+    }
+    .figure-caption {
+      color: #5c6773;
+      font-size: .92rem;
+      margin: .75rem .25rem .25rem;
+    }
+    .click-path {
+      background: #eef6ff;
+      border-left: 5px solid #0d6efd;
+      padding: 1rem;
+      border-radius: .5rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">GEO Microarray Analysis</a>
+      <a href="index.html">과정 목차</a>
+    </div>
+  </nav>
+
+  <header class="lesson-hero py-5">
+    <div class="container" style="max-width:1000px">
+      <span class="badge bg-light text-primary mb-3">Step 08</span>
+      <h1 class="display-5 fw-bold">STRING을 이용한 단백질 네트워크와 기능분석</h1>
+      <p class="lead mb-0">DEG 목록으로 protein association network를 만들고, STRING 웹사이트에서 GO·pathway enrichment를 확인합니다.</p>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:1000px">
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">STRING은 무엇을 분석하는가?</h2>
+        <p>STRING은 알려졌거나 예측된 단백질 간 연관성을 통합하여 네트워크로 보여주는 웹 기반 데이터베이스입니다. 실험 결과, curated database, co-expression, text mining 등 여러 근거를 함께 이용합니다.</p>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <div class="tip-box rounded p-3 h-100">
+              <strong>Protein network</strong><br>
+              입력한 유전자에 대응되는 단백질들이 서로 얼마나 연결되어 있는지 확인합니다.
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="tip-box rounded p-3 h-100">
+              <strong>Functional enrichment</strong><br>
+              입력 단백질에서 과대표현된 GO, KEGG 및 기타 기능 범주를 확인합니다.
+            </div>
+          </div>
+        </div>
+        <div class="warning-box rounded p-3 mt-3">
+          <strong>PPI가 항상 직접적인 물리적 결합을 뜻하지는 않습니다.</strong> STRING의 기본 네트워크에는 같은 생물학적 과정에 관여하거나 함께 발현되는 기능적 association도 포함될 수 있습니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">1. STRING 홈페이지 접속</h2>
+        <p>STRING 공식 홈페이지에 접속한 뒤 중앙의 <strong>SEARCH</strong> 버튼을 클릭합니다. 상단 메뉴의 Search를 선택해도 됩니다.</p>
+        <div class="click-path mb-3"><strong>클릭 순서:</strong> STRING Home → SEARCH</div>
+        <figure class="lesson-figure">
+          <img src="assets/images/string-home.png" alt="STRING 홈페이지의 SEARCH 버튼">
+          <figcaption class="figure-caption">그림 1. STRING 홈페이지와 검색 시작 화면</figcaption>
+        </figure>
+        <a class="btn btn-primary external-link mt-3" href="https://string-db.org/" target="_blank" rel="noopener">STRING 공식 홈페이지 열기</a>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">2. Multiple proteins 선택</h2>
+        <p>여러 DEG를 동시에 분석해야 하므로 왼쪽 메뉴에서 <strong>Multiple proteins</strong>를 선택합니다.</p>
+        <ol class="step-list">
+          <li><strong>List Of Names</strong>에 gene symbol을 한 줄에 하나씩 붙여넣습니다.</li>
+          <li>파일을 직접 올리려면 <strong>Browse</strong>를 이용합니다.</li>
+          <li><strong>Organisms</strong>에서 사람 데이터는 <strong>Homo sapiens</strong>를 선택합니다.</li>
+          <li><strong>SEARCH</strong>를 클릭합니다.</li>
+        </ol>
+        <figure class="lesson-figure">
+          <img src="assets/images/string-multiple-proteins.png" alt="STRING Multiple proteins 입력 화면">
+          <figcaption class="figure-caption">그림 2. Multiple proteins에 유전자 목록을 입력하고 Homo sapiens 선택</figcaption>
+        </figure>
+        <div class="table-responsive mt-3">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>분석</th><th>권장 입력 파일</th></tr></thead>
+            <tbody>
+              <tr><td>Up-regulated network</td><td><code>up_gene_symbols.txt</code></td></tr>
+              <tr><td>Down-regulated network</td><td><code>down_gene_symbols.txt</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3">
+          <strong>Up과 Down을 우선 분리해 분석합니다.</strong> 두 방향을 합쳐 분석하면 동일 network 안에서 발현 증가와 감소의 의미가 섞이게 됩니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">3. 입력 ID와 단백질 매핑 확인</h2>
+        <p>STRING은 입력한 이름을 해당 종의 단백질로 변환합니다. 유사한 이름이 여러 개 발견되면 후보가 여러 개 표시되므로 올바른 단백질을 직접 확인해야 합니다.</p>
+        <figure class="lesson-figure">
+          <img src="assets/images/string-id-mapping.png" alt="STRING 입력 ID 매핑 확인 화면">
+          <figcaption class="figure-caption">그림 3. 각 입력 ID에 대응되는 단백질 후보를 확인하는 화면</figcaption>
+        </figure>
+        <div class="table-responsive mt-3">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>상황</th><th>처리 방법</th></tr></thead>
+            <tbody>
+              <tr><td>후보가 하나만 정확하게 일치</td><td>기본 선택을 유지합니다.</td></tr>
+              <tr><td>후보가 여러 개 표시</td><td>공식 gene symbol과 단백질 설명을 확인해 올바른 항목을 선택합니다.</td></tr>
+              <tr><td>No proteins found</td><td>오래된 symbol, 별칭, 비암호화 RNA 또는 잘못된 taxonomy인지 확인합니다.</td></tr>
+              <tr><td>한 gene에 여러 ID가 묶임</td><td><code>///</code>, <code>;</code> 등으로 합쳐진 annotation을 정리한 뒤 다시 입력합니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>MAPPING</strong> 버튼으로 매핑 정보를 확인하거나 저장하고, 검토가 끝나면 <strong>CONTINUE</strong>를 클릭합니다.</p>
+        <div class="tip-box rounded p-3">
+          <strong>기록할 값:</strong> 처음 입력한 gene 수, 매핑된 protein 수, 매핑되지 않은 gene 수와 제외 이유를 기록합니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">4. Protein association network 확인</h2>
+        <p>매핑을 완료하면 입력 단백질로 구성된 네트워크가 나타납니다. 서로 연결되지 않은 단백질도 분석 목록에 포함될 수 있습니다.</p>
+        <figure class="lesson-figure">
+          <img src="assets/images/string-network.png" alt="STRING protein association network 결과 화면">
+          <figcaption class="figure-caption">그림 4. 입력 단백질의 STRING association network</figcaption>
+        </figure>
+        <div class="table-responsive mt-3">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>요소</th><th>의미</th></tr></thead>
+            <tbody>
+              <tr><td>Node</td><td>단백질을 나타냅니다. 여러 isoform은 일반적으로 하나의 protein-coding locus로 통합됩니다.</td></tr>
+              <tr><td>Edge</td><td>두 단백질 사이의 물리적 또는 기능적 association을 나타냅니다.</td></tr>
+              <tr><td>Edge thickness</td><td>선이 굵을수록 association에 대한 통합 confidence가 높습니다.</td></tr>
+              <tr><td>Node content</td><td>단백질 구조 정보가 알려졌거나 예측되면 노드 내부에 구조가 표시될 수 있습니다.</td></tr>
+              <tr><td>Disconnected node</td><td>현재 score와 조건에서 다른 입력 단백질과 연결 근거가 없는 단백질입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3">
+          네트워크 그림에서 노드 사이의 화면상 거리가 발현량이나 실제 세포 내 거리를 의미하지는 않습니다. 또한 노드 색상은 기본 화면에서 발현 증가·감소를 의미하지 않습니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">5. Settings에서 네트워크 조건 설정</h2>
+        <p>네트워크 아래의 <strong>Settings</strong>에서 분석 조건을 조정합니다. 조건을 바꿀 때마다 결과가 달라질 수 있으므로 최종 설정을 반드시 기록합니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>설정</th><th>설명</th><th>실습 권장값</th></tr></thead>
+            <tbody>
+              <tr><td>Network type</td><td>기능적 association을 포함한 full network 또는 physical subnetwork 선택</td><td>먼저 full network</td></tr>
+              <tr><td>Meaning of network edges</td><td>근거 유형별 색상 또는 confidence 중심 표시</td><td>Evidence로 근거 유형 확인</td></tr>
+              <tr><td>Minimum required interaction score</td><td>네트워크에 포함할 association의 최소 신뢰도</td><td>0.400 medium 또는 0.700 high</td></tr>
+              <tr><td>Max number of interactors</td><td>입력 목록 외에 STRING이 추가할 주변 단백질 수</td><td>0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3">
+          <strong>Additional interactors는 기본 실습에서 0으로 둡니다.</strong> 주변 단백질을 추가하면 네트워크는 풍부해 보이지만, DEG가 아닌 단백질이 분석과 enrichment 결과에 포함될 수 있습니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">6. PPI enrichment 해석</h2>
+        <p><strong>Analysis</strong>를 클릭하면 네트워크의 요약 통계와 PPI enrichment를 확인할 수 있습니다.</p>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>항목</th><th>해석</th></tr></thead>
+            <tbody>
+              <tr><td>Number of nodes</td><td>네트워크에 포함된 단백질 수</td></tr>
+              <tr><td>Number of edges</td><td>현재 조건에서 확인된 association 수</td></tr>
+              <tr><td>Average node degree</td><td>단백질 하나가 평균적으로 연결된 수</td></tr>
+              <tr><td>Expected number of edges</td><td>같은 수의 무작위 단백질에서 기대되는 연결 수</td></tr>
+              <tr><td>PPI enrichment P-value</td><td>관찰된 연결이 무작위 기대보다 많은지 평가한 값</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip-box rounded p-3">
+          PPI enrichment P-value가 작다면 입력 단백질들이 무작위 목록보다 서로 기능적으로 연결되어 있을 가능성을 지지합니다. 그러나 이것만으로 모든 단백질이 직접 결합하거나 동일 pathway에 속한다고 결론 내릴 수는 없습니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">7. STRING Functional enrichment 확인</h2>
+        <p>Analysis 화면의 functional enrichment 표에서 GO와 pathway 결과를 확인합니다. 화면 버전에 따라 범주 명칭이나 배치는 조금 달라질 수 있습니다.</p>
+        <ul>
+          <li><strong>Biological Process:</strong> 입력 단백질이 관여하는 생물학적 과정</li>
+          <li><strong>Molecular Function:</strong> 단백질의 분자 수준 기능</li>
+          <li><strong>Cellular Component:</strong> 단백질이 위치하거나 작용하는 세포 구성요소</li>
+          <li><strong>KEGG Pathways:</strong> 신호전달·대사·질환 관련 pathway</li>
+          <li><strong>Reactome Pathways:</strong> 반응과 pathway 단위의 기능 정보</li>
+        </ul>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light"><tr><th>결과 열</th><th>의미</th></tr></thead>
+            <tbody>
+              <tr><td>Term / Description</td><td>GO term 또는 pathway 이름</td></tr>
+              <tr><td>Observed gene count</td><td>입력 목록에서 해당 기능에 포함된 단백질 수</td></tr>
+              <tr><td>Background gene count</td><td>배경 데이터에서 해당 기능에 포함된 단백질 수</td></tr>
+              <tr><td>Strength</td><td>관찰된 단백질 비율과 무작위 기대 비율의 차이를 나타내는 enrichment 크기</td></tr>
+              <tr><td>False discovery rate</td><td>다중검정을 보정한 유의확률</td></tr>
+              <tr><td>Matching proteins</td><td>해당 결과를 구성하는 실제 입력 단백질</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning-box rounded p-3">
+          STRING의 functional enrichment와 DAVID 결과가 완전히 같을 필요는 없습니다. 사용하는 annotation 자료, 단백질 매핑, background와 통계 계산 방식이 다를 수 있으므로 각 도구의 결과를 독립적으로 기록합니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">8. Clusters와 hub protein</h2>
+        <p><strong>Clusters</strong> 메뉴를 이용하면 연결이 밀집된 하위 네트워크를 탐색할 수 있습니다. 각 cluster가 어떤 기능을 공유하는지 functional enrichment와 함께 확인합니다.</p>
+        <ul>
+          <li>큰 cluster가 반드시 가장 중요한 생물학적 기능을 의미하지는 않습니다.</li>
+          <li>Degree가 높은 단백질은 hub 후보이지만, 데이터베이스에서 많이 연구된 단백질일 가능성도 있습니다.</li>
+          <li>Hub 선정 시 degree뿐 아니라 logFC, FDR, 발현 방향, 기능분석과 선행 문헌을 함께 확인합니다.</li>
+          <li>Up과 Down 네트워크에서 동일한 단백질이나 기능이 반복되는지 비교합니다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card content-card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h3">9. 결과 내려받기와 분석 기록</h2>
+        <p><strong>Exports</strong>에서 네트워크 그림과 표를 저장하고, Analysis의 enrichment 결과도 내려받습니다.</p>
+        <pre class="code-block"><code>results/string/
+├─ STRING_up_network.png
+├─ STRING_up_interactions.tsv
+├─ STRING_up_enrichment.tsv
+├─ STRING_down_network.png
+├─ STRING_down_interactions.tsv
+├─ STRING_down_enrichment.tsv
+└─ STRING_analysis_note.txt</code></pre>
+        <pre class="code-block"><code>organism: Homo sapiens
+input list: Up or Down DEG
+network type: full STRING network
+required score: 0.400 or 0.700
+additional interactors: 0
+mapped / unmapped proteins:
+STRING version:
+analysis date:</code></pre>
+      </div>
+    </section>
+
+    <section class="card content-card mb-5">
+      <div class="card-body p-4">
+        <h2 class="h3">실습 문제</h2>
+        <ol class="step-list">
+          <li>Up gene 목록을 입력하고 전체 gene 수, mapping 성공 수와 mapping 실패 수를 기록하세요.</li>
+          <li>Interaction score를 0.400과 0.700으로 변경하고 node와 edge 수가 어떻게 달라지는지 비교하세요.</li>
+          <li>Additional interactors를 0으로 설정한 상태에서 PPI enrichment P-value를 기록하고 의미를 설명하세요.</li>
+          <li>Functional enrichment에서 FDR이 가장 작은 GO Biological Process 5개를 정리하세요.</li>
+          <li>KEGG 또는 Reactome에서 관심 pathway 하나를 선택하고 matching proteins를 확인하세요.</li>
+          <li>Down gene 목록에도 같은 분석을 반복하고 Up 결과와 공통된 기능 및 서로 다른 기능을 비교하세요.</li>
+          <li>Degree가 높은 hub 후보 3개를 선택하고, DEG 통계와 기능 결과를 근거로 후보 선정이 타당한지 설명하세요.</li>
+        </ol>
+      </div>
+    </section>
+
+    <div class="d-flex justify-content-between">
+      <a class="btn btn-outline-secondary" href="07_david.html">← Step 07</a>
+      <a class="btn btn-primary" href="09_cytoscape.html">Step 09 →</a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
