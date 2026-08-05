@@ -112,31 +112,49 @@
     Seurat에서는 각 샘플을 개별적으로 전처리한 뒤, anchor를 찾고 데이터를 통합합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(Seurat)
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>Step 3에서 이어지는 객체</h6>
+      <p class="mb-0">
+        <code>sample_list</code>에는 ND1~3과 WD1~3의 singlet cell이 저장되어 있으며,
+        각 객체에 <code>NormalizeData()</code>와 <code>FindVariableFeatures()</code>가 이미 적용되었습니다.
+        따라서 Step 4에서는 이 과정을 반복하지 않고 바로 integration feature를 선택합니다.
+      </p>
+    </div>
+  </div>
 
-# sample list 예시
-obj.list <- list(sample1 = obj1, sample2 = obj2, sample3 = obj3)
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
 
-# 각 샘플에서 normalization 및 variable features
-obj.list <- lapply(obj.list, function(x) {
-  x <- NormalizeData(x)
-  x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
-  return(x)
-})
+# 이전 단계에서 사용하던 6개 sample 이름 확인
+names(sample_list)
 
-# integration features 선택
-features <- SelectIntegrationFeatures(object.list = obj.list)
-
-# anchor 찾기
-anchors <- FindIntegrationAnchors(
-  object.list = obj.list,
-  anchor.features = features
+# 각 sample에서 공통적으로 사용할 integration feature 선택
+integration_features <- SelectIntegrationFeatures(
+  object.list = sample_list,
+  nfeatures = 2000
 )
 
-# 데이터 통합
-obj.integrated <- IntegrateData(anchorset = anchors)
+# sample 사이에서 서로 대응되는 anchor 탐색
+anchors <- FindIntegrationAnchors(
+  object.list = sample_list,
+  anchor.features = integration_features,
+  normalization.method = "LogNormalize"
+)
+
+# anchor를 이용하여 하나의 Seurat object로 통합
+integrated_obj <- IntegrateData(
+  anchorset = anchors,
+  normalization.method = "LogNormalize"
+)
 </code></pre>
+
+  <p class="note">
+    <code>SelectIntegrationFeatures()</code>는 6개 샘플의 variable feature 정보를 이용해
+    통합에 사용할 공통 유전자를 선택합니다. <code>FindIntegrationAnchors()</code>는
+    샘플 사이에서 유사한 세포 상태를 연결하는 anchor를 찾고,
+    <code>IntegrateData()</code>는 이 정보를 이용해 batch effect가 보정된
+    <code>integrated</code> assay를 생성합니다.
+  </p>
 
   <!-- E -->
   <h3 class="mt-4">E) 통합 후 기본 분석</h3>
@@ -145,13 +163,13 @@ obj.integrated <- IntegrateData(anchorset = anchors)
   </p>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-DefaultAssay(obj.integrated) <- "integrated"
+DefaultAssay(integrated_obj) <- "integrated"
 
-obj.integrated <- ScaleData(obj.integrated, verbose = FALSE)
-obj.integrated <- RunPCA(obj.integrated, npcs = 30, verbose = FALSE)
-obj.integrated <- RunUMAP(obj.integrated, dims = 1:20)
-obj.integrated <- FindNeighbors(obj.integrated, dims = 1:20)
-obj.integrated <- FindClusters(obj.integrated, resolution = 0.5)
+integrated_obj <- ScaleData(integrated_obj, verbose = FALSE)
+integrated_obj <- RunPCA(integrated_obj, npcs = 30, verbose = FALSE)
+integrated_obj <- RunUMAP(integrated_obj, dims = 1:20)
+integrated_obj <- FindNeighbors(integrated_obj, dims = 1:20)
+integrated_obj <- FindClusters(integrated_obj, resolution = 0.5)
 </code></pre>
 
   <!-- F -->
@@ -161,21 +179,56 @@ obj.integrated <- FindClusters(obj.integrated, resolution = 0.5)
     Seurat integration과 함께 자주 비교되는 방법입니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(Seurat)
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
 library(harmony)
 
-obj <- NormalizeData(obj)
-obj <- FindVariableFeatures(obj)
-obj <- ScaleData(obj)
-obj <- RunPCA(obj, npcs = 30)
+# Harmony는 먼저 sample을 하나의 RNA assay 객체로 병합
+harmony_obj <- merge(
+  x = sample_list[[1]],
+  y = sample_list[-1],
+  add.cell.ids = names(sample_list),
+  project = "Mouse_CRC"
+)
 
-obj <- RunHarmony(obj, group.by.vars = "sample")
+harmony_obj <- NormalizeData(harmony_obj)
+harmony_obj <- FindVariableFeatures(
+  harmony_obj,
+  selection.method = "vst",
+  nfeatures = 2000
+)
+harmony_obj <- ScaleData(harmony_obj)
+harmony_obj <- RunPCA(harmony_obj, npcs = 30)
 
-obj <- RunUMAP(obj, reduction = "harmony", dims = 1:20)
-obj <- FindNeighbors(obj, reduction = "harmony", dims = 1:20)
-obj <- FindClusters(obj, resolution = 0.5)
+# orig.ident를 sample/batch 변수로 사용
+harmony_obj <- RunHarmony(
+  harmony_obj,
+  group.by.vars = "orig.ident"
+)
+
+harmony_obj <- RunUMAP(
+  harmony_obj,
+  reduction = "harmony",
+  dims = 1:20
+)
+harmony_obj <- FindNeighbors(
+  harmony_obj,
+  reduction = "harmony",
+  dims = 1:20
+)
+harmony_obj <- FindClusters(
+  harmony_obj,
+  resolution = 0.5
+)
 </code></pre>
+
+  <div class="card warn-box mb-3">
+    <div class="card-body">
+      <b>중요:</b> ND와 WD는 비교하려는 생물학적 조건이므로
+      <code>condition</code>을 batch 변수로 보정하면 실제 조건 차이가 제거될 수 있습니다.
+      Harmony의 <code>group.by.vars</code>에는 샘플을 구분하는
+      <code>orig.ident</code>와 같은 기술적 batch 변수를 사용합니다.
+    </div>
+  </div>
 
   <!-- G -->
   <h3 class="mt-4">G) Integration 전후 비교</h3>
@@ -183,14 +236,33 @@ obj <- FindClusters(obj, resolution = 0.5)
     Integration이 잘 되었는지는 반드시 전후 UMAP을 비교해서 확인해야 합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# integration 전
-DimPlot(obj, group.by = "sample")
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># sample별 mixing 확인
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "orig.ident"
+)
 
-# integration 후
-DimPlot(obj.integrated, group.by = "sample")
-DimPlot(obj.integrated, label = TRUE)
+# biological condition 분포 확인
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "condition"
+)
+
+# cluster 구조 확인
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  label = TRUE
+)
 </code></pre>
+
+  <p class="note">
+    위 코드는 UMAP과 clustering을 수행한 다음 단계에서 실행합니다.
+    <code>orig.ident</code>로 샘플 간 mixing을 확인하고,
+    <code>condition</code>으로 ND와 WD의 분포가 과도하게 소실되지 않았는지 함께 평가합니다.
+  </p>
 
   <div class="text-center mt-4">
     <img src="../../assets/images/scrna_integration.png"
@@ -224,41 +296,61 @@ DimPlot(obj.integrated, label = TRUE)
 
   <!-- I -->
   <h3 class="mt-4">I) 실습용 전체 코드 예시</h3>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(Seurat)
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
 
-# 1. 개별 샘플 전처리
-obj.list <- list(sample1 = obj1, sample2 = obj2)
+# Step 3에서 정규화와 variable feature 선택을 마친 sample_list 사용
+names(sample_list)
 
-obj.list <- lapply(obj.list, function(x) {
-  x <- NormalizeData(x)
-  x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
-  return(x)
-})
-
-# 2. integration features 선택
-features <- SelectIntegrationFeatures(object.list = obj.list)
-
-# 3. anchors 찾기
-anchors <- FindIntegrationAnchors(
-  object.list = obj.list,
-  anchor.features = features
+# 1. integration features 선택
+integration_features <- SelectIntegrationFeatures(
+  object.list = sample_list,
+  nfeatures = 2000
 )
 
-# 4. integrate
-obj.integrated <- IntegrateData(anchorset = anchors)
+# 2. anchors 찾기
+anchors <- FindIntegrationAnchors(
+  object.list = sample_list,
+  anchor.features = integration_features,
+  normalization.method = "LogNormalize"
+)
+
+# 3. 데이터 통합
+integrated_obj <- IntegrateData(
+  anchorset = anchors,
+  normalization.method = "LogNormalize"
+)
+
+# 4. integrated assay 확인
+Assays(integrated_obj)
+DefaultAssay(integrated_obj) <- "integrated"
 
 # 5. downstream analysis
-DefaultAssay(obj.integrated) <- "integrated"
-obj.integrated <- ScaleData(obj.integrated)
-obj.integrated <- RunPCA(obj.integrated, npcs = 30)
-obj.integrated <- RunUMAP(obj.integrated, dims = 1:20)
-obj.integrated <- FindNeighbors(obj.integrated, dims = 1:20)
-obj.integrated <- FindClusters(obj.integrated, resolution = 0.5)
+integrated_obj <- ScaleData(
+  integrated_obj,
+  verbose = FALSE
+)
+integrated_obj <- RunPCA(
+  integrated_obj,
+  npcs = 30,
+  verbose = FALSE
+)
+integrated_obj <- RunUMAP(
+  integrated_obj,
+  dims = 1:20
+)
+integrated_obj <- FindNeighbors(
+  integrated_obj,
+  dims = 1:20
+)
+integrated_obj <- FindClusters(
+  integrated_obj,
+  resolution = 0.5
+)
 
 # 6. visualization
-DimPlot(obj.integrated, group.by = "sample")
-DimPlot(obj.integrated, label = TRUE)
+DimPlot(integrated_obj, group.by = "orig.ident")
+DimPlot(integrated_obj, group.by = "condition")
+DimPlot(integrated_obj, label = TRUE)
 </code></pre>
 
   <!-- Summary -->
@@ -296,3 +388,4 @@ function copyCode(btn){
 
 </body>
 </html>
+
