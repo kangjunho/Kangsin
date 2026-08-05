@@ -194,6 +194,48 @@
     </div>
   </div>
 
+  <div class="card border-secondary mb-4">
+    <div class="card-header bg-light fw-bold">QC threshold를 정할 때의 일반적인 판단 기준</div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-2">
+          <thead>
+            <tr>
+              <th>지표</th>
+              <th>낮은 값이 의미할 수 있는 것</th>
+              <th>높은 값이 의미할 수 있는 것</th>
+              <th>판단 방법</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>nFeature_RNA</code></td>
+              <td>빈 droplet, 손상된 세포, RNA가 적은 세포</td>
+              <td>RNA가 풍부한 세포 또는 doublet/multiplet</td>
+              <td>샘플별 분포의 낮은 꼬리와 높은 꼬리를 확인</td>
+            </tr>
+            <tr>
+              <td><code>nCount_RNA</code></td>
+              <td>낮은 library size, 낮은 sequencing depth</td>
+              <td>RNA 함량이 높은 세포 또는 여러 세포가 함께 포획된 droplet</td>
+              <td><code>nFeature_RNA</code>와 함께 확인</td>
+            </tr>
+            <tr>
+              <td><code>percent.mt</code></td>
+              <td>일반적으로 양호하지만 조직별 차이가 있음</td>
+              <td>세포막 손상, stress 또는 dying cell 가능성</td>
+              <td>조직과 세포 유형을 고려하여 상한 설정</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mb-0">
+        한 지표만으로 세포를 제거하지 말고 세 지표의 분포와 상관관계를 함께 확인합니다.
+        가능한 경우 샘플별 median과 MAD, knee point 또는 극단값 분포도 참고할 수 있습니다.
+      </p>
+    </div>
+  </div>
+
   <div class="part-title">Part 2. Hands-on Practice</div>
 
   <!-- E -->
@@ -238,6 +280,29 @@
   pt.size = 0.1
 )
 </code></pre>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step2_qc_violin_nd1.png"
+         alt="QC violin plot for the ND1 sample"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    ND1 샘플의 QC 분포 예시. 각 점은 하나의 세포이며,
+    violin의 폭은 해당 값 구간에 존재하는 세포의 상대적 밀도를 나타냅니다.
+  </p>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>이 그림에서 확인할 내용</h6>
+      <ul class="mb-0">
+        <li><code>nFeature_RNA</code>와 <code>nCount_RNA</code>가 매우 낮은 세포는 low-quality cell 후보입니다.</li>
+        <li>두 값이 유난히 높은 세포는 doublet 가능성이 있지만, 이 그림만으로 확정할 수는 없습니다.</li>
+        <li><code>percent.mt</code>가 높은 세포는 손상 또는 stress 가능성이 있어 상한 기준을 검토합니다.</li>
+        <li>violin plot은 threshold를 정하기 위한 분포 확인 단계이며, 생물학적 특성과 doublet 분석을 함께 고려해야 합니다.</li>
+      </ul>
+    </div>
+  </div>
 
   <p class="note">
     실제 분석에서는 모든 샘플에 대해 같은 분포를 확인하는 것이 좋습니다.
@@ -408,36 +473,143 @@ final_plot
 })
 </code></pre>
 
+  <div class="card border-info mb-3">
+    <div class="card-header bg-info bg-opacity-10 fw-bold">현재 filtering 기준의 의미</div>
+    <div class="card-body">
+      <ul class="mb-2">
+        <li><code>nFeature_RNA &gt; 200</code>: 검출 유전자가 지나치게 적은 empty droplet 또는 low-quality cell을 제거합니다.</li>
+        <li><code>nFeature_RNA &lt; 6000</code>: 유전자 수가 비정상적으로 높은 세포를 줄입니다. 다만 이는 doublet을 간접적으로 줄이는 기준일 뿐, 별도의 doublet 탐지를 대체하지 않습니다.</li>
+        <li><code>percent.mt &lt; 10</code>: mitochondrial transcript 비율이 높은 손상·stress 세포를 제거합니다.</li>
+      </ul>
+      <p class="mb-0">
+        이 기준은 본 실습 데이터에 적용하는 예시입니다. 실제 연구에서는 필터 전 분포,
+        필터 후 제거 비율, 조직 특성 및 보존하려는 세포 유형을 함께 검토해야 합니다.
+        특정 샘플에서 세포가 과도하게 제거된다면 동일한 숫자를 기계적으로 적용하지 말고 기준을 다시 확인합니다.
+      </p>
+    </div>
+  </div>
+
   <!-- L -->
-  <h3 class="mt-4">L) filtering 전후 cell 수 비교</h3>
+  <h3 class="mt-4">L) Doublet 탐지 후 singlet만 선택</h3>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># filtering 전 cell 수
+  <p class="note">
+    Doublet은 하나의 droplet에 두 개 이상의 세포가 함께 포획된 경우입니다.
+    서로 다른 세포 유형이 섞이면 인위적인 발현 패턴과 잘못된 cluster를 만들 수 있으므로
+    기본 QC와 별도로 탐지하는 것이 좋습니다. 여기서는 Bioconductor의
+    <a href="https://bioconductor.org/packages/scDblFinder/" target="_blank" rel="noopener">scDblFinder</a>를 사용합니다.
+  </p>
+
+  <div class="card warn-box mb-3">
+    <div class="card-body">
+      <b>왜 샘플별로 실행하나요?</b><br>
+      Doublet은 같은 capture 안에서 형성됩니다. 따라서 6개 객체를 먼저 합친 뒤 한 번에 분석하지 않고,
+      ND1, ND2, ND3, WD1, WD2, WD3 각각에서 독립적으로 doublet을 탐지합니다.
+      현재처럼 <code>lapply()</code>로 각 Seurat object를 처리하면 이 원칙을 자연스럽게 지킬 수 있습니다.
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 최초 1회만 설치
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c("SingleCellExperiment", "scDblFinder"))
+</code></pre>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(SingleCellExperiment)
+library(scDblFinder)
+
+set.seed(1234)
+
+sample_list_doublet <- lapply(sample_list_filtered, function(obj) {
+
+  # Seurat object를 SingleCellExperiment 형식으로 변환
+  sce <- as.SingleCellExperiment(obj, assay = "RNA")
+
+  # 각 생물학적 샘플에서 독립적으로 doublet 탐지
+  sce <- scDblFinder(sce)
+
+  # 결과를 Seurat metadata에 다시 저장
+  obj$scDblFinder.score <- sce$scDblFinder.score
+  obj$scDblFinder.class <- sce$scDblFinder.class
+
+  return(obj)
+})
+
+# 샘플별 singlet / doublet 개수 확인
+doublet_summary <- lapply(sample_list_doublet, function(obj) {
+  table(obj$scDblFinder.class)
+})
+doublet_summary
+</code></pre>
+
+  <p class="note">
+    <code>scDblFinder.score</code>는 doublet 가능성을 나타내는 점수이고,
+    <code>scDblFinder.class</code>는 자동으로 분류된 <code>singlet</code> 또는
+    <code>doublet</code> 결과입니다. 10x 기반 데이터에서는 expected doublet rate를
+    자동 추정할 수 있지만, 사용한 chemistry와 실제 loading 조건을 알고 있다면 결과가 합리적인지 함께 확인해야 합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># singlet cell만 남기기
+sample_list_singlet <- lapply(sample_list_doublet, function(obj) {
+  singlet_cells <- colnames(obj)[
+    obj$scDblFinder.class == "singlet"
+  ]
+
+  subset(obj, cells = singlet_cells)
+})
+
+# doublet 제거 전후 cell 수 비교
+doublet_cell_summary <- data.frame(
+  sample = names(sample_list_doublet),
+  before_doublet_filter = sapply(sample_list_doublet, ncol),
+  singlet = sapply(sample_list_singlet, ncol)
+)
+
+doublet_cell_summary$removed_doublet <-
+  doublet_cell_summary$before_doublet_filter -
+  doublet_cell_summary$singlet
+
+doublet_cell_summary
+</code></pre>
+
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>해석상의 주의:</strong> doublet 탐지 결과는 정답표가 아니라 계산 기반 예측입니다.
+    특히 같은 세포 유형끼리 형성된 homotypic doublet은 발현 양상이 singlet과 비슷하여 탐지가 어렵습니다.
+    샘플별 doublet 비율이 지나치게 높거나 조건 간 차이가 크다면 원자료의 cell loading,
+    sequencing depth와 score 분포를 다시 확인합니다.
+  </div>
+
+  <!-- M -->
+  <h3 class="mt-4">M) filtering 전후 cell 수 비교</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 단계별 cell 수
 before_cells <- sapply(sample_list, ncol)
-
-# filtering 후 cell 수
-after_cells <- sapply(sample_list_filtered, ncol)
+after_basic_qc <- sapply(sample_list_filtered, ncol)
+after_singlet <- sapply(sample_list_singlet, ncol)
 
 qc_summary <- data.frame(
   sample = names(before_cells),
   before = before_cells,
-  after = after_cells,
-  removed = before_cells - after_cells
+  after_basic_qc = after_basic_qc,
+  after_singlet = after_singlet,
+  removed_by_qc = before_cells - after_basic_qc,
+  removed_as_doublet = after_basic_qc - after_singlet
 )
 
 qc_summary
 </code></pre>
 
   <p class="note">
-    이 표를 통해 각 샘플에서 얼마나 많은 세포가 제거되었는지 확인할 수 있습니다.
+    이 표를 통해 각 샘플에서 기본 QC와 doublet 제거 단계별로 얼마나 많은 세포가 제외되었는지 확인할 수 있습니다.
   </p>
 
-  <!-- M -->
-  <h3 class="mt-4">M) filtering 후 분포 재확인</h3>
+  <!-- N -->
+  <h3 class="mt-4">N) filtering 및 doublet 제거 후 분포 재확인</h3>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>for (nm in names(sample_list_filtered)) {
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>for (nm in names(sample_list_singlet)) {
   print(
     VlnPlot(
-      sample_list_filtered[[nm]],
+      sample_list_singlet[[nm]],
       features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
       ncol = 3,
       pt.size = 0.1
@@ -450,15 +622,15 @@ qc_summary
     filtering 후에는 분포가 더 안정적으로 정리되었는지 다시 확인하는 것이 중요합니다.
   </p>
 
-  <!-- N -->
-  <h3 class="mt-4">N) 다음 단계로 넘길 객체 준비</h3>
+  <!-- O -->
+  <h3 class="mt-4">O) 다음 단계로 넘길 객체 준비</h3>
 
   <p class="note">
     이후 단계에서는 filtering된 객체를 사용합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list <- sample_list_filtered
-rm(sample_list_filtered)
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_list <- sample_list_singlet
+rm(sample_list_filtered, sample_list_doublet, sample_list_singlet)
 
 names(sample_list)
 </code></pre>
@@ -472,7 +644,8 @@ names(sample_list)
           <li>QC는 low-quality cell, doublet, ambient RNA, dissociation artifact를 줄이기 위한 필수 단계입니다.</li>
           <li>주요 QC 지표는 <code>nFeature_RNA</code>, <code>nCount_RNA</code>, <code>percent.mt</code>입니다.</li>
           <li>QC 기준에는 절대적인 정답이 없으며, 조직 특성과 데이터 분포에 따라 달라집니다.</li>
-          <li>본 실습에서는 6개 mouse CRC 샘플에 대해 동일한 기준으로 filtering을 수행했습니다.</li>
+          <li>본 실습에서는 6개 mouse CRC 샘플에 대해 기본 QC filtering을 수행했습니다.</li>
+          <li><code>scDblFinder</code>를 각 생물학적 샘플에서 독립적으로 실행하고 singlet cell만 다음 단계로 전달합니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">
@@ -498,3 +671,4 @@ function copyCode(btn){
 
 </body>
 </html>
+
