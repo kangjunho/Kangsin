@@ -582,6 +582,55 @@ cluster_composition <- ggplot(
 cluster_composition
 </code></pre>
 
+  <div class="text-center mt-4">
+    <img src="../../assets/images/scrna_step4_umap_overview.png"
+         alt="Integrated UMAP colored by sample, condition, and Seurat cluster"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    샘플, 조건 및 Seurat cluster 기준의 통합 UMAP 결과
+  </p>
+
+  <p class="note">
+    왼쪽 그림에서는 6개 샘플의 세포가 같은 cluster 안에서 비교적 고르게 섞이는지 확인합니다.
+    가운데 그림에서는 ND와 WD 세포의 전체 분포를 비교하고, 오른쪽 그림에서는
+    resolution 0.5에서 생성된 0~19번 cluster의 위치와 분리 정도를 확인합니다.
+  </p>
+
+  <div class="text-center mt-4">
+    <img src="../../assets/images/scrna_step4_condition_split_umap.png"
+         alt="Seurat cluster UMAP split by ND and WD condition"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    동일한 UMAP 좌표를 ND와 WD 조건으로 나누어 표시한 결과
+  </p>
+
+  <p class="note">
+    두 panel은 같은 UMAP 좌표계를 사용하므로 각 cluster의 조건별 세포 분포를 직접 비교할 수 있습니다.
+    대부분의 cluster가 두 조건 모두에서 관찰되는지, 특정 조건에서 상대적으로 많거나 적어 보이는
+    cluster가 있는지를 탐색적으로 확인합니다.
+  </p>
+
+  <div class="text-center mt-4">
+    <img src="../../assets/images/scrna_step4_cluster_composition.png"
+         alt="Stacked bar plot of cluster composition in ND and WD"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    ND와 WD 조건 내부에서 각 cluster가 차지하는 세포 비율
+  </p>
+
+  <p class="note">
+    각 막대의 전체 높이는 100%이며 색상별 영역은 해당 조건에서 각 cluster가 차지하는 비율입니다.
+    UMAP에서 관찰한 조건별 차이를 정량적인 구성비 관점에서 다시 확인할 수 있습니다.
+    다만 이 그림은 개별 세포를 기준으로 계산한 기술통계이므로,
+    조건 간 유의한 차이는 생물학적 반복 샘플을 분석 단위로 하는 별도의 통계검정이 필요합니다.
+  </p>
+
   <div class="card tip mb-3">
     <div class="card-body">
       <h6>그림에서 확인할 내용</h6>
