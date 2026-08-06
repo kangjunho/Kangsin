@@ -210,7 +210,7 @@ ggplot(
   <p class="note">참고: <a href="https://satijalab.org/seurat/articles/de_vignette" target="_blank" rel="noopener">Seurat differential expression 및 pseudobulk vignette</a>, <a href="https://www.nature.com/articles/s41467-021-25960-2" target="_blank" rel="noopener">biological replicate를 고려한 single-cell DEG 연구</a>.</p>
 
   <h3 class="mt-5">I) 실습용 전체 코드</h3>
-  <p class="note">아래 코드는 annotation 객체 불러오기부터 sample별 세포 조성, 탐색적 비율 검정, cell-type-specific DEG, pseudobulk edgeR, 그림과 결과 저장까지 연속적으로 실행합니다.</p>
+  <p class="note">아래 코드는 Step 6의 annotation 객체에서 이어서 sample별 세포 조성, 탐색적 비율 검정, cell-type-specific DEG와 pseudobulk edgeR까지 연속적으로 실행합니다. 실습 중에는 별도의 CSV, RDS 또는 그림 파일을 생성하지 않고 R 객체와 Plot 창에서 결과를 확인합니다.</p>
   <div class="card tip mb-3"><div class="card-body">
     <ol class="mb-0">
       <li>Step 6의 <code>integrated_obj</code>가 현재 R session에 있는 상태에서 시작합니다.</li>
@@ -262,12 +262,6 @@ cell_composition &lt;- integrated_obj@meta.data |&gt;
   ungroup()
 
 cell_composition
-
-write.csv(
-  cell_composition,
-  file = "step7_cell_composition_by_sample.csv",
-  row.names = FALSE
-)
 
 
 # ============================================================
@@ -425,12 +419,6 @@ composition_test &lt;- cell_composition |&gt;
 
 composition_test
 
-write.csv(
-  composition_test,
-  file = "step7_cell_composition_wilcoxon.csv",
-  row.names = FALSE
-)
-
 
 # ============================================================
 # 4. 실습용 DEG: 한 세포형 내부에서 ND vs WD 비교
@@ -484,16 +472,6 @@ deg_target &lt;- deg_target |&gt;
 
 head(deg_target, 20)
 table(deg_target$direction)
-
-write.csv(
-  deg_target,
-  file = paste0(
-    "step7_DEG_WD_vs_ND_",
-    target_celltype,
-    "_celllevel.csv"
-  ),
-  row.names = FALSE
-)
 
 
 # ============================================================
@@ -661,11 +639,7 @@ deg_all_celltypes &lt;- bind_rows(
   deg_all_celltypes
 )
 
-write.csv(
-  deg_all_celltypes,
-  file = "step7_DEG_WD_vs_ND_all_celltypes_celllevel.csv",
-  row.names = FALSE
-)
+head(deg_all_celltypes)
 
 
 # ============================================================
@@ -785,16 +759,6 @@ if (requireNamespace("edgeR", quietly = TRUE)) {
   pseudobulk_deg &lt;- pseudobulk_deg |&gt;
     relocate(gene)
 
-  write.csv(
-    pseudobulk_deg,
-    file = paste0(
-      "step7_DEG_WD_vs_ND_",
-      target_celltype_pb,
-      "_pseudobulk_edgeR.csv"
-    ),
-    row.names = FALSE
-  )
-
   print(
     head(pseudobulk_deg, 20)
   )
@@ -802,48 +766,9 @@ if (requireNamespace("edgeR", quietly = TRUE)) {
 
 
 # ============================================================
-# 8. 그림과 최종 객체 저장
-# ============================================================
-
-ggsave(
-  "step7_cell_composition_by_sample.png",
-  p_composition_sample,
-  width = 12,
-  height = 7,
-  dpi = 300
-)
-
-ggsave(
-  "step7_cell_composition_boxplot.png",
-  p_composition_box,
-  width = 13,
-  height = 9,
-  dpi = 300
-)
-
-ggsave(
-  paste0(
-    "step7_volcano_",
-    target_celltype,
-    "_WD_vs_ND.png"
-  ),
-  p_volcano,
-  width = 7,
-  height = 6,
-  dpi = 300
-)
-
-saveRDS(
-  integrated_obj,
-  file = "integrated_obj_step7.rds",
-  compress = FALSE
-)
-
-
-# ============================================================
 # 실습 문제
 # ============================================================
-# 1) Macrophage 대신 Monocyte 또는 T_cell을 선택하여
+# 1) Macrophage를 제외한 다른 cell type을 하나 선택하여
 #    WD vs ND DEG를 계산합니다.
 # 2) 유의한 상향·하향 유전자를 각각 5개 선택합니다.
 # 3) FeaturePlot과 VlnPlot으로 발현 차이를 확인합니다.
@@ -856,7 +781,7 @@ saveRDS(
   <div class="card tip mb-3"><div class="card-body">
     <ol class="mb-0">
       <li>ND와 WD에서 평균 비율 차이가 가장 큰 세포형을 찾습니다.</li>
-      <li>Macrophage 대신 Monocyte 또는 T_cell을 선택하여 WD vs ND DEG를 계산합니다.</li>
+      <li><b>Macrophage를 제외한 다른 세포형을 하나 선택하여 WD vs ND DEG를 계산합니다.</b></li>
       <li>유의한 상향·하향 유전자를 각각 5개 선택하고 FeaturePlot과 VlnPlot으로 확인합니다.</li>
       <li>Cell-level Wilcoxon과 pseudobulk 결과에서 공통으로 발견된 DEG를 구합니다.</li>
       <li>두 분석 결과가 다를 수 있는 이유를 biological replicate와 pseudoreplication 관점에서 설명합니다.</li>
