@@ -102,21 +102,21 @@
   </p>
 
   <div class="text-center mt-3">
-    <img src="../../assets/images/scrna_step6_mouse_colon_cell_hierarchy.svg"
-         alt="Hierarchical cell types and marker genes in mouse colon tissue"
+    <img src="../../assets/images/scrna_step6_mouse_crc_cell_composition.svg"
+         alt="Major cell populations and marker genes in mouse colorectal cancer scRNA-seq"
          class="section-img">
   </div>
 
   <p class="text-center text-muted mt-2">
-    고임팩트 intestinal cell atlas의 분석 원리를 마우스 대장에 적용한 실습용 계층 구조
+    문헌상 참고 범위와 대표 marker를 반영한 마우스 대장암 scRNA-seq 실습용 세포 구성
   </p>
 
   <div class="card tip mb-3">
     <div class="card-body">
       <h6>논문과 동일한 Annotation의 세 단계</h6>
       <ol class="mb-0">
-        <li><b>대분류:</b> epithelial, immune, stromal, endothelial, muscle/pericyte, neural/glial</li>
-        <li><b>중분류:</b> immune 안에서 T, NK, B/plasma, myeloid, mast 등으로 구분</li>
+        <li><b>1차 분류:</b> epithelial, T/NK, myeloid, B/plasma, fibroblast/CAF, endothelial, muscle/pericyte</li>
+        <li><b>희귀 세포:</b> neural/glial은 자동 분류에서 제외하고 핵심 marker가 확인될 때만 추가</li>
         <li><b>소분류:</b> 필요한 lineage만 subset·재분석하여 T-cell subtype, epithelial subtype 또는 fibroblast state 등을 판정</li>
       </ol>
     </div>
@@ -169,6 +169,12 @@ table(Idents(integrated_obj))
   <!-- C -->
   <h3 class="mt-4">C) 대분류를 자동으로 mapping하기</h3>
 
+  <div class="alert alert-info mt-3" role="alert">
+    <strong>실습 구성:</strong> C–F는 marker score와 계층적 annotation 원리를 단계별로 이해하기 위한 설명입니다.
+    실제 최종 분석은 검출률·score margin·계통별 후보 제한과 전문가 검토가 모두 반영된
+    페이지 하단 K의 전체 R 스크립트를 사용합니다.
+  </div>
+
   <p class="note">
     이번 실습에서는 문헌 기반 marker set으로 lineage score를 계산하고,
     cluster별 평균 점수가 가장 높은 대분류를 자동 배정합니다.
@@ -180,27 +186,31 @@ table(Idents(integrated_obj))
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_marker_list <- list(
   Epithelial = c(
     "Epcam", "Cdh1", "Krt8", "Krt18",
-    "Krt19", "Krt20", "Vil1", "Tacstd2"
+    "Krt19", "Krt20", "Vil1", "Muc2"
   ),
-  Immune = c(
-    "Ptprc", "Cd52", "Coro1a", "Lcp1",
-    "Ptpn6", "Tyrobp", "Fcer1g"
+  T_NK = c(
+    "Cd3d", "Cd3e", "Trbc1", "Trbc2",
+    "Cd4", "Cd8a", "Nkg7", "Klrd1", "Prf1"
   ),
-  Stromal = c(
+  Myeloid = c(
+    "Lyz2", "Csf1r", "Adgre1", "Itgam",
+    "Fcgr3", "Ctss", "Tyrobp", "Fcer1g"
+  ),
+  B_Plasma = c(
+    "Cd79a", "Ms4a1", "Cd19", "Cd74",
+    "H2-Aa", "Jchain", "Mzb1", "Sdc1"
+  ),
+  Fibroblast_CAF = c(
     "Col1a1", "Col1a2", "Col3a1", "Dcn",
-    "Lum", "Dpt", "Pdgfra", "Col6a1"
+    "Lum", "Dpt", "Pdgfra", "Thy1"
   ),
   Endothelial = c(
     "Pecam1", "Cdh5", "Kdr", "Esam",
-    "Emcn", "Egfl7", "Tek", "Vwf"
+    "Emcn", "Egfl7", "Flt1", "Vwf"
   ),
   Muscle_Pericyte = c(
     "Acta2", "Tagln", "Myh11", "Actg2",
-    "Cnn1", "Rgs5", "Pdgfrb", "Cspg4", "Notch3"
-  ),
-  Neural_Glial = c(
-    "Tubb3", "Elavl3", "Elavl4", "Snap25",
-    "Syp", "Sox10", "S100b", "Plp1", "Slc1a3"
+    "Cnn1", "Rgs5", "Pdgfrb", "Cspg4", "Mcam"
   )
 )
 
@@ -264,9 +274,18 @@ sorted_scores <- t(
 
 marker_annotation <- data.frame(
   cluster = rownames(score_matrix),
-  marker_major = colnames(score_matrix)[top1_index],
+  marker_major_raw = colnames(score_matrix)[top1_index],
+  top_score = sorted_scores[, 1],
   score_margin = sorted_scores[, 1] - sorted_scores[, 2],
   row.names = NULL
+)
+
+# 모든 cluster를 강제로 배정하지 않고 불명확한 경우 Unresolved
+marker_annotation$marker_major <- ifelse(
+  marker_annotation$top_score > 0 &
+    marker_annotation$score_margin >= 0.05,
+  marker_annotation$marker_major_raw,
+  "Unresolved"
 )
 
 marker_annotation
@@ -274,10 +293,45 @@ marker_annotation
 
   <p class="note">
     <code>score_margin</code>은 1위와 2위 lineage score의 차이입니다.
-    값이 작은 cluster는 자동 결과를 확정하지 않고 우선 검토합니다.
+    최고 score가 0 이하이거나 차이가 0.05 미만이면 강제로 이름을 붙이지 않고
+    <code>Unresolved</code>로 남깁니다. 0.05는 실습용 점검 기준이며 절대적인 생물학적 기준은 아닙니다.
   </p>
 
-  <h4 class="mt-3">C-3) Marker 기반 대분류를 metadata에 자동 저장</h4>
+  <h4 class="mt-3">C-3) Neural/Glial은 희귀 세포군으로 별도 확인</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>rare_neural_markers <- list(
+  Enteric_glia = c(
+    "Sox10", "S100b", "Plp1",
+    "Slc1a3", "Fabp7", "Gfap"
+  ),
+  Enteric_neuron = c(
+    "Tubb3", "Elavl3", "Elavl4",
+    "Snap25", "Syp", "Rbfox3", "Phox2b", "Ret"
+  )
+)
+
+rare_neural_markers <- lapply(
+  rare_neural_markers,
+  intersect,
+  y = rownames(integrated_obj)
+)
+
+DotPlot(
+  integrated_obj,
+  features = rare_neural_markers,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Optional validation of rare enteric neural cells")
+</code></pre>
+
+  <p class="note">
+    Enteric glia는 <code>Sox10–S100b–Plp1</code>, enteric neuron은
+    <code>Tubb3–Elavl4–Snap25–Syp</code>가 함께 확인될 때만 최종 annotation에 추가합니다.
+  </p>
+
+  <h4 class="mt-3">C-4) Marker 기반 1차 분류를 metadata에 자동 저장</h4>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_cluster_map <- setNames(
   marker_annotation$marker_major,
@@ -501,6 +555,8 @@ DotPlot(
   </div>
 
   <!-- G -->
+  <!-- 이전 수동 mapping 예시는 최종 계층형 코드로 대체되어 화면에서 숨깁니다. -->
+  <div style="display:none">
   <h3 class="mt-4">G) 중분류 annotation 저장</h3>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>medium_cluster_map <- setNames(
@@ -622,27 +678,31 @@ table(Idents(integrated_obj))
 major_marker_list <- list(
   Epithelial = c(
     "Epcam", "Cdh1", "Krt8", "Krt18",
-    "Krt19", "Krt20", "Vil1", "Tacstd2"
+    "Krt19", "Krt20", "Vil1", "Muc2"
   ),
-  Immune = c(
-    "Ptprc", "Cd52", "Coro1a", "Lcp1",
-    "Ptpn6", "Tyrobp", "Fcer1g"
+  T_NK = c(
+    "Cd3d", "Cd3e", "Trbc1", "Trbc2",
+    "Cd4", "Cd8a", "Nkg7", "Klrd1", "Prf1"
   ),
-  Stromal = c(
+  Myeloid = c(
+    "Lyz2", "Csf1r", "Adgre1", "Itgam",
+    "Fcgr3", "Ctss", "Tyrobp", "Fcer1g"
+  ),
+  B_Plasma = c(
+    "Cd79a", "Ms4a1", "Cd19", "Cd74",
+    "H2-Aa", "Jchain", "Mzb1", "Sdc1"
+  ),
+  Fibroblast_CAF = c(
     "Col1a1", "Col1a2", "Col3a1", "Dcn",
-    "Lum", "Dpt", "Pdgfra", "Col6a1"
+    "Lum", "Dpt", "Pdgfra", "Thy1"
   ),
   Endothelial = c(
     "Pecam1", "Cdh5", "Kdr", "Esam",
-    "Emcn", "Egfl7", "Tek", "Vwf"
+    "Emcn", "Egfl7", "Flt1", "Vwf"
   ),
   Muscle_Pericyte = c(
     "Acta2", "Tagln", "Myh11", "Actg2",
-    "Cnn1", "Rgs5", "Pdgfrb", "Cspg4", "Notch3"
-  ),
-  Neural_Glial = c(
-    "Tubb3", "Elavl3", "Elavl4", "Snap25",
-    "Syp", "Sox10", "S100b", "Plp1", "Slc1a3"
+    "Cnn1", "Rgs5", "Pdgfrb", "Cspg4", "Mcam"
   )
 )
 
@@ -706,14 +766,46 @@ sorted_scores <- t(
 
 marker_annotation <- data.frame(
   cluster = rownames(score_matrix),
-  marker_major = colnames(score_matrix)[top1_index],
+  marker_major_raw = colnames(score_matrix)[top1_index],
+  top_score = sorted_scores[, 1],
   score_margin = sorted_scores[, 1] - sorted_scores[, 2],
   row.names = NULL
 )
 
+# 불명확한 cluster는 강제로 배정하지 않음
+marker_annotation$marker_major <- ifelse(
+  marker_annotation$top_score > 0 &
+    marker_annotation$score_margin >= 0.05,
+  marker_annotation$marker_major_raw,
+  "Unresolved"
+)
+
+print(marker_annotation)
+
 
 # ------------------------------------------------------------
-# 4. Marker 기반 자동 대분류를 metadata에 저장
+# 4. 희귀 enteric neural/glial marker 별도 확인
+# ------------------------------------------------------------
+rare_neural_markers <- list(
+  Enteric_glia = c(
+    "Sox10", "S100b", "Plp1",
+    "Slc1a3", "Fabp7", "Gfap"
+  ),
+  Enteric_neuron = c(
+    "Tubb3", "Elavl3", "Elavl4",
+    "Snap25", "Syp", "Rbfox3", "Phox2b", "Ret"
+  )
+)
+
+rare_neural_markers <- lapply(
+  rare_neural_markers,
+  intersect,
+  y = rownames(integrated_obj)
+)
+
+
+# ------------------------------------------------------------
+# 5. Marker 기반 자동 1차 분류를 metadata에 저장
 # ------------------------------------------------------------
 major_cluster_map <- setNames(
   marker_annotation$marker_major,
@@ -727,7 +819,7 @@ integrated_obj$celltype_major_auto <- unname(
 )
 
 # ------------------------------------------------------------
-# 5. Cluster marker 계산 또는 저장 결과 불러오기
+# 6. Cluster marker 계산 또는 저장 결과 불러오기
 # ------------------------------------------------------------
 if (file.exists("all_markers.csv")) {
 
@@ -769,7 +861,7 @@ print(top10_markers)
 
 
 # ------------------------------------------------------------
-# 6. Marker 및 자동 annotation 시각화
+# 7. Marker 및 자동 annotation 시각화
 # ------------------------------------------------------------
 p_marker <- DotPlot(
   integrated_obj,
@@ -789,12 +881,22 @@ p_auto <- DimPlot(
 ) +
   ggtitle("B. Automatic major annotation")
 
+p_rare <- DotPlot(
+  integrated_obj,
+  features = rare_neural_markers,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("C. Optional enteric neural markers")
+
 p_marker
 p_auto
+p_rare
 
 
 # ------------------------------------------------------------
-# 7. 검토 후 최종 대분류 확정
+# 8. 검토 후 최종 1차 분류 확정
 # ------------------------------------------------------------
 integrated_obj$celltype_major <-
   integrated_obj$celltype_major_auto
@@ -819,7 +921,7 @@ DimPlot(
 
 
 # ------------------------------------------------------------
-# 8. 결과 저장
+# 9. 결과 저장
 # ------------------------------------------------------------
 saveRDS(
   integrated_obj,
@@ -894,18 +996,1131 @@ p_immune
 p_epithelial
 </code></pre>
 
+  </div>
+
+  <!-- G: final annotation -->
+  <h3 class="mt-5">G) 자동 annotation 결과를 marker로 최종 검증</h3>
+
+  <p class="note">
+    자동 score는 annotation의 시작점입니다. 최종 label은 cluster top marker,
+    canonical marker의 조합, UMAP 위치, sample별 세포 구성까지 함께 확인해 확정합니다.
+    이번 데이터에서는 특히 cluster 5, 11, 19를 추가 검토했습니다.
+  </p>
+
+  <div class="table-responsive mb-3">
+    <table class="table table-bordered align-middle">
+      <thead><tr><th>Cluster</th><th>최종 label</th><th>검증 근거</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>5</td><td><b>ANKRD1_positive_CAF</b></td>
+          <td>6개 sample에 고르게 존재하고 Dcn+ stromal 계통이며 Ankrd1이 선택적으로 높음. 전형적인 myofibroblast, pericyte, epithelial, endothelial marker는 부족</td>
+        </tr>
+        <tr>
+          <td>11</td><td><b>ECM_CAF</b></td>
+          <td>Postn, Mmp3, Sfrp2/4, Lox, Cpxm1 기반 ECM-remodeling 프로그램</td>
+        </tr>
+        <tr>
+          <td>19</td><td><b>Endothelial</b></td>
+          <td>Cldn5, Pecam1, Kdr, Emcn 기반 혈관내피 계통</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card warn-box mb-3">
+    <div class="card-body">
+      <b>표현상의 주의:</b> <code>ANKRD1_positive_CAF</code>는 이 데이터에서 관찰된 특징을
+      반영한 설명적이고 잠정적인 명칭입니다. 이미 확립된 보편적 대장 CAF subtype으로 단정하지 않습니다.
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># Top marker와 marker plot을 이용한 최종 전문가 검토
+major_annotation$component_auto[
+  major_annotation$cluster == "5"
+] &lt;- "Fibroblast"
+
+major_annotation$celltype_major[
+  major_annotation$cluster == "5"
+] &lt;- "Stromal"
+
+intermediate_annotation$component_auto[
+  intermediate_annotation$cluster == "5"
+] &lt;- "Fibroblast"
+
+intermediate_annotation$celltype_major[
+  intermediate_annotation$cluster == "5"
+] &lt;- "Stromal"
+
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$cluster == "5"
+] &lt;- "ANKRD1_positive_CAF"
+
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$cluster == "11"
+] &lt;- "ECM_CAF"
+
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$cluster == "19"
+] &lt;- "Endothelial"</code></pre>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_final_annotation.png?v=20260806-2"
+         alt="Final major and intermediate cell annotation"
+         class="section-img">
+  </div>
+  <p class="text-center text-muted mt-2">대분류와 marker 검증을 거친 최종 중분류 결과</p>
+
+  <!-- H: marker expression -->
+  <h3 class="mt-5">H) 각 세포형의 대표 marker 발현 확인</h3>
+
+  <p class="note">
+    <code>DimPlot()</code>은 cell type처럼 범주형 metadata를 표시하고,
+    유전자 발현량은 <code>FeaturePlot()</code>으로 확인합니다.
+    <code>DotPlot()</code>은 평균 발현량과 발현 세포 비율을 동시에 비교할 때 유용합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>representative_markers &lt;- c(
+  "Lyz2",     # Monocyte/myeloid
+  "C1qc",     # Macrophage
+  "Cd209a",   # cDC2
+  "Ccr7",     # Migratory DC
+  "Siglech",  # pDC
+  "Cd3e",     # T cell
+  "Ncr1",     # NK cell
+  "Dcn",      # Fibroblast
+  "Ankrd1",   # ANKRD1-positive CAF
+  "Postn",    # ECM-CAF
+  "Cldn5"     # Endothelial
+)
+
+representative_markers &lt;- intersect(
+  representative_markers,
+  rownames(integrated_obj)
+)
+
+FeaturePlot(
+  integrated_obj,
+  features = representative_markers,
+  reduction = "umap",
+  order = TRUE,
+  min.cutoff = "q05",
+  max.cutoff = "q95",
+  ncol = 4
+)
+
+DotPlot(
+  integrated_obj,
+  features = representative_markers,
+  group.by = "celltype_intermediate",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Representative marker validation")</code></pre>
+
+  <h4 class="mt-4">H-1) Cluster 5 marker 검증 예시</h4>
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_cluster5_marker_validation.png?v=20260806-2"
+         alt="Cluster 5 marker validation"
+         class="section-img">
+  </div>
+  <p class="note mt-2">
+    Cluster 5는 Dcn과 Ankrd1을 보이지만 canonical myofibroblast, pericyte,
+    epithelial 및 endothelial marker는 뚜렷하지 않아
+    <code>ANKRD1_positive_CAF</code>라는 설명적 명칭을 사용합니다.
+  </p>
+
+  <!-- I: full practical code -->
+  <h3 class="mt-5">I) 실습용 전체 코드</h3>
+  <p class="note">
+    전체 R 스크립트에는 기존의 계층형 marker score 계산, 검출률과 score margin 기준,
+    희귀 neural/glial 검증, 5·11·19번 최종 보정, 대표 marker 시각화 및 저장 과정이
+    한 번에 실행되도록 정리되어 있습니다.
+  </p>
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실습용 통합 코드 실행 순서</h6>
+      <ol class="mb-0">
+        <li>Step 5에서 생성하거나 불러온 <code>integrated_obj</code>가 있는지 확인합니다.</li>
+        <li>아래 전체 코드를 한 번에 복사하여 새로운 R script에서 실행합니다.</li>
+        <li><code>major_annotation</code>과 <code>intermediate_annotation</code>을 확인합니다.</li>
+        <li>대표 marker plot을 검토한 뒤 annotation 객체를 저장합니다.</li>
+      </ol>
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
+# ============================================================
+# Step 6. Mouse colon scRNA-seq hierarchical annotation
+# 대분류: Epithelial / Immune / Stromal / Other
+# 중분류까지만 수행
+# 시작 객체: integrated_obj
+# ============================================================
+
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+
+set.seed(1234)
+
+Idents(integrated_obj) &lt;- "seurat_clusters"
+DefaultAssay(integrated_obj) &lt;- "RNA"
+
+
+# ============================================================
+# 1. 공통 함수
+# ============================================================
+
+# Signature별 AddModuleScore를 계산하고 cluster 평균으로 요약
+calculate_cluster_scores &lt;- function(
+  object,
+  signatures,
+  score_prefix
+) {
+
+  signatures &lt;- lapply(
+    signatures,
+    intersect,
+    y = rownames(object)
+  )
+
+  if (any(lengths(signatures) &lt; 3)) {
+    stop(
+      "3개 미만의 marker만 남은 signature가 있습니다: ",
+      paste(
+        names(signatures)[lengths(signatures) &lt; 3],
+        collapse = ", "
+      )
+    )
+  }
+
+  object &lt;- AddModuleScore(
+    object,
+    features = signatures,
+    assay = "RNA",
+    name = score_prefix,
+    seed = 1234
+  )
+
+  score_columns &lt;- paste0(
+    score_prefix,
+    seq_along(signatures)
+  )
+
+  cluster_score_df &lt;- FetchData(
+    object,
+    vars = c("seurat_clusters", score_columns)
+  ) |&gt;
+    group_by(seurat_clusters) |&gt;
+    summarise(
+      across(all_of(score_columns), mean),
+      .groups = "drop"
+    )
+
+  score_matrix &lt;- as.matrix(
+    cluster_score_df[, score_columns]
+  )
+
+  rownames(score_matrix) &lt;-
+    as.character(cluster_score_df$seurat_clusters)
+  colnames(score_matrix) &lt;- names(signatures)
+
+  list(
+    object = object,
+    signatures = signatures,
+    score_matrix = score_matrix
+  )
+}
+
+
+# Cluster별 core marker 검출 비율 계산
+calculate_detection_fraction &lt;- function(
+  object,
+  marker_union
+) {
+
+  marker_union &lt;- intersect(
+    unique(marker_union),
+    rownames(object)
+  )
+
+  detection_df &lt;- FetchData(
+    object,
+    vars = c("seurat_clusters", marker_union)
+  ) |&gt;
+    group_by(seurat_clusters) |&gt;
+    summarise(
+      across(
+        all_of(marker_union),
+        ~ mean(.x &gt; 0)
+      ),
+      .groups = "drop"
+    )
+
+  detection_matrix &lt;- as.matrix(
+    detection_df[, marker_union]
+  )
+
+  rownames(detection_matrix) &lt;-
+    as.character(detection_df$seurat_clusters)
+
+  detection_matrix
+}
+
+
+# ============================================================
+# 2. 대분류용 signature
+# ============================================================
+
+# Stromal은 내부 이질성이 크므로 fibroblast, endothelial,
+# muscle/pericyte score를 따로 계산한 뒤 대분류에서 Stromal로 통합
+major_component_markers &lt;- list(
+  Epithelial = c(
+    "Epcam", "Cdh1", "Krt8", "Krt18",
+    "Krt19", "Krt20", "Vil1", "Muc2"
+  ),
+  Immune = c(
+    "Ptprc", "Cd52", "Coro1a", "Lcp1",
+    "Ptpn6", "Hcls1", "Fyb", "Rac2"
+  ),
+  Fibroblast = c(
+    "Dcn", "Lum", "Col1a1", "Col1a2",
+    "Col3a1", "Pdgfra", "Dpt", "Col6a1"
+  ),
+  Endothelial = c(
+    "Pecam1", "Cdh5", "Kdr", "Cldn5",
+    "Esam", "Emcn", "Flt1", "Robo4"
+  ),
+  Muscle_Pericyte = c(
+    "Myh11", "Actg2", "Tagln", "Cnn1",
+    "Rgs5", "Pdgfrb", "Cspg4", "Mcam"
+  ),
+  ENS = c(
+    "Sox10", "S100b", "Plp1", "Slc1a3",
+    "Tubb3", "Elavl4", "Snap25", "Syp"
+  )
+)
+
+
+# 각 component의 판정을 지지하는 핵심 marker
+major_core_markers &lt;- list(
+  Epithelial = c(
+    "Epcam", "Cdh1", "Krt8", "Krt18"
+  ),
+  Immune = c(
+    "Ptprc", "Coro1a", "Lcp1", "Cd52"
+  ),
+  Fibroblast = c(
+    "Dcn", "Lum", "Col1a1", "Col1a2"
+  ),
+  Endothelial = c(
+    "Pecam1", "Cdh5", "Kdr", "Cldn5"
+  ),
+  Muscle_Pericyte = c(
+    "Myh11", "Tagln", "Rgs5", "Pdgfrb"
+  ),
+  ENS = c(
+    "Sox10", "S100b", "Plp1",
+    "Tubb3", "Elavl4", "Snap25"
+  )
+)
+
+
+# ============================================================
+# 3. 대분류 score 계산
+# ============================================================
+
+major_result &lt;- calculate_cluster_scores(
+  object = integrated_obj,
+  signatures = major_component_markers,
+  score_prefix = "MajorComponentScore"
+)
+
+integrated_obj &lt;- major_result$object
+major_score_matrix &lt;- major_result$score_matrix
+
+major_sorted_scores &lt;- t(
+  apply(
+    major_score_matrix,
+    1,
+    sort,
+    decreasing = TRUE
+  )
+)
+
+major_top_index &lt;- max.col(
+  major_score_matrix,
+  ties.method = "first"
+)
+
+major_annotation &lt;- data.frame(
+  cluster = rownames(major_score_matrix),
+  component_raw =
+    colnames(major_score_matrix)[major_top_index],
+  top_score = major_sorted_scores[, 1],
+  score_margin =
+    major_sorted_scores[, 1] -
+    major_sorted_scores[, 2],
+  row.names = NULL
+)
+
+
+# ============================================================
+# 4. Core marker 검출 지지 확인
+# ============================================================
+
+major_detection_matrix &lt;- calculate_detection_fraction(
+  object = integrated_obj,
+  marker_union = unlist(
+    major_core_markers,
+    use.names = FALSE
+  )
+)
+
+# 일반 lineage:
+# core marker 중 2개 이상이 cluster 세포의 10% 이상에서 검출
+major_annotation$core_support &lt;- vapply(
+  seq_len(nrow(major_annotation)),
+  function(i) {
+
+    cluster_id &lt;- major_annotation$cluster[i]
+    component &lt;- major_annotation$component_raw[i]
+    core_genes &lt;- intersect(
+      major_core_markers[[component]],
+      colnames(major_detection_matrix)
+    )
+
+    if (length(core_genes) &lt; 2) {
+      return(FALSE)
+    }
+
+    sum(
+      major_detection_matrix[
+        cluster_id,
+        core_genes
+      ] &gt;= 0.10
+    ) &gt;= 2
+  },
+  logical(1)
+)
+
+
+# ENS는 glia 또는 neuron marker 조합 중 하나가 충족되어야 함
+ens_glia_core &lt;- intersect(
+  c("Sox10", "S100b", "Plp1"),
+  colnames(major_detection_matrix)
+)
+
+ens_neuron_core &lt;- intersect(
+  c("Tubb3", "Elavl4", "Snap25", "Syp"),
+  colnames(major_detection_matrix)
+)
+
+for (i in seq_len(nrow(major_annotation))) {
+
+  if (major_annotation$component_raw[i] != "ENS") {
+    next
+  }
+
+  cluster_id &lt;- major_annotation$cluster[i]
+
+  glia_supported &lt;-
+    length(ens_glia_core) &gt;= 2 &amp;&amp;
+    sum(
+      major_detection_matrix[
+        cluster_id,
+        ens_glia_core
+      ] &gt;= 0.10
+    ) &gt;= 2
+
+  neuron_supported &lt;-
+    length(ens_neuron_core) &gt;= 2 &amp;&amp;
+    sum(
+      major_detection_matrix[
+        cluster_id,
+        ens_neuron_core
+      ] &gt;= 0.10
+    ) &gt;= 2
+
+  major_annotation$core_support[i] &lt;-
+    glia_supported || neuron_supported
+}
+
+
+# ============================================================
+# 5. 대분류 자동 배정
+# ============================================================
+
+# 모든 cluster를 강제로 분류하지 않음
+major_annotation$component_auto &lt;- ifelse(
+  major_annotation$top_score &gt; 0 &amp;
+    major_annotation$score_margin &gt;= 0.05 &amp;
+    major_annotation$core_support,
+  major_annotation$component_raw,
+  "Unresolved"
+)
+
+major_annotation$celltype_major &lt;- case_when(
+  major_annotation$component_auto ==
+    "Epithelial" ~ "Epithelial",
+  major_annotation$component_auto ==
+    "Immune" ~ "Immune",
+  major_annotation$component_auto %in%
+    c(
+      "Fibroblast",
+      "Endothelial",
+      "Muscle_Pericyte"
+    ) ~ "Stromal",
+  major_annotation$component_auto ==
+    "ENS" ~ "Other",
+  TRUE ~ "Unresolved"
+)
+
+print(major_annotation)
+
+
+# ============================================================
+# 6. 중분류용 signature
+# ============================================================
+
+intermediate_markers &lt;- list(
+  Normal_epithelial = c(
+    "Alpi", "Krt20", "Car1", "Slc26a3",
+    "Vil1", "Muc2", "Spink4", "Clca1"
+  ),
+
+  # 일반 발현 marker만으로 악성 여부를 확정할 수 없으므로
+  # Tumor_epithelial_candidate로 표시
+  Tumor_epithelial_candidate = c(
+    "Krt19", "Sox9", "Tacstd2", "Prom1",
+    "Mki67", "Top2a", "Birc5", "Ube2c"
+  ),
+
+  T_cell = c(
+    "Cd3d", "Cd3e", "Cd3g",
+    "Trbc1", "Trbc2", "Cd247"
+  ),
+  NK_cell = c(
+    "Ncr1", "Nkg7", "Klrd1",
+    "Prf1", "Gzma", "Gzmb"
+  ),
+  Macrophage = c(
+    "C1qa", "C1qb", "C1qc", "Adgre1",
+    "Csf1r", "Fcrls", "Apoe", "Cd68"
+  ),
+  Monocyte = c(
+    "Ly6c2", "Ccr2", "Fcgr3", "Lyz2",
+    "S100a8", "S100a9", "Ctss", "Ms4a7"
+  ),
+  Neutrophil = c(
+    "Ly6g", "Csf3r", "Retnlg", "S100a8",
+    "S100a9", "Mmp8", "Camp", "Lcn2"
+  ),
+  cDC1 = c(
+    "Xcr1", "Clec9a", "Batf3", "Irf8",
+    "Flt3", "Itgax", "Mycl", "Snx22"
+  ),
+  cDC2 = c(
+    "Cd209a", "Clec10a", "Sirpa", "Itgam",
+    "Flt3", "Itgax", "H2-Aa", "Cd74"
+  ),
+  Migratory_DC = c(
+    "Ccr7", "Ccl22", "Il12b", "Fscn1",
+    "Cd40", "Cd80", "Cd86", "Relb"
+  ),
+  pDC = c(
+    "Siglech", "Bst2", "Gzmb", "Tcf4",
+    "Irf7", "Ly6d", "Cd300c", "Gm21762"
+  ),
+  B_cell = c(
+    "Cd79a", "Cd79b", "Ms4a1",
+    "Cd19", "Cd22", "Cd74"
+  ),
+  Plasma_cell = c(
+    "Jchain", "Mzb1", "Sdc1",
+    "Xbp1", "Derl3", "Sec11c"
+  ),
+  Homeostatic_fibroblast = c(
+    "Dcn", "Lum", "Col1a1", "Col1a2",
+    "Dpt", "Pdgfra", "Col6a1", "Col6a2"
+  ),
+  ECM_CAF = c(
+    "Postn", "Sfrp2", "Sfrp4", "Lox",
+    "Ccn2", "Col3a1", "Mmp3", "Cpxm1"
+  ),
+  Inflammatory_CAF = c(
+    "Il6", "Cxcl12", "Cxcl14", "Ccl2",
+    "Has1", "Saa3", "Ly6c1", "Pi16"
+  ),
+  Myofibroblast = c(
+    "Acta2", "Tagln", "Cald1", "Myh11",
+    "Cnn1", "Actg2", "Des", "Myl9"
+  ),
+  Antigen_presenting_CAF = c(
+    "Cd74", "H2-Aa", "H2-Ab1", "H2-Eb1",
+    "Ciita", "H2-DMa", "H2-DMb1", "Pdgfra"
+  ),
+  Endothelial = c(
+    "Pecam1", "Cdh5", "Kdr", "Cldn5",
+    "Esam", "Robo4", "Clec14a", "Mmrn2"
+  ),
+  Pericyte = c(
+    "Rgs5", "Pdgfrb", "Cspg4", "Mcam",
+    "Notch3", "Kcnj8", "Abcc9", "Des"
+  ),
+  Enteric_nervous_system = c(
+    "Sox10", "S100b", "Plp1", "Slc1a3",
+    "Tubb3", "Elavl4", "Snap25", "Syp"
+  )
+)
+
+
+# ============================================================
+# 7. 중분류 score 계산
+# ============================================================
+
+intermediate_result &lt;- calculate_cluster_scores(
+  object = integrated_obj,
+  signatures = intermediate_markers,
+  score_prefix = "IntermediateScore"
+)
+
+integrated_obj &lt;- intermediate_result$object
+intermediate_score_matrix &lt;-
+  intermediate_result$score_matrix
+
+# 중분류도 최소 2개의 marker가 cluster 세포의
+# 10% 이상에서 검출되어야 최종 배정
+intermediate_detection_matrix &lt;-
+  calculate_detection_fraction(
+    object = integrated_obj,
+    marker_union = unlist(
+      intermediate_markers,
+      use.names = FALSE
+    )
+  )
+
+
+# 대분류가 아니라 먼저 확인된 세포 계통(component)별로
+# 경쟁 가능한 중분류만 지정합니다.
+#
+# 중요: Dcn, Lum, Col1a1/2는 정상 섬유아세포 전용 marker가 아니라
+# 대부분의 fibroblast/CAF에서 발현될 수 있는 pan-fibroblast marker입니다.
+# 따라서 Homeostatic_fibroblast를 CAF subtype과 직접 경쟁시키지 않고,
+# 활성화 CAF program이 지지되지 않을 때만 fallback label로 사용합니다.
+allowed_intermediate &lt;- list(
+  Epithelial = c(
+    "Normal_epithelial",
+    "Tumor_epithelial_candidate"
+  ),
+  Immune = c(
+    "T_cell",
+    "NK_cell",
+    "Macrophage",
+    "Monocyte",
+    "Neutrophil",
+    "cDC1",
+    "cDC2",
+    "Migratory_DC",
+    "pDC",
+    "B_cell",
+    "Plasma_cell"
+  ),
+  Fibroblast = c(
+    "ECM_CAF",
+    "Inflammatory_CAF",
+    "Myofibroblast",
+    "Antigen_presenting_CAF"
+  ),
+  Endothelial = c(
+    "Endothelial"
+  ),
+  Muscle_Pericyte = c(
+    "Myofibroblast",
+    "Pericyte"
+  ),
+  ENS = c(
+    "Enteric_nervous_system"
+  )
+)
+
+
+# ============================================================
+# 8. 확인된 세포 계통 내부에서만 중분류 자동 배정
+# ============================================================
+
+intermediate_annotation &lt;- major_annotation |&gt;
+  select(
+    cluster,
+    component_auto,
+    celltype_major
+  ) |&gt;
+  mutate(
+    celltype_intermediate = "Unresolved",
+    intermediate_top_score = NA_real_,
+    intermediate_margin = NA_real_
+  )
+
+for (i in seq_len(nrow(intermediate_annotation))) {
+
+  cluster_id &lt;- intermediate_annotation$cluster[i]
+  component_label &lt;-
+    intermediate_annotation$component_auto[i]
+
+  if (
+    component_label == "Unresolved" ||
+    !component_label %in% names(allowed_intermediate)
+  ) {
+    next
+  }
+
+  # Endothelial은 대분류 단계에서 Cldn5, Pecam1, Kdr 등의
+  # core marker 검증을 이미 통과한 단일 계통입니다.
+  # 중분류에서 다시 module score 경쟁을 시키면 검출률 기준 때문에
+  # 불필요하게 Unresolved가 될 수 있으므로 그대로 유지합니다.
+  if (component_label == "Endothelial") {
+    intermediate_annotation$celltype_intermediate[i] &lt;-
+      "Endothelial"
+    next
+  }
+
+  candidates &lt;- intersect(
+    allowed_intermediate[[component_label]],
+    colnames(intermediate_score_matrix)
+  )
+
+  # score matrix에 해당 후보 열이 없는 경우 안전하게 보류
+  if (length(candidates) == 0) {
+    next
+  }
+
+  candidate_scores &lt;- intermediate_score_matrix[
+    cluster_id,
+    candidates,
+    drop = TRUE
+  ]
+
+  # 각 subtype은 적어도 2개 marker가 cluster 세포의 10% 이상에서
+  # 검출되어야 후보로 인정합니다.
+  candidate_supported &lt;- vapply(
+    candidates,
+    function(label) {
+      subtype_markers &lt;- intersect(
+        intermediate_markers[[label]],
+        colnames(intermediate_detection_matrix)
+      )
+
+      length(subtype_markers) &gt;= 2 &amp;&amp;
+        sum(
+          intermediate_detection_matrix[
+            cluster_id,
+            subtype_markers
+          ] &gt;= 0.10
+        ) &gt;= 2
+    },
+    logical(1)
+  )
+
+  supported_candidates &lt;- candidates[
+    candidate_supported &amp; candidate_scores[candidates] &gt; 0
+  ]
+
+  # Fibroblast에서 활성화 CAF program이 하나도 지지되지 않으면
+  # 그때만 Homeostatic_fibroblast로 보수적으로 분류합니다.
+  if (
+    component_label == "Fibroblast" &amp;&amp;
+    length(supported_candidates) == 0
+  ) {
+    intermediate_annotation$celltype_intermediate[i] &lt;-
+      "Homeostatic_fibroblast"
+    next
+  }
+
+  if (length(supported_candidates) == 0) {
+    next
+  }
+
+  candidate_scores &lt;- sort(
+    candidate_scores[supported_candidates],
+    decreasing = TRUE
+  )
+
+  top_score &lt;- candidate_scores[1]
+  margin &lt;- if (
+    length(candidate_scores) &gt;= 2
+  ) {
+    candidate_scores[1] - candidate_scores[2]
+  } else {
+    candidate_scores[1]
+  }
+
+  intermediate_annotation$intermediate_top_score[i] &lt;-
+    top_score
+  intermediate_annotation$intermediate_margin[i] &lt;-
+    margin
+
+  top_label &lt;- names(candidate_scores)[1]
+
+  if (
+    top_score &gt; 0 &amp;&amp;
+    (length(candidate_scores) == 1 || margin &gt;= 0.05)
+  ) {
+    intermediate_annotation$celltype_intermediate[i] &lt;-
+      top_label
+  } else if (component_label == "Fibroblast") {
+    # CAF activation은 보이지만 어느 subtype인지 명확하지 않은 경우
+    # 정상 섬유아세포로 강제하지 않습니다.
+    intermediate_annotation$celltype_intermediate[i] &lt;-
+      "Fibroblast_unresolved"
+  }
+}
+
+
+# ENS는 core marker 검증을 통과한 cluster만 유지
+ens_core_support &lt;- setNames(
+  major_annotation$core_support,
+  major_annotation$cluster
+)
+
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$component_auto == "ENS" &amp;
+    !ens_core_support[intermediate_annotation$cluster]
+] &lt;- "Unresolved"
+
+
+# ============================================================
+# 8-1. Top marker와 marker plot을 이용한 최종 전문가 검토
+# ============================================================
+# 자동 annotation은 시작점이며, 최종 label은 다음 근거를 함께 확인합니다.
+# 1) cluster top marker
+# 2) canonical marker의 발현 조합
+# 3) UMAP에서의 위치
+# 4) 특정 sample에만 편중되지 않았는지 여부
+#
+# Cluster 5
+# - 6개 sample에 고르게 존재: ND 1,732 / WD 1,276 cells
+# - Dcn+ stromal 계통이며 Ankrd1이 선택적으로 높음
+# - canonical endothelial, epithelial, pericyte marker는 뚜렷하지 않음
+# - Acta2/Tagln/Myh11이 부족하여 전형적인 myofibroblast로 부르지 않음
+# 따라서 데이터 기반 잠정 명칭인 ANKRD1_positive_CAF로 분류합니다.
+major_annotation$component_auto[
+  major_annotation$cluster == "5"
+] &lt;- "Fibroblast"
+
+major_annotation$celltype_major[
+  major_annotation$cluster == "5"
+] &lt;- "Stromal"
+
+intermediate_annotation$component_auto[
+  intermediate_annotation$cluster == "5"
+] &lt;- "Fibroblast"
+
+intermediate_annotation$celltype_major[
+  intermediate_annotation$cluster == "5"
+] &lt;- "Stromal"
+
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$cluster == "5"
+] &lt;- "ANKRD1_positive_CAF"
+
+# Cluster 11: Postn, Mmp3, Sfrp2/4, Lox, Cpxm1 기반 ECM-remodeling CAF
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$cluster == "11"
+] &lt;- "ECM_CAF"
+
+# Cluster 19: Cldn5, Pecam1, Kdr, Emcn 기반 endothelial lineage
+intermediate_annotation$celltype_intermediate[
+  intermediate_annotation$cluster == "19"
+] &lt;- "Endothelial"
+
+print(intermediate_annotation)
+
+
+# ============================================================
+# 9. Seurat metadata에 저장
+# ============================================================
+
+major_map &lt;- setNames(
+  major_annotation$celltype_major,
+  major_annotation$cluster
+)
+
+intermediate_map &lt;- setNames(
+  intermediate_annotation$celltype_intermediate,
+  intermediate_annotation$cluster
+)
+
+integrated_obj$celltype_major &lt;- unname(
+  major_map[
+    as.character(integrated_obj$seurat_clusters)
+  ]
+)
+
+integrated_obj$celltype_intermediate &lt;- unname(
+  intermediate_map[
+    as.character(integrated_obj$seurat_clusters)
+  ]
+)
+
+table(
+  cluster = integrated_obj$seurat_clusters,
+  major = integrated_obj$celltype_major
+)
+
+table(
+  cluster = integrated_obj$seurat_clusters,
+  intermediate =
+    integrated_obj$celltype_intermediate
+)
+
+
+# ============================================================
+# 10. 시각화
+# ============================================================
+
+p_major &lt;- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_major",
+  label = TRUE,
+  repel = TRUE
+) +
+  ggtitle("A. Major cell classes")
+
+p_intermediate &lt;- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_intermediate",
+  label = TRUE,
+  repel = TRUE
+) +
+  ggtitle("B. Intermediate cell classes")
+
+p_major + p_intermediate
+
+
+# 대분류 component marker 검증
+p_major_marker &lt;- DotPlot(
+  integrated_obj,
+  features = major_component_markers,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Major-lineage marker validation")
+
+p_major_marker
+
+
+# 중분류 marker 검증
+p_intermediate_marker &lt;- DotPlot(
+  integrated_obj,
+  features = intermediate_markers,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Intermediate marker validation")
+
+p_intermediate_marker
+
+
+# 대표 marker의 실제 발현 위치 확인
+# DimPlot은 범주형 metadata를, FeaturePlot은 유전자 발현량을 표시합니다.
+representative_markers &lt;- c(
+  "Lyz2",     # Monocyte/myeloid
+  "C1qc",     # Macrophage
+  "Cd209a",   # cDC2
+  "Ccr7",     # Migratory DC
+  "Siglech",  # pDC
+  "Cd3e",     # T cell
+  "Ncr1",     # NK cell
+  "Dcn",      # Fibroblast
+  "Ankrd1",   # ANKRD1-positive CAF
+  "Postn",    # ECM-CAF
+  "Cldn5"     # Endothelial
+)
+
+representative_markers &lt;- intersect(
+  representative_markers,
+  rownames(integrated_obj)
+)
+
+p_representative_feature &lt;- FeaturePlot(
+  integrated_obj,
+  features = representative_markers,
+  reduction = "umap",
+  order = TRUE,
+  min.cutoff = "q05",
+  max.cutoff = "q95",
+  ncol = 4
+)
+
+p_representative_feature
+
+
+# Cluster별 대표 marker 발현율과 평균 발현을 한 번에 비교
+p_representative_dot &lt;- DotPlot(
+  integrated_obj,
+  features = representative_markers,
+  group.by = "celltype_intermediate",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Representative marker validation")
+
+p_representative_dot
+
+
+# ============================================================
+# 실습 문제
+# ============================================================
+# 1) top10_markers 또는 all_markers에서 각 세포 유형을 대표할
+#    유전자 하나씩을 선택합니다.
+# 2) FeaturePlot으로 선택한 유전자의 UMAP 발현 위치를 확인합니다.
+# 3) DotPlot으로 해당 유전자가 목표 세포형에 선택적으로 발현되는지
+#    발현 세포 비율과 평균 발현량을 함께 확인합니다.
+#
+# 예시:
+# student_genes &lt;- c("C1qc", "Cd3e", "Ncr1", "Ankrd1", "Postn", "Cldn5")
+# student_genes &lt;- intersect(student_genes, rownames(integrated_obj))
+#
+# FeaturePlot(
+#   integrated_obj,
+#   features = student_genes,
+#   reduction = "umap",
+#   order = TRUE,
+#   min.cutoff = "q05",
+#   max.cutoff = "q95",
+#   ncol = 3
+# )
+#
+# DotPlot(
+#   integrated_obj,
+#   features = student_genes,
+#   group.by = "celltype_intermediate",
+#   assay = "RNA"
+# ) + RotatedAxis()
+
+
+# ============================================================
+# 11. 결과 저장
+# ============================================================
+
+hierarchical_annotation &lt;- left_join(
+  major_annotation,
+  intermediate_annotation,
+  by = c(
+    "cluster",
+    "celltype_major"
+  )
+)
+
+write.csv(
+  hierarchical_annotation,
+  file = "hierarchical_annotation_result.csv",
+  row.names = FALSE
+)
+
+saveRDS(
+  integrated_obj,
+  file = "integrated_obj_annotated.rds",
+  compress = FALSE
+)
+
+file.exists(
+  "integrated_obj_annotated.rds"
+)
+
+
+# ============================================================
+# 주의
+# ============================================================
+# 1) Unresolved는 실패가 아니라 근거가 부족한 cluster입니다.
+# 2) Tumor_epithelial_candidate는 종양 확정 label이 아닙니다.
+#    inferCNV/CNV, 조직 조건 또는 검증된 tumor marker가 필요합니다.
+# 3) epithelial marker 근거가 없으면 epithelial cluster는 생성되지 않습니다.
+# 4) 0.05 score margin과 10% 검출 기준은 실습용 점검 기준입니다.
+#    데이터 특성에 따라 조정할 수 있습니다.
+  </code></pre>
+  <p>
+    <a class="btn btn-primary"
+       href="../../assets/scripts/step6_hierarchical_annotation.R?v=20260806-2"
+       download>Step 6 전체 R 스크립트 다운로드</a>
+  </p>
+
+  <!-- J: exercise -->
+  <h3 class="mt-5">J) 실습 문제: 대표 유전자로 annotation 검증하기</h3>
+
+  <div class="card tip mb-3"><div class="card-body">
+    <h6>실습 과제</h6>
+    <ol class="mb-0">
+      <li><code>top10_markers</code>에서 Monocyte, Macrophage, T cell, NK cell, CAF, Endothelial을 대표할 유전자를 각각 하나씩 선택합니다.</li>
+      <li><code>FeaturePlot()</code>으로 선택한 유전자의 UMAP 발현 위치를 확인합니다.</li>
+      <li><code>DotPlot()</code>으로 목표 세포형의 평균 발현량과 발현 세포 비율을 비교합니다.</li>
+      <li>다른 세포형에도 넓게 발현된다면 더 특이적인 marker로 교체하고 이유를 설명합니다.</li>
+    </ol>
+  </div></div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 수강생이 직접 대표 유전자를 입력하세요.
+student_genes &lt;- c(
+  "대표유전자1",
+  "대표유전자2",
+  "대표유전자3"
+)
+
+student_genes &lt;- intersect(
+  student_genes,
+  rownames(integrated_obj)
+)
+
+FeaturePlot(
+  integrated_obj,
+  features = student_genes,
+  reduction = "umap",
+  order = TRUE,
+  min.cutoff = "q05",
+  max.cutoff = "q95",
+  ncol = 3
+)
+
+DotPlot(
+  integrated_obj,
+  features = student_genes,
+  group.by = "celltype_intermediate",
+  assay = "RNA"
+) + RotatedAxis()</code></pre>
+
+  <!-- K: save -->
+  <h3 class="mt-5">K) Annotation 결과 저장</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>saveRDS(
+  integrated_obj,
+  file = "integrated_obj_annotated.rds",
+  compress = FALSE
+)
+
+write.csv(
+  hierarchical_annotation,
+  file = "hierarchical_annotation_result.csv",
+  row.names = FALSE
+)
+
+file.exists("integrated_obj_annotated.rds")</code></pre>
+
   <!-- Summary -->
   <section class="mt-4">
     <div class="card border-primary">
       <div class="card-header bg-primary text-white fw-bold">요약</div>
       <div class="card-body">
         <ul class="mb-3">
-          <li>Annotation은 대분류 → 중분류 → 필요한 계통의 소분류 순서로 진행합니다.</li>
-          <li>페이지 하단의 실습용 전체 코드는 대분류 자동 mapping부터 결과 저장까지 한 번에 수행합니다.</li>
-          <li>대분류에서는 epithelial, immune, stromal, endothelial, muscle/pericyte 및 neural/glial을 구분합니다.</li>
-          <li>중분류에서는 immune cell을 T, NK, B/plasma, myeloid 등으로 나누고 epithelial 및 stromal subtype을 확인합니다.</li>
-          <li>하나의 marker가 아니라 여러 positive marker 조합과 negative evidence를 함께 확인합니다.</li>
-          <li>자동 mapping은 marker score로 수행하며 최종 판정은 RNA assay의 marker 발현으로 검증합니다.</li>
+          <li>Annotation은 대분류 → 계통 내부 중분류 → 필요한 계통의 소분류 순서로 진행합니다.</li>
+          <li>자동 mapping은 marker score, 발현 검출률 및 1·2위 score margin을 함께 사용합니다.</li>
+          <li>Enteric neural/glial은 핵심 marker 조합이 확인될 때만 희귀 세포군으로 추가합니다.</li>
+          <li>Top marker, canonical marker 조합, UMAP 위치와 sample 편중 여부를 확인해 자동 결과를 검증합니다.</li>
+          <li>Cluster 5는 ANKRD1-positive CAF, cluster 11은 ECM-CAF, cluster 19는 Endothelial로 최종 검토했습니다.</li>
+          <li>대표 유전자의 실제 발현은 FeaturePlot으로, 평균 발현과 발현 세포 비율은 DotPlot으로 확인합니다.</li>
+          <li>근거가 충분하지 않은 cluster는 강제로 분류하지 않고 Unresolved로 유지합니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">
