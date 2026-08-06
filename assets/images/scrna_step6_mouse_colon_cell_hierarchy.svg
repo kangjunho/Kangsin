@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <style>
+      .title{font:700 40px Arial,'Noto Sans KR',sans-serif;fill:#16345c}
+      .sub{font:600 23px Arial,'Noto Sans KR',sans-serif;fill:#25364d}
+      .txt{font:500 19px Arial,'Noto Sans KR',sans-serif;fill:#243447}
+      .small{font:500 16px Arial,'Noto Sans KR',sans-serif;fill:#4a5a6a}
+      .box{stroke-width:2.5;rx:18;ry:18}
+      .line{stroke:#8294aa;stroke-width:3;fill:none}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="800" y="58" text-anchor="middle" class="title">마우스 대장 조직의 세포 계층 구조</text>
+  <text x="800" y="91" text-anchor="middle" class="small">대분류에서 시작해 marker 조합을 이용하여 중분류와 소분류로 확장</text>
+
+  <rect x="650" y="120" width="300" height="72" class="box" fill="#16345c" stroke="#16345c"/>
+  <text x="800" y="164" text-anchor="middle" style="font:700 26px Arial,'Noto Sans KR',sans-serif;fill:white">Mouse colon tissue</text>
+
+  <path d="M800 192 V230 M150 230 H1450" class="line"/>
+  <path d="M150 230 V260 M410 230 V260 M670 230 V260 M930 230 V260 M1190 230 V260 M1450 230 V260" class="line"/>
+
+  <rect x="40" y="260" width="220" height="88" class="box" fill="#ffe1b5" stroke="#e89c32"/>
+  <text x="150" y="296" text-anchor="middle" class="sub">Epithelial</text>
+  <text x="150" y="325" text-anchor="middle" class="small">Epcam · Krt8 · Krt18</text>
+
+  <rect x="300" y="260" width="220" height="88" class="box" fill="#ffd1d5" stroke="#df6871"/>
+  <text x="410" y="296" text-anchor="middle" class="sub">Immune</text>
+  <text x="410" y="325" text-anchor="middle" class="small">Ptprc</text>
+
+  <rect x="560" y="260" width="220" height="88" class="box" fill="#d7efc5" stroke="#69a941"/>
+  <text x="670" y="296" text-anchor="middle" class="sub">Stromal</text>
+  <text x="670" y="325" text-anchor="middle" class="small">Col1a1 · Dcn · Pdgfra</text>
+
+  <rect x="820" y="260" width="220" height="88" class="box" fill="#cdebea" stroke="#3d9c9b"/>
+  <text x="930" y="296" text-anchor="middle" class="sub">Endothelial</text>
+  <text x="930" y="325" text-anchor="middle" class="small">Pecam1 · Cdh5 · Kdr</text>
+
+  <rect x="1080" y="260" width="220" height="88" class="box" fill="#ddd8f5" stroke="#796fba"/>
+  <text x="1190" y="296" text-anchor="middle" class="sub">Muscle / Pericyte</text>
+  <text x="1190" y="325" text-anchor="middle" class="small">Acta2 · Tagln · Rgs5</text>
+
+  <rect x="1340" y="260" width="220" height="88" class="box" fill="#e6e6e6" stroke="#777777"/>
+  <text x="1450" y="296" text-anchor="middle" class="sub">Neural / Glial</text>
+  <text x="1450" y="325" text-anchor="middle" class="small">Tubb3 · S100b · Sox10</text>
+
+  <path d="M150 348 V390" class="line"/>
+  <rect x="30" y="390" width="240" height="360" class="box" fill="#fff7eb" stroke="#e89c32"/>
+  <text x="150" y="426" text-anchor="middle" class="sub">중분류 / 소분류</text>
+  <text x="55" y="470" class="txt">• Colonocyte</text><text x="55" y="494" class="small">Alpi · Krt20 · Car1</text>
+  <text x="55" y="538" class="txt">• Goblet</text><text x="55" y="562" class="small">Muc2 · Spink4 · Clca1</text>
+  <text x="55" y="606" class="txt">• Stem / TA</text><text x="55" y="630" class="small">Lgr5 · Olfm4 · Mki67</text>
+  <text x="55" y="674" class="txt">• Enteroendocrine</text><text x="55" y="698" class="small">Chga · Chgb · Neurog3</text>
+  <text x="55" y="742" class="txt">• Tuft: Dclk1 · Pou2f3</text>
+
+  <path d="M410 348 V390" class="line"/>
+  <rect x="290" y="390" width="240" height="360" class="box" fill="#fff0f2" stroke="#df6871"/>
+  <text x="410" y="426" text-anchor="middle" class="sub">중분류 / 소분류</text>
+  <text x="315" y="470" class="txt">• T cell</text><text x="315" y="494" class="small">Cd3d · Cd3e · Trbc2</text>
+  <text x="315" y="538" class="txt">• NK cell</text><text x="315" y="562" class="small">Nkg7 · Klrd1 · Gzmb</text>
+  <text x="315" y="606" class="txt">• B / Plasma</text><text x="315" y="630" class="small">Ms4a1 · Cd79a · Jchain</text>
+  <text x="315" y="674" class="txt">• Myeloid</text><text x="315" y="698" class="small">Lyz2 · Adgre1 · Csf1r</text>
+  <text x="315" y="742" class="txt">• Mast: Kit · Cpa3 · Mcpt4</text>
+
+  <path d="M670 348 V390" class="line"/>
+  <rect x="550" y="390" width="240" height="250" class="box" fill="#f3faed" stroke="#69a941"/>
+  <text x="670" y="426" text-anchor="middle" class="sub">중분류</text>
+  <text x="575" y="480" class="txt">• Fibroblast</text><text x="575" y="504" class="small">Col1a1 · Col1a2 · Dcn</text>
+  <text x="575" y="554" class="txt">• Myofibroblast</text><text x="575" y="578" class="small">Acta2 · Tagln · Col3a1</text>
+  <text x="575" y="622" class="txt">• Telocyte-like: Wnt2b</text>
+
+  <path d="M930 348 V390" class="line"/>
+  <rect x="810" y="390" width="240" height="250" class="box" fill="#effafa" stroke="#3d9c9b"/>
+  <text x="930" y="426" text-anchor="middle" class="sub">중분류</text>
+  <text x="835" y="480" class="txt">• Capillary</text><text x="835" y="504" class="small">Emcn · Car4 · Kdr</text>
+  <text x="835" y="554" class="txt">• Venous / Arterial</text><text x="835" y="578" class="small">Ackr1 · Efnb2 · Gja5</text>
+  <text x="835" y="622" class="txt">• Lymphatic: Prox1 · Lyve1</text>
+
+  <path d="M1190 348 V390" class="line"/>
+  <rect x="1070" y="390" width="240" height="250" class="box" fill="#f5f3fc" stroke="#796fba"/>
+  <text x="1190" y="426" text-anchor="middle" class="sub">중분류</text>
+  <text x="1095" y="480" class="txt">• Smooth muscle</text><text x="1095" y="504" class="small">Myh11 · Actg2 · Des</text>
+  <text x="1095" y="554" class="txt">• Pericyte</text><text x="1095" y="578" class="small">Rgs5 · Cspg4 · Pdgfrb</text>
+
+  <path d="M1450 348 V390" class="line"/>
+  <rect x="1330" y="390" width="240" height="250" class="box" fill="#f7f7f7" stroke="#777777"/>
+  <text x="1450" y="426" text-anchor="middle" class="sub">중분류</text>
+  <text x="1355" y="480" class="txt">• Enteric neuron</text><text x="1355" y="504" class="small">Tubb3 · Elavl4 · Ret</text>
+  <text x="1355" y="554" class="txt">• Enteric glia</text><text x="1355" y="578" class="small">S100b · Plp1 · Sox10</text>
+
+  <rect x="380" y="790" width="840" height="72" rx="18" fill="#eef4fb" stroke="#6b8eb8" stroke-width="2"/>
+  <text x="800" y="820" text-anchor="middle" class="sub">실습 전략</text>
+  <text x="800" y="848" text-anchor="middle" class="txt">20개 cluster를 대분류 → 중분류 순서로 annotation하고, 필요한 계통만 subset하여 소분류</text>
+</svg>
