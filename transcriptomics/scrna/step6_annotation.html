@@ -50,7 +50,49 @@
   <hr/>
 
   <!-- A -->
-  <h3>A) 마우스 대장 조직에는 어떤 세포가 있을까?</h3>
+  <h3>A) 고임팩트 장 조직 atlas에서 사용하는 계층적 annotation</h3>
+
+  <p class="note">
+    대규모 single-cell atlas는 모든 cluster에 세부 이름을 한 번에 붙이지 않습니다.
+    먼저 <b>epithelial, immune, stromal/mesenchymal, endothelial, neural</b>과 같은
+    major lineage를 판정하고, 각 lineage를 다시 subclustering하여 세부 cell type과 state를 구분합니다.
+    이번 실습도 이 구조를 그대로 따릅니다.
+  </p>
+
+  <div class="table-responsive mb-3">
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr><th>대표 논문</th><th>그림에서 확인할 내용</th><th>실습에 적용할 개념</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Nature (2021)</b><br><a href="https://www.nature.com/articles/s41586-021-03852-1" target="_blank" rel="noopener">Cells of the human intestinal tract mapped across space and time</a></td>
+          <td>Figure 1b의 major lineage와 Extended Data Figure 2a의 lineage별 세부 유형</td>
+          <td>전체 세포 → major lineage → 133 cell types/states</td>
+        </tr>
+        <tr>
+          <td><b>Cell (2019)</b><br><a href="https://www.sciencedirect.com/science/article/pii/S0092867419307329" target="_blank" rel="noopener">Intra- and Inter-cellular Rewiring of the Human Colon during Ulcerative Colitis</a></td>
+          <td>사람 대장의 epithelial, stromal, immune compartment와 51개 subset</td>
+          <td>대장 조직의 대분류 및 중·소분류 예시</td>
+        </tr>
+        <tr>
+          <td><b>Nature (2017)</b><br><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6022292/" target="_blank" rel="noopener">A single-cell survey of the small intestinal epithelium</a></td>
+          <td>마우스 intestinal epithelial lineage와 stem/TA, absorptive, secretory subtype</td>
+          <td>Epithelial cluster를 별도로 subset하여 세분화</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card warn-box mb-4">
+    <div class="card-body">
+      <b>해석 시 주의:</b> 앞의 두 atlas는 사람 장 조직이고 세 번째 연구는 마우스 소장 epithelial 중심입니다.
+      따라서 논문의 cell type 이름을 그대로 복사하지 않고, 마우스 대장 데이터에서 marker 조합을 직접 확인해 annotation합니다.
+      아래 그림은 이들 논문의 계층적 분석 원리를 마우스 대장 실습에 맞게 다시 구성한 도식입니다.
+    </div>
+  </div>
+
+  <h3>A-1) 마우스 대장 조직에는 어떤 세포가 있을까?</h3>
 
   <p class="note">
     마우스 대장은 epithelial layer, lamina propria의 immune·stromal compartment,
@@ -66,22 +108,22 @@
   </div>
 
   <p class="text-center text-muted mt-2">
-    마우스 대장 조직의 주요 세포 계통과 대표 marker를 정리한 실습용 계층 구조
+    고임팩트 intestinal cell atlas의 분석 원리를 마우스 대장에 적용한 실습용 계층 구조
   </p>
 
   <div class="card tip mb-3">
     <div class="card-body">
-      <h6>Annotation의 세 단계</h6>
+      <h6>논문과 동일한 Annotation의 세 단계</h6>
       <ol class="mb-0">
         <li><b>대분류:</b> epithelial, immune, stromal, endothelial, muscle/pericyte, neural/glial</li>
         <li><b>중분류:</b> immune 안에서 T, NK, B/plasma, myeloid, mast 등으로 구분</li>
-        <li><b>소분류:</b> 필요할 때 T-cell subtype, epithelial subtype 또는 fibroblast state 등을 subset 분석</li>
+        <li><b>소분류:</b> 필요한 lineage만 subset·재분석하여 T-cell subtype, epithelial subtype 또는 fibroblast state 등을 판정</li>
       </ol>
     </div>
   </div>
 
   <div class="card border-secondary mb-4">
-    <div class="card-header bg-light fw-bold">그림 구성의 참고 자료</div>
+    <div class="card-header bg-light fw-bold">마우스 대장 구성과 marker 선정의 추가 참고 자료</div>
     <div class="card-body">
       <ul class="mb-0">
         <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8238917/" target="_blank" rel="noopener">Seq-Scope spatial transcriptomics of mouse colon</a>: epithelial, immune, fibroblast, smooth muscle 및 neural compartment</li>
@@ -125,11 +167,150 @@ table(Idents(integrated_obj))
   </div>
 
   <!-- C -->
-  <h3 class="mt-4">C) Cluster별 marker gene 찾기</h3>
+  <h3 class="mt-4">C) 대분류를 자동으로 mapping하기</h3>
 
   <p class="note">
-    <code>FindAllMarkers()</code>는 각 cluster와 나머지 세포를 비교하여
-    해당 cluster에서 상대적으로 높게 발현되는 유전자를 찾습니다.
+    이번 실습에서는 문헌 기반 marker set으로 lineage score를 계산하고,
+    cluster별 평균 점수가 가장 높은 대분류를 자동 배정합니다.
+    자동 결과는 cluster marker와 marker plot을 이용해 검증합니다.
+  </p>
+
+  <h4 class="mt-3">C-1) 대분류 marker set 준비</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_marker_list <- list(
+  Epithelial = c(
+    "Epcam", "Cdh1", "Krt8", "Krt18",
+    "Krt19", "Krt20", "Vil1", "Tacstd2"
+  ),
+  Immune = c(
+    "Ptprc", "Cd52", "Coro1a", "Lcp1",
+    "Ptpn6", "Tyrobp", "Fcer1g"
+  ),
+  Stromal = c(
+    "Col1a1", "Col1a2", "Col3a1", "Dcn",
+    "Lum", "Dpt", "Pdgfra", "Col6a1"
+  ),
+  Endothelial = c(
+    "Pecam1", "Cdh5", "Kdr", "Esam",
+    "Emcn", "Egfl7", "Tek", "Vwf"
+  ),
+  Muscle_Pericyte = c(
+    "Acta2", "Tagln", "Myh11", "Actg2",
+    "Cnn1", "Rgs5", "Pdgfrb", "Cspg4", "Notch3"
+  ),
+  Neural_Glial = c(
+    "Tubb3", "Elavl3", "Elavl4", "Snap25",
+    "Syp", "Sox10", "S100b", "Plp1", "Slc1a3"
+  )
+)
+
+# 현재 객체에 존재하는 marker만 사용
+major_marker_list <- lapply(
+  major_marker_list,
+  intersect,
+  y = rownames(integrated_obj)
+)
+
+lengths(major_marker_list)
+stopifnot(all(lengths(major_marker_list) >= 3))
+</code></pre>
+
+  <h4 class="mt-3">C-2) Marker score로 cluster 자동 배정</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>set.seed(1234)
+
+integrated_obj <- AddModuleScore(
+  integrated_obj,
+  features = major_marker_list,
+  assay = "RNA",
+  name = "MajorScore",
+  seed = 1234
+)
+
+score_columns <- paste0(
+  "MajorScore",
+  seq_along(major_marker_list)
+)
+
+cluster_score <- FetchData(
+  integrated_obj,
+  vars = c("seurat_clusters", score_columns)
+) |>
+  group_by(seurat_clusters) |>
+  summarise(
+    across(all_of(score_columns), mean),
+    .groups = "drop"
+  )
+
+score_matrix <- as.matrix(
+  cluster_score[, score_columns]
+)
+colnames(score_matrix) <- names(major_marker_list)
+rownames(score_matrix) <- cluster_score$seurat_clusters
+
+top1_index <- max.col(
+  score_matrix,
+  ties.method = "first"
+)
+
+sorted_scores <- t(
+  apply(
+    score_matrix,
+    1,
+    sort,
+    decreasing = TRUE
+  )
+)
+
+marker_annotation <- data.frame(
+  cluster = rownames(score_matrix),
+  marker_major = colnames(score_matrix)[top1_index],
+  score_margin = sorted_scores[, 1] - sorted_scores[, 2],
+  row.names = NULL
+)
+
+marker_annotation
+</code></pre>
+
+  <p class="note">
+    <code>score_margin</code>은 1위와 2위 lineage score의 차이입니다.
+    값이 작은 cluster는 자동 결과를 확정하지 않고 우선 검토합니다.
+  </p>
+
+  <h4 class="mt-3">C-3) Marker 기반 대분류를 metadata에 자동 저장</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_cluster_map <- setNames(
+  marker_annotation$marker_major,
+  marker_annotation$cluster
+)
+
+integrated_obj$celltype_major_auto <- unname(
+  major_cluster_map[
+    as.character(integrated_obj$seurat_clusters)
+  ]
+)
+
+table(
+  cluster = integrated_obj$seurat_clusters,
+  major = integrated_obj$celltype_major_auto
+)
+
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_major_auto",
+  label = TRUE,
+  repel = TRUE
+)
+</code></pre>
+
+  <!-- D -->
+  <h3 class="mt-4">D) FindAllMarkers로 자동 annotation 검증</h3>
+
+  <p class="note">
+    <code>FindAllMarkers()</code>는 자동 mapping을 수행하는 함수가 아닙니다.
+    자동 배정 후 각 cluster의 특징 유전자가 예상한 세포 계통과 일치하는지 검증하는 데 사용합니다.
+    각 cluster와 나머지 세포를 비교하여 상대적으로 높게 발현되는 유전자를 찾습니다.
     세포 수가 많으므로 실습 시간을 줄이기 위해 cluster당 최대 1,000개 세포를 사용합니다.
   </p>
 
@@ -172,7 +353,7 @@ all_markers <- read.csv(
 )
 </code></pre>
 
-  <h4 class="mt-4">C-1) Cluster별 상위 marker 확인</h4>
+  <h4 class="mt-4">D-1) Cluster별 상위 marker 확인</h4>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>top10_markers <- all_markers |>
   group_by(cluster) |>
@@ -200,92 +381,23 @@ top10_markers |>
     stress gene만 높은 경우에는 세포 정체성보다 상태 또는 QC 영향을 반영할 수 있습니다.
   </p>
 
-  <!-- D -->
-  <h3 class="mt-4">D) 대분류: 주요 세포 계통 확인</h3>
-
-  <div class="table-responsive">
-    <table class="table table-bordered align-middle">
-      <thead>
-        <tr>
-          <th style="width:24%">대분류</th>
-          <th style="width:38%">대표 positive marker</th>
-          <th style="width:38%">해석 시 참고</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Epithelial</td><td>Epcam, Krt8, Krt18, Krt19</td><td>Colonocyte, goblet, stem/TA 등으로 세분화</td></tr>
-        <tr><td>Immune</td><td>Ptprc</td><td>T/NK, B/plasma, myeloid, mast로 세분화</td></tr>
-        <tr><td>Stromal</td><td>Col1a1, Col1a2, Dcn, Pdgfra</td><td>Fibroblast와 myofibroblast 확인</td></tr>
-        <tr><td>Endothelial</td><td>Pecam1, Cdh5, Kdr, Esam</td><td>Blood 및 lymphatic endothelial 확인</td></tr>
-        <tr><td>Muscle/Pericyte</td><td>Acta2, Tagln, Myh11, Rgs5, Pdgfrb</td><td>Smooth muscle과 pericyte 구분</td></tr>
-        <tr><td>Neural/Glial</td><td>Tubb3, Elavl4, S100b, Plp1, Sox10</td><td>희귀할 수 있으므로 여러 marker 조합 확인</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_marker_list <- list(
-  Epithelial = c("Epcam", "Krt8", "Krt18", "Krt19"),
-  Immune = c("Ptprc"),
-  Stromal = c("Col1a1", "Col1a2", "Dcn", "Pdgfra"),
-  Endothelial = c("Pecam1", "Cdh5", "Kdr", "Esam"),
-  Muscle_Pericyte = c("Acta2", "Tagln", "Myh11", "Rgs5", "Pdgfrb"),
-  Neural_Glial = c("Tubb3", "Elavl4", "S100b", "Plp1", "Sox10")
-)
-
-DotPlot(
-  integrated_obj,
-  features = major_marker_list,
-  group.by = "seurat_clusters",
-  assay = "RNA"
-) +
-  RotatedAxis() +
-  ggtitle("Major lineage markers")
-</code></pre>
-
-  <p class="note">
-    Dot size는 해당 cluster에서 marker가 발현되는 세포 비율,
-    색은 평균 발현량을 나타냅니다. 하나의 유전자만 보지 말고 같은 계통의 여러 marker가
-    동시에 일관되게 나타나는지 확인합니다.
-  </p>
-
-  <h4 class="mt-4">D-1) 주요 marker의 UMAP 위치 확인</h4>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>FeaturePlot(
-  integrated_obj,
-  features = c(
-    "Epcam",
-    "Ptprc",
-    "Col1a1",
-    "Pecam1",
-    "Acta2",
-    "S100b"
-  ),
-  reduction = "umap",
-  ncol = 3,
-  order = TRUE
-)
-</code></pre>
-
   <!-- E -->
-  <h3 class="mt-4">E) 대분류 annotation을 metadata에 저장</h3>
+  <h3 class="mt-4">E) 검토한 대분류를 최종 metadata에 저장</h3>
 
   <p class="note">
-    Marker 결과를 확인한 뒤 cluster 번호별 대분류를 직접 입력합니다.
-    아래 코드는 실습용 template이므로 <code>Unassigned</code>를 실제 판정 결과로 수정해야 합니다.
+    Marker score의 자동 배정 결과를 시작값으로 사용합니다.
+    상위 marker와 marker plot이 자동 배정 결과와 일치하지 않는 cluster만 수정한 뒤
+    최종 결과를 <code>celltype_major</code>에 저장합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>cluster_ids <- levels(Idents(integrated_obj))
-
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 자동 배정 결과를 최종 mapping의 시작값으로 사용
 major_cluster_map <- setNames(
-  rep("Unassigned", length(cluster_ids)),
-  cluster_ids
+  marker_annotation$marker_major,
+  marker_annotation$cluster
 )
 
-# 아래는 marker 결과를 확인한 뒤 직접 입력
-# 예시:
-# major_cluster_map[c("0", "3", "4")] <- "Epithelial"
-# major_cluster_map[c("2", "11", "12")] <- "Immune"
-# major_cluster_map[c("1", "5")] <- "Stromal"
+# 불일치 cluster가 있을 때만 아래와 같이 수정
+# major_cluster_map["수정할_cluster"] <- "수정할_대분류"
 
 major_cluster_map
 
@@ -432,50 +544,8 @@ p_medium <- DimPlot(
 p_major + p_medium
 </code></pre>
 
-  <!-- H -->
-  <h3 class="mt-4">H) Reference-based annotation은 보조적으로 사용</h3>
-
-  <p class="note">
-    SingleR를 사용할 경우 사람 reference가 아니라 마우스 reference를 사용해야 합니다.
-    Reference 결과는 broad identity를 보조하는 자료이며, colon tumor context와 수동 marker 확인을 대체하지 않습니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 최초 1회 설치
-# BiocManager::install(c(
-#   "SingleR",
-#   "celldex",
-#   "SingleCellExperiment"
-# ))
-
-library(SingleR)
-library(celldex)
-library(SingleCellExperiment)
-
-mouse_ref <- MouseRNAseqData()
-
-sce <- as.SingleCellExperiment(
-  integrated_obj,
-  assay = "RNA"
-)
-
-singleR_cluster <- SingleR(
-  test = sce,
-  ref = mouse_ref,
-  labels = mouse_ref$label.main,
-  clusters = integrated_obj$seurat_clusters
-)
-
-singleR_cluster$labels
-</code></pre>
-
-  <div class="alert alert-warning mt-3" role="alert">
-    <strong>자동 annotation 주의:</strong> reference에 없는 tumor-associated state,
-    transitional population 또는 rare subtype은 부정확하게 분류될 수 있습니다.
-    최종 annotation은 cluster marker, DotPlot, FeaturePlot 및 조직 생물학을 함께 보고 결정합니다.
-  </div>
-
   <!-- I -->
-  <h3 class="mt-4">I) Annotation 결과 저장</h3>
+  <h3 class="mt-4">H) Annotation 결과 저장</h3>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># metadata 확인
 head(
@@ -504,6 +574,326 @@ file.exists(
 )
 </code></pre>
 
+  <!-- I -->
+  <h3 class="mt-5">I) 실습용 전체 코드: 대분류 자동 annotation</h3>
+
+  <p class="note">
+    아래 블록은 Step 5에서 저장한 <code>integrated_obj</code>를 이용하여
+    대분류 marker score 계산, cluster marker 확인,
+    UMAP 시각화 및 결과 저장까지 한 번에 수행하는 실습용 통합 코드입니다.
+  </p>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실습 진행 방법</h6>
+      <ol class="mb-0">
+        <li>전체 코드를 복사하여 실행합니다.</li>
+        <li><code>marker_annotation</code>에서 score margin이 작은 cluster를 확인합니다.</li>
+        <li>DotPlot, FeaturePlot과 상위 marker를 보고 필요한 cluster만 수정합니다.</li>
+        <li>수정 후 마지막 저장 부분을 다시 실행합니다.</li>
+      </ol>
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># ============================================================
+# Step 6 실습용 전체 코드: Major cell-type annotation
+# 시작 객체: integrated_obj
+# ============================================================
+
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+set.seed(1234)
+
+# ------------------------------------------------------------
+# 1. 분석 시작 상태 확인
+# ------------------------------------------------------------
+Idents(integrated_obj) <- "seurat_clusters"
+DefaultAssay(integrated_obj) <- "RNA"
+
+integrated_obj
+table(Idents(integrated_obj))
+
+
+# ------------------------------------------------------------
+# 2. 대분류 marker set 준비
+# ------------------------------------------------------------
+major_marker_list <- list(
+  Epithelial = c(
+    "Epcam", "Cdh1", "Krt8", "Krt18",
+    "Krt19", "Krt20", "Vil1", "Tacstd2"
+  ),
+  Immune = c(
+    "Ptprc", "Cd52", "Coro1a", "Lcp1",
+    "Ptpn6", "Tyrobp", "Fcer1g"
+  ),
+  Stromal = c(
+    "Col1a1", "Col1a2", "Col3a1", "Dcn",
+    "Lum", "Dpt", "Pdgfra", "Col6a1"
+  ),
+  Endothelial = c(
+    "Pecam1", "Cdh5", "Kdr", "Esam",
+    "Emcn", "Egfl7", "Tek", "Vwf"
+  ),
+  Muscle_Pericyte = c(
+    "Acta2", "Tagln", "Myh11", "Actg2",
+    "Cnn1", "Rgs5", "Pdgfrb", "Cspg4", "Notch3"
+  ),
+  Neural_Glial = c(
+    "Tubb3", "Elavl3", "Elavl4", "Snap25",
+    "Syp", "Sox10", "S100b", "Plp1", "Slc1a3"
+  )
+)
+
+# 현재 데이터에 존재하는 marker만 유지
+major_marker_list <- lapply(
+  major_marker_list,
+  intersect,
+  y = rownames(integrated_obj)
+)
+
+print(lengths(major_marker_list))
+stopifnot(all(lengths(major_marker_list) >= 3))
+
+
+# ------------------------------------------------------------
+# 3. Marker module score 계산
+# ------------------------------------------------------------
+integrated_obj <- AddModuleScore(
+  integrated_obj,
+  features = major_marker_list,
+  assay = "RNA",
+  name = "MajorScore",
+  seed = 1234
+)
+
+score_columns <- paste0(
+  "MajorScore",
+  seq_along(major_marker_list)
+)
+
+cluster_score <- FetchData(
+  integrated_obj,
+  vars = c("seurat_clusters", score_columns)
+) |>
+  group_by(seurat_clusters) |>
+  summarise(
+    across(all_of(score_columns), mean),
+    .groups = "drop"
+  )
+
+score_matrix <- as.matrix(
+  cluster_score[, score_columns]
+)
+
+colnames(score_matrix) <- names(major_marker_list)
+rownames(score_matrix) <- cluster_score$seurat_clusters
+
+top1_index <- max.col(
+  score_matrix,
+  ties.method = "first"
+)
+
+sorted_scores <- t(
+  apply(
+    score_matrix,
+    1,
+    sort,
+    decreasing = TRUE
+  )
+)
+
+marker_annotation <- data.frame(
+  cluster = rownames(score_matrix),
+  marker_major = colnames(score_matrix)[top1_index],
+  score_margin = sorted_scores[, 1] - sorted_scores[, 2],
+  row.names = NULL
+)
+
+
+# ------------------------------------------------------------
+# 4. Marker 기반 자동 대분류를 metadata에 저장
+# ------------------------------------------------------------
+major_cluster_map <- setNames(
+  marker_annotation$marker_major,
+  marker_annotation$cluster
+)
+
+integrated_obj$celltype_major_auto <- unname(
+  major_cluster_map[
+    as.character(integrated_obj$seurat_clusters)
+  ]
+)
+
+# ------------------------------------------------------------
+# 5. Cluster marker 계산 또는 저장 결과 불러오기
+# ------------------------------------------------------------
+if (file.exists("all_markers.csv")) {
+
+  all_markers <- read.csv(
+    "all_markers.csv",
+    check.names = FALSE
+  )
+
+} else {
+
+  all_markers <- FindAllMarkers(
+    integrated_obj,
+    assay = "RNA",
+    only.pos = TRUE,
+    test.use = "wilcox",
+    min.pct = 0.25,
+    logfc.threshold = 0.25,
+    max.cells.per.ident = 1000,
+    random.seed = 1234
+  )
+
+  write.csv(
+    all_markers,
+    file = "all_markers.csv",
+    row.names = FALSE
+  )
+}
+
+top10_markers <- all_markers |>
+  group_by(cluster) |>
+  slice_max(
+    order_by = avg_log2FC,
+    n = 10,
+    with_ties = FALSE
+  ) |>
+  ungroup()
+
+print(top10_markers)
+
+
+# ------------------------------------------------------------
+# 6. Marker 및 자동 annotation 시각화
+# ------------------------------------------------------------
+p_marker <- DotPlot(
+  integrated_obj,
+  features = major_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("A. Major-lineage markers")
+
+p_auto <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_major_auto",
+  label = TRUE,
+  repel = TRUE
+) +
+  ggtitle("B. Automatic major annotation")
+
+p_marker
+p_auto
+
+
+# ------------------------------------------------------------
+# 7. 검토 후 최종 대분류 확정
+# ------------------------------------------------------------
+integrated_obj$celltype_major <-
+  integrated_obj$celltype_major_auto
+
+# 필요한 cluster만 수정하는 예시
+# integrated_obj$celltype_major[
+#   integrated_obj$seurat_clusters == "수정할_cluster"
+# ] <- "수정할_대분류"
+
+table(
+  cluster = integrated_obj$seurat_clusters,
+  final_major = integrated_obj$celltype_major
+)
+
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_major",
+  label = TRUE,
+  repel = TRUE
+)
+
+
+# ------------------------------------------------------------
+# 8. 결과 저장
+# ------------------------------------------------------------
+saveRDS(
+  integrated_obj,
+  file = "integrated_obj_annotated.rds",
+  compress = FALSE
+)
+
+write.csv(
+  marker_annotation,
+  file = "major_annotation_score.csv",
+  row.names = FALSE
+)
+
+file.exists("integrated_obj_annotated.rds")
+</code></pre>
+
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>중요:</strong> 전체 코드는 대분류의 시작값을 자동으로 생성합니다.
+    <code>score_margin</code>이 작은 cluster는 그대로 확정하지 말고 marker plot과
+    <code>top10_markers</code>를 확인한 후 수정해야 합니다.
+  </div>
+
+  <!-- J -->
+  <h3 class="mt-5">J) 선택 실습: 중분류 marker 확인</h3>
+
+  <p class="note">
+    대분류를 확정한 다음 필요한 lineage만 중분류합니다.
+    이번 실습에서는 immune 및 epithelial marker를 한 번에 확인하고,
+    실제 중분류 이름은 marker 조합을 검토한 뒤 입력합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># Immune 중분류 marker
+immune_marker_list <- list(
+  T_cell = c("Cd3d", "Cd3e", "Trbc1", "Trbc2"),
+  NK_cell = c("Nkg7", "Klrd1", "Gzmb", "Prf1"),
+  B_cell = c("Ms4a1", "Cd79a", "Cd74", "H2-Aa"),
+  Plasma_cell = c("Jchain", "Mzb1", "Sdc1", "Xbp1"),
+  Myeloid = c("Lyz2", "Csf1r", "Adgre1", "Fcgr3"),
+  Neutrophil = c("S100a8", "S100a9", "Ly6g", "Csf3r"),
+  Mast_cell = c("Kit", "Cpa3", "Mcpt4", "Ms4a2")
+)
+
+# Epithelial 중분류 marker
+epithelial_marker_list <- list(
+  Colonocyte = c("Alpi", "Krt20", "Car1", "Slc26a3"),
+  Goblet = c("Muc2", "Spink4", "Clca1", "Agr2"),
+  Stem = c("Lgr5", "Olfm4", "Smoc2", "Ascl2"),
+  Cycling_TA = c("Mki67", "Top2a", "Birc5", "Ccna2"),
+  Enteroendocrine = c("Chga", "Chgb", "Neurog3", "Pyy"),
+  Tuft = c("Dclk1", "Pou2f3", "Trpm5", "Gfi1b")
+)
+
+p_immune <- DotPlot(
+  integrated_obj,
+  features = immune_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Immune intermediate markers")
+
+p_epithelial <- DotPlot(
+  integrated_obj,
+  features = epithelial_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Epithelial intermediate markers")
+
+p_immune
+p_epithelial
+</code></pre>
+
   <!-- Summary -->
   <section class="mt-4">
     <div class="card border-primary">
@@ -511,10 +901,11 @@ file.exists(
       <div class="card-body">
         <ul class="mb-3">
           <li>Annotation은 대분류 → 중분류 → 필요한 계통의 소분류 순서로 진행합니다.</li>
+          <li>페이지 하단의 실습용 전체 코드는 대분류 자동 mapping부터 결과 저장까지 한 번에 수행합니다.</li>
           <li>대분류에서는 epithelial, immune, stromal, endothelial, muscle/pericyte 및 neural/glial을 구분합니다.</li>
           <li>중분류에서는 immune cell을 T, NK, B/plasma, myeloid 등으로 나누고 epithelial 및 stromal subtype을 확인합니다.</li>
           <li>하나의 marker가 아니라 여러 positive marker 조합과 negative evidence를 함께 확인합니다.</li>
-          <li>최종 marker 분석은 RNA assay에서 수행하며 SingleR 결과는 보조적으로 사용합니다.</li>
+          <li>자동 mapping은 marker score로 수행하며 최종 판정은 RNA assay의 marker 발현으로 검증합니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">
