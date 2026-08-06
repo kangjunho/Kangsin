@@ -15,6 +15,7 @@
     .note { color:#444; }
     .tip { border-left:4px solid #0d6efd; background:#f8fbff; }
     .tip h6 { color:#0d6efd; margin-bottom:.4rem; }
+    .warn-box { border-left:4px solid #ffc107; background:#fffdf3; }
     .table thead th { background:#f3f6ff; }
     .step-badge{
       border:1px solid #0d6efd;
@@ -24,7 +25,7 @@
       font-weight:600;
     }
     .section-img {
-      max-width: 980px;
+      max-width: 1180px;
       width: 100%;
       border-radius: 10px;
       box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
@@ -41,251 +42,467 @@
   </div>
 
   <p class="lead">
-    clustering으로 나뉜 세포 집단은 아직 번호만 붙은 상태입니다.
-    Annotation 단계에서는 각 cluster의 <b>marker gene</b>를 확인하고,
-    known biology와 reference 정보를 바탕으로 <b>세포 유형(cell type)</b>을 해석합니다.
+    Resolution 0.5에서 생성된 20개 cluster의 marker gene을 확인하고,
+    마우스 대장 조직의 세포 구성을 기준으로 <b>대분류 → 중분류 → 소분류</b> 순서로
+    biological identity를 부여합니다.
   </p>
 
   <hr/>
 
   <!-- A -->
-  <h3>A) Annotation이란?</h3>
-  <ul class="note">
-    <li>cluster 번호(0, 1, 2, 3...) 자체는 biological 의미를 가지지 않습니다.</li>
-    <li>각 cluster에서 높게 발현되는 유전자(marker gene)를 보고 해당 cluster의 정체를 추정합니다.</li>
-    <li>예를 들어 <b>CD3D</b>, <b>CD3E</b>가 높으면 T cell, <b>MS4A1</b>이 높으면 B cell을 의심할 수 있습니다.</li>
-    <li>최종적으로는 “cluster 3”이 아니라 “T cells”, “Fibroblasts”, “Epithelial cells”처럼 이름을 붙이게 됩니다.</li>
-  </ul>
+  <h3>A) 마우스 대장 조직에는 어떤 세포가 있을까?</h3>
+
+  <p class="note">
+    마우스 대장은 epithelial layer, lamina propria의 immune·stromal compartment,
+    혈관과 림프관, muscular layer 및 enteric nervous system으로 구성됩니다.
+    Annotation에서는 처음부터 세부 subtype을 맞히려고 하기보다, 먼저 명확한 계통 marker를 이용해
+    대분류한 다음 각 계통 내부를 다시 세분화하는 것이 안정적입니다.
+  </p>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_mouse_colon_cell_hierarchy.svg"
+         alt="Hierarchical cell types and marker genes in mouse colon tissue"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    마우스 대장 조직의 주요 세포 계통과 대표 marker를 정리한 실습용 계층 구조
+  </p>
 
   <div class="card tip mb-3">
     <div class="card-body">
-      <h6>핵심 포인트</h6>
+      <h6>Annotation의 세 단계</h6>
+      <ol class="mb-0">
+        <li><b>대분류:</b> epithelial, immune, stromal, endothelial, muscle/pericyte, neural/glial</li>
+        <li><b>중분류:</b> immune 안에서 T, NK, B/plasma, myeloid, mast 등으로 구분</li>
+        <li><b>소분류:</b> 필요할 때 T-cell subtype, epithelial subtype 또는 fibroblast state 등을 subset 분석</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card border-secondary mb-4">
+    <div class="card-header bg-light fw-bold">그림 구성의 참고 자료</div>
+    <div class="card-body">
       <ul class="mb-0">
-        <li>Annotation은 자동으로 끝나는 절차가 아니라, <b>데이터 + marker + 생물학적 지식</b>을 함께 보는 해석 과정입니다.</li>
-        <li>하나의 marker gene만 보고 판단하지 말고, <b>여러 marker 조합</b>을 함께 보는 것이 중요합니다.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8238917/" target="_blank" rel="noopener">Seq-Scope spatial transcriptomics of mouse colon</a>: epithelial, immune, fibroblast, smooth muscle 및 neural compartment</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9035718/" target="_blank" rel="noopener">Single-cell atlas of the aging mouse colon</a>: mouse colonic epithelial 및 immune cell diversity</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6642641/" target="_blank" rel="noopener">Tabula Muris</a>: mouse tissue cell atlas와 broad cell identity reference</li>
       </ul>
     </div>
   </div>
 
   <!-- B -->
-  <h3 class="mt-4">B) Cluster별 marker gene 찾기</h3>
+  <h3 class="mt-4">B) Step 5 결과에서 이어서 시작하기</h3>
+
   <p class="note">
-    Seurat에서는 <code>FindAllMarkers()</code>를 이용해 각 cluster에서 특이적으로 높은 유전자를 찾을 수 있습니다.
+    Step 5 마지막에서 resolution 0.5 cluster를 identity로 지정하고
+    <code>RNA</code> assay로 전환했습니다. 현재 객체는 기존 <code>Assay</code> 클래스이므로
+    <code>JoinLayers()</code>는 실행하지 않습니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-markers <- FindAllMarkers(
-  obj,
-  only.pos = TRUE,
-  min.pct = 0.25,
-  logfc.threshold = 0.25
-)
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
 
-head(markers)
+# 저장된 cluster를 identity로 지정
+Idents(integrated_obj) <- "seurat_clusters"
+
+# marker 발현 분석은 RNA assay에서 수행
+DefaultAssay(integrated_obj) <- "RNA"
+
+# 시작 상태 확인
+integrated_obj
+levels(integrated_obj)
+class(integrated_obj[["RNA"]])
+Layers(integrated_obj[["RNA"]])
+table(Idents(integrated_obj))
 </code></pre>
 
-  <p class="note">
-    결과 테이블에는 보통 cluster 번호, gene 이름, average log fold change, 발현 비율 등이 포함됩니다.
-  </p>
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>Assay 사용 구분:</strong> integrated assay는 batch-corrected PCA·UMAP·clustering에 사용하고,
+    RNA assay는 실제 marker 발현과 differential expression에 사용합니다.
+  </div>
 
   <!-- C -->
-  <h3 class="mt-4">C) 대표 marker 확인</h3>
+  <h3 class="mt-4">C) Cluster별 marker gene 찾기</h3>
+
   <p class="note">
-    각 cluster의 상위 marker를 확인하여 어떤 세포 유형인지 추정할 수 있습니다.
+    <code>FindAllMarkers()</code>는 각 cluster와 나머지 세포를 비교하여
+    해당 cluster에서 상대적으로 높게 발현되는 유전자를 찾습니다.
+    세포 수가 많으므로 실습 시간을 줄이기 위해 cluster당 최대 1,000개 세포를 사용합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(dplyr)
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>set.seed(1234)
 
-top10 <- markers %>%
-  group_by(cluster) %>%
-  slice_max(order_by = avg_log2FC, n = 10)
+all_markers <- FindAllMarkers(
+  integrated_obj,
+  assay = "RNA",
+  only.pos = TRUE,
+  test.use = "wilcox",
+  min.pct = 0.25,
+  logfc.threshold = 0.25,
+  max.cells.per.ident = 1000,
+  random.seed = 1234
+)
 
-top10
+dim(all_markers)
+head(all_markers)
 </code></pre>
+
+  <div class="card warn-box mb-3">
+    <div class="card-body">
+      <b>계산 시간:</b> marker 탐색도 세포 수와 cluster 수에 따라 시간이 걸릴 수 있습니다.
+      강의 전에 한 번 계산해 <code>all_markers.csv</code>로 저장하면,
+      실습에서는 아래처럼 바로 불러올 수 있습니다.
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 계산 결과 저장
+write.csv(
+  all_markers,
+  file = "all_markers.csv",
+  row.names = FALSE
+)
+
+# 저장된 결과를 사용할 때
+all_markers <- read.csv(
+  "all_markers.csv",
+  check.names = FALSE
+)
+</code></pre>
+
+  <h4 class="mt-4">C-1) Cluster별 상위 marker 확인</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>top10_markers <- all_markers |>
+  group_by(cluster) |>
+  slice_max(
+    order_by = avg_log2FC,
+    n = 10,
+    with_ties = FALSE
+  ) |>
+  ungroup()
+
+top10_markers |>
+  select(
+    cluster,
+    gene,
+    avg_log2FC,
+    pct.1,
+    pct.2,
+    p_val_adj
+  )
+</code></pre>
+
+  <p class="note">
+    <code>avg_log2FC</code>가 크고 <code>pct.1</code>이 높으면서 <code>pct.2</code>가 낮은 유전자는
+    해당 cluster를 설명하는 데 유용합니다. 하지만 ribosomal, mitochondrial, cell-cycle 및
+    stress gene만 높은 경우에는 세포 정체성보다 상태 또는 QC 영향을 반영할 수 있습니다.
+  </p>
 
   <!-- D -->
-  <h3 class="mt-4">D) 시각화로 marker 확인하기</h3>
-  <p class="note">
-    Annotation에서는 표만 보는 것이 아니라, 반드시 시각화와 함께 확인하는 것이 좋습니다.
-  </p>
+  <h3 class="mt-4">D) 대분류: 주요 세포 계통 확인</h3>
 
-  <h5 class="mt-3">D-1) FeaturePlot</h5>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-FeaturePlot(obj, features = c("CD3D", "MS4A1", "EPCAM", "COL1A1"))
-</code></pre>
-
-  <h5 class="mt-3">D-2) DotPlot</h5>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-DotPlot(
-  obj,
-  features = c("CD3D", "CD79A", "EPCAM", "COL1A1", "PECAM1", "LYZ")
-) + RotatedAxis()
-</code></pre>
-
-  <h5 class="mt-3">D-3) VlnPlot</h5>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-VlnPlot(obj, features = c("CD3D", "MS4A1", "EPCAM"), ncol = 3)
-</code></pre>
-
-  <div class="text-center mt-4">
-    <img src="../../assets/images/scrna_annotation.png"
-         alt="Cell type annotation illustration"
-         class="section-img">
-  </div>
-  <p class="text-center text-muted mt-2">
-    marker gene 발현 패턴을 바탕으로 cluster의 biological identity를 해석합니다.
-  </p>
-
-  <!-- E -->
-  <h3 class="mt-4">E) 자주 쓰이는 대표 marker 예시</h3>
   <div class="table-responsive">
     <table class="table table-bordered align-middle">
       <thead>
         <tr>
-          <th style="width:26%">세포 유형</th>
-          <th style="width:74%">대표 marker gene 예시</th>
+          <th style="width:24%">대분류</th>
+          <th style="width:38%">대표 positive marker</th>
+          <th style="width:38%">해석 시 참고</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>T cells</td>
-          <td>CD3D, CD3E, TRBC1, IL7R</td>
-        </tr>
-        <tr>
-          <td>B cells</td>
-          <td>MS4A1, CD79A, CD79B, CD74</td>
-        </tr>
-        <tr>
-          <td>Myeloid / Monocytes</td>
-          <td>LYZ, S100A8, S100A9, FCN1, CTSS</td>
-        </tr>
-        <tr>
-          <td>Epithelial cells</td>
-          <td>EPCAM, KRT8, KRT18, KRT19</td>
-        </tr>
-        <tr>
-          <td>Fibroblasts</td>
-          <td>COL1A1, COL1A2, DCN, LUM</td>
-        </tr>
-        <tr>
-          <td>Endothelial cells</td>
-          <td>PECAM1, VWF, EMCN, KDR</td>
-        </tr>
+        <tr><td>Epithelial</td><td>Epcam, Krt8, Krt18, Krt19</td><td>Colonocyte, goblet, stem/TA 등으로 세분화</td></tr>
+        <tr><td>Immune</td><td>Ptprc</td><td>T/NK, B/plasma, myeloid, mast로 세분화</td></tr>
+        <tr><td>Stromal</td><td>Col1a1, Col1a2, Dcn, Pdgfra</td><td>Fibroblast와 myofibroblast 확인</td></tr>
+        <tr><td>Endothelial</td><td>Pecam1, Cdh5, Kdr, Esam</td><td>Blood 및 lymphatic endothelial 확인</td></tr>
+        <tr><td>Muscle/Pericyte</td><td>Acta2, Tagln, Myh11, Rgs5, Pdgfrb</td><td>Smooth muscle과 pericyte 구분</td></tr>
+        <tr><td>Neural/Glial</td><td>Tubb3, Elavl4, S100b, Plp1, Sox10</td><td>희귀할 수 있으므로 여러 marker 조합 확인</td></tr>
       </tbody>
     </table>
   </div>
 
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_marker_list <- list(
+  Epithelial = c("Epcam", "Krt8", "Krt18", "Krt19"),
+  Immune = c("Ptprc"),
+  Stromal = c("Col1a1", "Col1a2", "Dcn", "Pdgfra"),
+  Endothelial = c("Pecam1", "Cdh5", "Kdr", "Esam"),
+  Muscle_Pericyte = c("Acta2", "Tagln", "Myh11", "Rgs5", "Pdgfrb"),
+  Neural_Glial = c("Tubb3", "Elavl4", "S100b", "Plp1", "Sox10")
+)
+
+DotPlot(
+  integrated_obj,
+  features = major_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Major lineage markers")
+</code></pre>
+
+  <p class="note">
+    Dot size는 해당 cluster에서 marker가 발현되는 세포 비율,
+    색은 평균 발현량을 나타냅니다. 하나의 유전자만 보지 말고 같은 계통의 여러 marker가
+    동시에 일관되게 나타나는지 확인합니다.
+  </p>
+
+  <h4 class="mt-4">D-1) 주요 marker의 UMAP 위치 확인</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>FeaturePlot(
+  integrated_obj,
+  features = c(
+    "Epcam",
+    "Ptprc",
+    "Col1a1",
+    "Pecam1",
+    "Acta2",
+    "S100b"
+  ),
+  reduction = "umap",
+  ncol = 3,
+  order = TRUE
+)
+</code></pre>
+
+  <!-- E -->
+  <h3 class="mt-4">E) 대분류 annotation을 metadata에 저장</h3>
+
+  <p class="note">
+    Marker 결과를 확인한 뒤 cluster 번호별 대분류를 직접 입력합니다.
+    아래 코드는 실습용 template이므로 <code>Unassigned</code>를 실제 판정 결과로 수정해야 합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>cluster_ids <- levels(Idents(integrated_obj))
+
+major_cluster_map <- setNames(
+  rep("Unassigned", length(cluster_ids)),
+  cluster_ids
+)
+
+# 아래는 marker 결과를 확인한 뒤 직접 입력
+# 예시:
+# major_cluster_map[c("0", "3", "4")] <- "Epithelial"
+# major_cluster_map[c("2", "11", "12")] <- "Immune"
+# major_cluster_map[c("1", "5")] <- "Stromal"
+
+major_cluster_map
+
+integrated_obj$celltype_major <- unname(
+  major_cluster_map[
+    as.character(Idents(integrated_obj))
+  ]
+)
+
+table(
+  cluster = integrated_obj$seurat_clusters,
+  major = integrated_obj$celltype_major
+)
+
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_major",
+  label = TRUE,
+  repel = TRUE
+)
+</code></pre>
+
   <!-- F -->
-  <h3 class="mt-4">F) Cluster 이름 바꾸기</h3>
-  <p class="note">
-    해석이 끝나면 cluster 번호를 실제 cell type 이름으로 바꿀 수 있습니다.
-  </p>
+  <h3 class="mt-4">F) 중분류: 대분류 내부를 다시 세분화</h3>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-new.cluster.ids <- c(
-  "T cells",
-  "B cells",
-  "Myeloid cells",
-  "Epithelial cells",
-  "Fibroblasts",
-  "Endothelial cells"
+  <h4 class="mt-3">F-1) Immune cell 중분류</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>immune_marker_list <- list(
+  T_cell = c("Cd3d", "Cd3e", "Trbc1", "Trbc2"),
+  NK_cell = c("Nkg7", "Klrd1", "Gzmb", "Prf1"),
+  B_cell = c("Ms4a1", "Cd79a", "Cd74", "H2-Aa"),
+  Plasma_cell = c("Jchain", "Mzb1", "Sdc1", "Xbp1"),
+  Myeloid = c("Lyz2", "Csf1r", "Adgre1", "Fcgr3"),
+  Neutrophil = c("S100a8", "S100a9", "Ly6g", "Csf3r"),
+  Mast_cell = c("Kit", "Cpa3", "Mcpt4", "Ms4a2")
 )
 
-names(new.cluster.ids) <- levels(obj)
-obj <- RenameIdents(obj, new.cluster.ids)
-
-DimPlot(obj, reduction = "umap", label = TRUE)
+DotPlot(
+  integrated_obj,
+  features = immune_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Immune lineage markers")
 </code></pre>
 
-  <p class="note">
-    cluster 수와 이름 개수는 반드시 일치해야 합니다.
-  </p>
+  <h4 class="mt-3">F-2) Epithelial cell 중분류</h4>
 
-  <!-- G -->
-  <h3 class="mt-4">G) Metadata에 annotation 저장</h3>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-obj$celltype <- Idents(obj)
-
-head(obj@meta.data)
-DimPlot(obj, group.by = "celltype", label = TRUE)
-</code></pre>
-
-  <!-- H -->
-  <h3 class="mt-4">H) Reference-based annotation</h3>
-  <p class="note">
-    수동 annotation 외에도 reference dataset을 사용하여 annotation을 보조할 수 있습니다.
-    대표적으로 <b>SingleR</b> 같은 도구가 자주 사용됩니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-library(SingleR)
-library(celldex)
-
-ref <- HumanPrimaryCellAtlasData()
-
-pred <- SingleR(
-  test = GetAssayData(obj, slot = "data"),
-  ref = ref,
-  labels = ref$label.main
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>epithelial_marker_list <- list(
+  Colonocyte = c("Alpi", "Krt20", "Car1", "Slc26a3"),
+  Goblet = c("Muc2", "Spink4", "Clca1", "Agr2"),
+  Stem = c("Lgr5", "Olfm4", "Smoc2", "Ascl2"),
+  Cycling_TA = c("Mki67", "Top2a", "Birc5", "Ccna2"),
+  Enteroendocrine = c("Chga", "Chgb", "Neurog3", "Pyy"),
+  Tuft = c("Dclk1", "Pou2f3", "Trpm5", "Gfi1b")
 )
 
-head(pred$labels)
+DotPlot(
+  integrated_obj,
+  features = epithelial_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Epithelial lineage markers")
+</code></pre>
+
+  <h4 class="mt-3">F-3) Stromal·vascular 중분류</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>stromal_marker_list <- list(
+  Fibroblast = c("Col1a1", "Col1a2", "Dcn", "Pdgfra"),
+  Myofibroblast = c("Acta2", "Tagln", "Col3a1", "Cald1"),
+  Smooth_muscle = c("Myh11", "Actg2", "Des", "Cnn1"),
+  Pericyte = c("Rgs5", "Cspg4", "Pdgfrb", "Mcam"),
+  Endothelial = c("Pecam1", "Cdh5", "Kdr", "Emcn"),
+  Lymphatic_endothelial = c("Prox1", "Lyve1", "Flt4", "Pdpn")
+)
+
+DotPlot(
+  integrated_obj,
+  features = stromal_marker_list,
+  group.by = "seurat_clusters",
+  assay = "RNA"
+) +
+  RotatedAxis() +
+  ggtitle("Stromal and vascular markers")
 </code></pre>
 
   <div class="card tip mb-3">
     <div class="card-body">
-      <h6>주의</h6>
-      <ul class="mb-0">
-        <li>reference-based annotation은 매우 유용하지만, 모든 데이터셋에 정답을 주지는 않습니다.</li>
-        <li>특히 종양, 발달, rare population에서는 <b>수동 해석과 병행</b>하는 것이 중요합니다.</li>
-      </ul>
+      <h6>중분류의 핵심</h6>
+      <p class="mb-0">
+        전체 20개 cluster에서 모든 세부 subtype을 동시에 구분하기보다,
+        대분류가 확정된 cluster 안에서 해당 계통 marker를 집중적으로 확인합니다.
+        더 세밀한 소분류가 필요하면 immune 또는 epithelial cell만 subset하여
+        variable feature 선택부터 clustering까지 다시 수행합니다.
+      </p>
     </div>
   </div>
 
-  <!-- I -->
-  <h3 class="mt-4">I) 실습용 전체 코드 예시</h3>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
-# marker gene 찾기
-markers <- FindAllMarkers(
-  obj,
-  only.pos = TRUE,
-  min.pct = 0.25,
-  logfc.threshold = 0.25
+  <!-- G -->
+  <h3 class="mt-4">G) 중분류 annotation 저장</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>medium_cluster_map <- setNames(
+  rep("Unassigned", length(cluster_ids)),
+  cluster_ids
 )
 
-# 상위 marker 확인
-library(dplyr)
-top10 <- markers %>%
-  group_by(cluster) %>%
-  slice_max(order_by = avg_log2FC, n = 10)
+# Marker 결과에 따라 직접 입력
+# 예시:
+# medium_cluster_map[c("0", "3")] <- "Colonocyte"
+# medium_cluster_map[c("2")] <- "T_cell"
+# medium_cluster_map[c("11")] <- "B_cell"
 
-top10
+integrated_obj$celltype_medium <- unname(
+  medium_cluster_map[
+    as.character(Idents(integrated_obj))
+  ]
+)
 
-# 시각화
-FeaturePlot(obj, features = c("CD3D", "MS4A1", "EPCAM", "COL1A1"))
-DotPlot(obj, features = c("CD3D", "CD79A", "EPCAM", "COL1A1", "PECAM1", "LYZ")) + RotatedAxis()
+table(
+  cluster = integrated_obj$seurat_clusters,
+  medium = integrated_obj$celltype_medium
+)
 
-# cluster 이름 변경
-new.cluster.ids <- c("T cells", "B cells", "Myeloid cells", "Epithelial cells", "Fibroblasts", "Endothelial cells")
-names(new.cluster.ids) <- levels(obj)
-obj <- RenameIdents(obj, new.cluster.ids)
+p_major <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_major",
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Major cell classes")
 
-# metadata 저장
-obj$celltype <- Idents(obj)
+p_medium <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "celltype_medium",
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Intermediate cell types")
 
-# 최종 시각화
-DimPlot(obj, group.by = "celltype", label = TRUE)
+p_major + p_medium
 </code></pre>
 
-  <!-- J -->
-  <h3 class="mt-4">J) 해석 시 주의점</h3>
-  <ul class="note">
-    <li>하나의 marker만으로 세포 유형을 단정하지 않는 것이 좋습니다.</li>
-    <li>marker는 tissue context와 disease context에 따라 다르게 나타날 수 있습니다.</li>
-    <li>같은 cell type 안에서도 activation state, cell cycle, differentiation state에 따라 subgroup가 존재할 수 있습니다.</li>
-    <li>annotation은 clustering 결과를 biological language로 번역하는 과정이므로, 결과를 반복적으로 점검해야 합니다.</li>
-  </ul>
+  <!-- H -->
+  <h3 class="mt-4">H) Reference-based annotation은 보조적으로 사용</h3>
+
+  <p class="note">
+    SingleR를 사용할 경우 사람 reference가 아니라 마우스 reference를 사용해야 합니다.
+    Reference 결과는 broad identity를 보조하는 자료이며, colon tumor context와 수동 marker 확인을 대체하지 않습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 최초 1회 설치
+# BiocManager::install(c(
+#   "SingleR",
+#   "celldex",
+#   "SingleCellExperiment"
+# ))
+
+library(SingleR)
+library(celldex)
+library(SingleCellExperiment)
+
+mouse_ref <- MouseRNAseqData()
+
+sce <- as.SingleCellExperiment(
+  integrated_obj,
+  assay = "RNA"
+)
+
+singleR_cluster <- SingleR(
+  test = sce,
+  ref = mouse_ref,
+  labels = mouse_ref$label.main,
+  clusters = integrated_obj$seurat_clusters
+)
+
+singleR_cluster$labels
+</code></pre>
+
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>자동 annotation 주의:</strong> reference에 없는 tumor-associated state,
+    transitional population 또는 rare subtype은 부정확하게 분류될 수 있습니다.
+    최종 annotation은 cluster marker, DotPlot, FeaturePlot 및 조직 생물학을 함께 보고 결정합니다.
+  </div>
+
+  <!-- I -->
+  <h3 class="mt-4">I) Annotation 결과 저장</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># metadata 확인
+head(
+  integrated_obj@meta.data[
+    ,
+    c(
+      "orig.ident",
+      "condition",
+      "seurat_clusters",
+      "celltype_major",
+      "celltype_medium"
+    )
+  ]
+)
+
+# annotation 결과 객체 저장
+saveRDS(
+  integrated_obj,
+  file = "integrated_obj_annotated.rds",
+  compress = FALSE
+)
+
+# 저장 확인
+file.exists(
+  "integrated_obj_annotated.rds"
+)
+</code></pre>
 
   <!-- Summary -->
   <section class="mt-4">
@@ -293,15 +510,16 @@ DimPlot(obj, group.by = "celltype", label = TRUE)
       <div class="card-header bg-primary text-white fw-bold">요약</div>
       <div class="card-body">
         <ul class="mb-3">
-          <li>Annotation은 cluster를 실제 biological identity로 해석하는 과정입니다.</li>
-          <li><code>FindAllMarkers()</code>로 cluster별 marker gene를 찾을 수 있습니다.</li>
-          <li><code>FeaturePlot</code>, <code>DotPlot</code>, <code>VlnPlot</code>으로 marker 발현을 시각화해 확인합니다.</li>
-          <li>수동 annotation과 reference-based annotation을 함께 활용하면 더 안정적인 해석이 가능합니다.</li>
+          <li>Annotation은 대분류 → 중분류 → 필요한 계통의 소분류 순서로 진행합니다.</li>
+          <li>대분류에서는 epithelial, immune, stromal, endothelial, muscle/pericyte 및 neural/glial을 구분합니다.</li>
+          <li>중분류에서는 immune cell을 T, NK, B/plasma, myeloid 등으로 나누고 epithelial 및 stromal subtype을 확인합니다.</li>
+          <li>하나의 marker가 아니라 여러 positive marker 조합과 negative evidence를 함께 확인합니다.</li>
+          <li>최종 marker 분석은 RNA assay에서 수행하며 SingleR 결과는 보조적으로 사용합니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">
           <a class="btn btn-outline-secondary" href="step5_clustering.html">← Back to Clustering</a>
-          <a class="btn btn-primary" href="step7_deg_pathway.html">Next: DEG and Pathway Analysis →</a>
+          <a class="btn btn-primary" href="step7_deg.html">Next: Differential Expression →</a>
         </div>
       </div>
     </div>
