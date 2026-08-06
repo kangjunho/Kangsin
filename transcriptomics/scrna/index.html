@@ -4,34 +4,63 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Single-cell RNA-seq Tutorial (Hands-on)</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="../../assets/css/style.css"/>
+
   <style>
-    .card-step { box-shadow:0 6px 16px rgba(0,0,0,.06); border-radius:12px; }
-    .card-step:hover { transform: translateY(-4px); transition: .25s ease; }
-    .card-step img { height:170px; object-fit:cover; border-top-left-radius:12px; border-top-right-radius:12px; }
-    .step-title { font-weight:700; font-size:1.05rem; }
-    .go-btn { min-width:56px; }
-    .grid-gap { row-gap: 1.25rem; }
+    .card-step {
+      box-shadow: 0 6px 16px rgba(0,0,0,.06);
+      border-radius: 12px;
+      transition: transform .25s ease;
+    }
+
+    .card-step:hover {
+      transform: translateY(-4px);
+    }
+
+    .card-step img {
+      height: 170px;
+      object-fit: cover;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .go-btn {
+      min-width: 56px;
+    }
+
+    .grid-gap {
+      row-gap: 1.25rem;
+    }
   </style>
 </head>
+
 <body>
   <div class="container py-5">
     <h1 class="text-center mb-2">Single-cell RNA-seq Tutorial (Hands-on)</h1>
-    <p class="text-center text-muted mb-4">각 단계를 차례대로 클릭하여 실습을 진행하세요.</p>
+    <p class="text-center text-muted mb-4">
+      각 단계를 차례대로 클릭하여 실습을 진행하세요.
+    </p>
 
     <div class="row grid-gap">
+
       <!-- Step 01 -->
       <div class="col-md-4">
         <div class="card card-step h-100">
           <img src="../../assets/images/scrna_intro.png" alt="Introduction to scRNA-seq">
-          <div class="card-body">
+          <div class="card-body d-flex flex-column">
             <div class="step-title">Step 01. scRNA-seq 소개 및 서버 접근</div>
             <p class="mb-3">
-              scRNA-seq 기본 개념, barcode·UMI·count matrix, bulk RNA-seq와의 차이,
-              droplet 기반 원리와 서버 접속 방법을 소개합니다.
+              scRNA-seq 기본 개념, barcode·UMI·count matrix,
+              bulk RNA-seq와의 차이, Seurat object 구조와 서버 접근 방법을 학습합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step1_intro.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step1_intro.html">Go</a>
           </div>
         </div>
       </div>
@@ -40,13 +69,13 @@
       <div class="col-md-4">
         <div class="card card-step h-100">
           <img src="../../assets/images/scrna_qc.png" alt="QC and Filtering">
-          <div class="card-body">
+          <div class="card-body d-flex flex-column">
             <div class="step-title">Step 02. QC와 Filtering</div>
             <p class="mb-3">
-              nFeature_RNA, nCount_RNA, percent.mt를 이용한 품질관리와
-              저품질 세포 제거, doublet 개념을 학습합니다.
+              nFeature_RNA, nCount_RNA, percent.mt를 이용해 저품질 세포를 제거하고,
+              scDblFinder로 doublet을 탐지하여 singlet만 남깁니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step2_qc.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step2_qc.html">Go</a>
           </div>
         </div>
       </div>
@@ -55,13 +84,13 @@
       <div class="col-md-4">
         <div class="card card-step h-100">
           <img src="../../assets/images/scrna_normalization.png" alt="Normalization and Feature Selection">
-          <div class="card-body">
+          <div class="card-body d-flex flex-column">
             <div class="step-title">Step 03. 정규화와 Feature Selection</div>
             <p class="mb-3">
-              NormalizeData, FindVariableFeatures, ScaleData를 이용한
-              정규화와 고변이 유전자 선택 과정을 실습합니다.
+              LogNormalize로 샘플을 정규화하고 FindVariableFeatures로
+              downstream 분석에 사용할 고변이 유전자를 선택합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step3_normalization.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step3_normalization.html">Go</a>
           </div>
         </div>
       </div>
@@ -70,13 +99,13 @@
       <div class="col-md-4">
         <div class="card card-step h-100">
           <img src="../../assets/images/scrna_integration.png" alt="Integration and Batch Correction">
-          <div class="card-body">
+          <div class="card-body d-flex flex-column">
             <div class="step-title">Step 04. Integration과 Batch Correction</div>
             <p class="mb-3">
-              여러 샘플 통합, batch effect 개념, Seurat integration과
-              Harmony 기반 보정의 개요를 다룹니다.
+              여러 샘플의 integration feature와 anchor를 이용한 Seurat 통합 원리를 배우고,
+              실습에서는 미리 처리된 통합 객체를 불러와 확인합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step4_integration.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step4_integration.html">Go</a>
           </div>
         </div>
       </div>
@@ -84,14 +113,14 @@
       <!-- Step 05 -->
       <div class="col-md-4">
         <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_clustering.png" alt="Dimension Reduction and Clustering">
-          <div class="card-body">
+          <img src="../../assets/images/scrna_clustering.png" alt="Dimensional Reduction and Clustering">
+          <div class="card-body d-flex flex-column">
             <div class="step-title">Step 05. 차원축소와 Clustering</div>
             <p class="mb-3">
-              PCA, UMAP, FindNeighbors, FindClusters를 이용해
-              세포 집단을 탐색하고 시각화합니다.
+              PCA loading과 ElbowPlot으로 사용할 PC를 검토하고,
+              UMAP과 clustering resolution을 이용해 세포 집단을 정의합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step5_clustering.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step5_clustering.html">Go</a>
           </div>
         </div>
       </div>
@@ -100,13 +129,13 @@
       <div class="col-md-4">
         <div class="card card-step h-100">
           <img src="../../assets/images/scrna_annotation.png" alt="Cell Type Annotation">
-          <div class="card-body">
+          <div class="card-body d-flex flex-column">
             <div class="step-title">Step 06. Cell Type Annotation</div>
             <p class="mb-3">
-              marker gene 기반으로 immune, stromal, epithelial 등
-              세포 유형을 annotation하는 방법을 실습합니다.
+              Marker score와 top marker를 이용해 대분류와 중분류 annotation을 수행하고,
+              FeaturePlot과 DotPlot으로 대표 marker 발현을 검증합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step6_annotation.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step6_annotation.html">Go</a>
           </div>
         </div>
       </div>
@@ -114,13 +143,14 @@
       <!-- Step 07 -->
       <div class="col-md-4">
         <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_deg_pathway.png" alt="DEG and Pathway Analysis">
-          <div class="card-body">
-            <div class="step-title">Step 07. DEG분석</div>
+          <img src="../../assets/images/scrna_deg_pathway.png" alt="Cell Composition and Differential Expression">
+          <div class="card-body d-flex flex-column">
+            <div class="step-title">Step 07. 세포 조성과 DEG 분석</div>
             <p class="mb-3">
-              cluster 간 또는 조건 간 DEG를 분석합니다.              
+              ND와 WD의 sample별 세포 비율을 비교하고,
+              같은 세포형 내부에서 조건별 차등발현유전자를 분석합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step7_deg.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step7_deg.html">Go</a>
           </div>
         </div>
       </div>
@@ -128,17 +158,18 @@
       <!-- Step 08 -->
       <div class="col-md-4">
         <div class="card card-step h-100">
-          <img src="../../assets/images/scrna_advanced.png" alt="Advanced Analysis">
-          <div class="card-body">
-            <div class="step-title">Step 08. Advanced 분석</div>
+          <img src="../../assets/images/scrna_advanced.png" alt="Functional Annotation and Cell-Cell Interaction">
+          <div class="card-body d-flex flex-column">
+            <div class="step-title">Step 08. Functional Annotation과 Cell–Cell Interaction</div>
             <p class="mb-3">
-              Gene ontology, KEGG, Reactome,
-              pseudotime, cell-cell communication 등 주제를 다룹니다.
+              WD 상향·하향 DEG의 GO·KEGG enrichment를 비교하고,
+              CellChat으로 ND와 WD의 세포 간 communication 변화를 탐색합니다.
             </p>
-            <a class="btn btn-primary go-btn" href="step8_pathway.html">Go</a>
+            <a class="btn btn-primary go-btn mt-auto align-self-start" href="step8_pathway.html">Go</a>
           </div>
         </div>
       </div>
+
     </div>
 
     <div class="text-center mt-4">
