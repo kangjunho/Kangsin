@@ -112,6 +112,12 @@
     Seurat에서는 각 샘플을 개별적으로 전처리한 뒤, anchor를 찾고 데이터를 통합합니다.
   </p>
 
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>참고용 처리 과정:</strong> D~G의 코드는 통합 객체를 생성한 실제 분석 과정을 설명하기 위한 것입니다.
+    이번 실습에서는 이 코드를 실행하지 않고, K에서 현재 디렉토리의
+    <code>integrated_obj.rds</code>를 불러옵니다.
+  </div>
+
   <div class="card tip mb-3">
     <div class="card-body">
       <h6>Step 3에서 이어지는 객체</h6>
@@ -140,7 +146,36 @@ anchors <- FindIntegrationAnchors(
   anchor.features = integration_features,
   normalization.method = "LogNormalize"
 )
+</code></pre>
 
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step4_find_anchors_progress.png"
+         alt="FindIntegrationAnchors progress in the RStudio console"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    FindIntegrationAnchors 실행 화면 예시. CCA, object merging, 이웃 탐색,
+    anchor 탐색과 filtering이 샘플 조합별로 반복됩니다.
+  </p>
+
+  <div class="card border-warning mb-3">
+    <div class="card-header bg-warning bg-opacity-25 fw-bold">통합 과정은 시간이 오래 걸릴 수 있습니다</div>
+    <div class="card-body">
+      <ul class="mb-2">
+        <li>샘플 수와 세포 수가 많을수록 비교해야 하는 샘플 조합과 계산량이 증가합니다.</li>
+        <li>Console에 <code>Running CCA</code>, <code>Finding neighborhoods</code>, <code>Finding anchors</code> 등이 반복해서 출력되는 것은 정상입니다.</li>
+        <li>진행률과 Console 출력이 계속 갱신되고 있다면 멈춘 것이 아니므로 완료될 때까지 기다립니다.</li>
+        <li>실행 중 RStudio 창을 닫거나 R session을 재시작하면 계산이 중단될 수 있습니다.</li>
+      </ul>
+      <p class="mb-0">
+        소요 시간은 서버의 CPU와 메모리, 세포 수 및 샘플 간 이질성에 따라 달라지므로
+        화면의 예상 시간은 계속 변할 수 있습니다.
+      </p>
+    </div>
+  </div>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>
 # anchor를 이용하여 하나의 Seurat object로 통합
 integrated_obj <- IntegrateData(
   anchorset = anchors,
@@ -157,7 +192,26 @@ integrated_obj <- IntegrateData(
   </p>
 
   <!-- E -->
-  <h3 class="mt-4">E) 통합 후 기본 분석</h3>
+  <h3 class="mt-4">E) 통합 결과 확인 및 임시 객체 정리</h3>
+
+  <p class="note">
+    Integration 과정에서 생성된 <code>anchors</code>는 메모리를 많이 사용할 수 있습니다.
+    통합이 정상적으로 완료되면 integrated assay를 확인하고,
+    이후 분석에 필요하지 않은 임시 객체를 제거합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># integrated assay가 생성되었는지 확인
+Assays(integrated_obj)
+
+# 이후 사용하지 않는 임시 객체 제거
+rm(integration_features, anchors)
+
+# 사용 가능한 메모리 회수 요청
+gc()
+</code></pre>
+
+  <!-- F -->
+  <h3 class="mt-4">F) 통합 후 기본 분석</h3>
   <p class="note">
     통합된 객체에서는 보통 integrated assay를 기준으로 scaling, PCA, UMAP, clustering을 수행합니다.
   </p>
@@ -172,8 +226,58 @@ integrated_obj <- FindNeighbors(integrated_obj, dims = 1:20)
 integrated_obj <- FindClusters(integrated_obj, resolution = 0.5)
 </code></pre>
 
-  <!-- F -->
-  <h3 class="mt-4">F) Harmony 기반 보정 예시</h3>
+  <!-- G -->
+  <h3 class="mt-4">G) 최종 실습 객체 검증 및 저장</h3>
+
+  <p class="note">
+    이번 실습에 사용할 객체는 integration뿐 아니라 scaling, PCA, UMAP 및 clustering까지
+    완료된 상태로 저장합니다. 저장 위치는 별도 하위 폴더가 아닌 현재 작업 디렉토리입니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 최종 객체 검증
+integrated_obj
+Assays(integrated_obj)
+Layers(integrated_obj[["RNA"]])
+Layers(integrated_obj[["integrated"]])
+Reductions(integrated_obj)
+
+stopifnot(
+  ncol(integrated_obj) == 39167,
+  anyDuplicated(colnames(integrated_obj)) == 0,
+  "pca" %in% Reductions(integrated_obj),
+  "umap" %in% Reductions(integrated_obj),
+  "seurat_clusters" %in% colnames(integrated_obj@meta.data)
+)
+
+# 현재 작업 디렉토리에 저장
+getwd()
+
+saveRDS(
+  integrated_obj,
+  file = "integrated_obj.rds",
+  compress = FALSE
+)
+
+# 저장 여부와 파일 크기 확인
+file.exists("integrated_obj.rds")
+file.info("integrated_obj.rds")$size / 1024^3
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>실제 저장된 실습 객체</h6>
+      <ul class="mb-0">
+        <li>32,930 features와 39,167 cells</li>
+        <li>RNA 및 integrated assay</li>
+        <li>PCA와 UMAP reduction</li>
+        <li>resolution 0.5에서 생성된 20개 cluster</li>
+        <li>ND 22,673 cells, WD 16,494 cells</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- H -->
+  <h3 class="mt-4">H) Harmony 기반 보정 예시</h3>
   <p class="note">
     Harmony는 PCA 공간에서 batch effect를 줄이는 접근입니다.
     Seurat integration과 함께 자주 비교되는 방법입니다.
@@ -230,8 +334,7 @@ harmony_obj <- FindClusters(
     </div>
   </div>
 
-  <!-- G -->
-  <h3 class="mt-4">G) Integration 전후 비교</h3>
+  <h4 class="mt-4">H-1) Integration 결과 확인</h4>
   <p class="note">
     Integration이 잘 되었는지는 반드시 전후 UMAP을 비교해서 확인해야 합니다.
   </p>
@@ -274,8 +377,7 @@ DimPlot(
     공통된 cell type 구조를 더 잘 비교할 수 있도록 돕습니다.
   </p>
 
-  <!-- H -->
-  <h3 class="mt-4">H) 해석 시 주의할 점</h3>
+  <h4 class="mt-4">H-2) 해석 시 주의할 점</h4>
   <ul class="note">
     <li>batch effect가 줄어들었다고 해서 무조건 좋은 결과는 아닙니다.</li>
     <li>실제 biological difference까지 없어졌는지 함께 확인해야 합니다.</li>
@@ -296,62 +398,220 @@ DimPlot(
 
   <!-- I -->
   <h3 class="mt-4">I) 실습용 전체 코드 예시</h3>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
 
-# Step 3에서 정규화와 variable feature 선택을 마친 sample_list 사용
-names(sample_list)
+  <div class="alert alert-primary mt-3" role="alert">
+    <strong>이번 실습에서는 앞에서 설명한 integration 과정을 직접 실행하지 않습니다.</strong><br>
+    Anchor 탐색과 integration에 약 20분 이상이 필요하고, 3개 서버의 여러 계정에서 동시에 실행하면
+    서버 부하가 커질 수 있습니다. 따라서 미리 처리한 <code>integrated_obj.rds</code>를 불러와
+    시각화와 후속 분석을 진행합니다.
+  </div>
 
-# 1. integration features 선택
-integration_features <- SelectIntegrationFeatures(
-  object.list = sample_list,
-  nfeatures = 2000
+  <p class="note">
+    이전 단계에서 생성된 객체와 임시 변수를 모두 제거하여 깨끗한 R environment에서 시작합니다.
+    아래의 <code>rm(list = ls())</code>는 현재 R session의 객체를 모두 삭제하므로,
+    저장하지 않은 분석 결과가 있다면 먼저 저장해야 합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 1. 현재 R environment의 모든 객체 제거
+rm(list = ls())
+gc()
+
+# 2. 실습 작업 디렉토리 설정
+setwd("~/God_nas/Mouse_CRC")
+getwd()
+
+# 3. 분석 패키지 불러오기
+library(Seurat)
+library(ggplot2)
+library(patchwork)
+
+# 4. 현재 디렉토리의 통합 객체 존재 여부 확인
+file.exists("integrated_obj.rds")
+
+# 5. 미리 처리된 통합 객체 불러오기
+integrated_obj <- readRDS(
+  "integrated_obj.rds"
 )
 
-# 2. anchors 찾기
-anchors <- FindIntegrationAnchors(
-  object.list = sample_list,
-  anchor.features = integration_features,
-  normalization.method = "LogNormalize"
-)
-
-# 3. 데이터 통합
-integrated_obj <- IntegrateData(
-  anchorset = anchors,
-  normalization.method = "LogNormalize"
-)
-
-# 4. integrated assay 확인
+# 6. 객체 구조 확인
+integrated_obj
 Assays(integrated_obj)
+Reductions(integrated_obj)
+table(integrated_obj$condition)
+table(integrated_obj$seurat_clusters)
+
+# 7. 저장된 PCA와 UMAP 확인
+stopifnot(
+  ncol(integrated_obj) == 39167,
+  anyDuplicated(colnames(integrated_obj)) == 0,
+  "pca" %in% Reductions(integrated_obj),
+  "umap" %in% Reductions(integrated_obj),
+  "seurat_clusters" %in% colnames(integrated_obj@meta.data)
+)
+
+# 8. integrated assay를 기본 분석 assay로 지정
 DefaultAssay(integrated_obj) <- "integrated"
 
-# 5. downstream analysis
-integrated_obj <- ScaleData(
+# 9. 샘플별 UMAP
+p_sample <- DimPlot(
   integrated_obj,
-  verbose = FALSE
-)
-integrated_obj <- RunPCA(
+  reduction = "umap",
+  group.by = "orig.ident",
+  pt.size = 0.1
+) +
+  ggtitle("A. Samples") +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+# 10. 조건별 UMAP
+p_condition <- DimPlot(
   integrated_obj,
-  npcs = 30,
-  verbose = FALSE
-)
-integrated_obj <- RunUMAP(
+  reduction = "umap",
+  group.by = "condition",
+  pt.size = 0.1
+) +
+  ggtitle("B. Conditions") +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+# 11. cluster별 UMAP
+p_cluster <- DimPlot(
   integrated_obj,
-  dims = 1:20
-)
-integrated_obj <- FindNeighbors(
-  integrated_obj,
-  dims = 1:20
-)
-integrated_obj <- FindClusters(
-  integrated_obj,
-  resolution = 0.5
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  label = TRUE,
+  repel = TRUE,
+  pt.size = 0.1
+) +
+  NoLegend() +
+  ggtitle("C. Clusters") +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+# 12. 세 개의 UMAP을 하나의 figure로 통합
+umap_overview <-
+  p_sample +
+  p_condition +
+  p_cluster +
+  plot_layout(ncol = 3)
+
+umap_overview
+
+# 13. UMAP overview 저장
+ggsave(
+  filename = "Step4_integrated_UMAP_overview.png",
+  plot = umap_overview,
+  width = 16,
+  height = 5.5,
+  dpi = 300,
+  bg = "white"
 )
 
-# 6. visualization
-DimPlot(integrated_obj, group.by = "orig.ident")
-DimPlot(integrated_obj, group.by = "condition")
-DimPlot(integrated_obj, label = TRUE)
+# 14. ND와 WD를 나누어 cluster 분포 확인
+condition_umap <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  split.by = "condition",
+  label = TRUE,
+  repel = TRUE,
+  pt.size = 0.1,
+  ncol = 2
+)
+
+condition_umap
+
+# 15. cluster별 조건 구성비 계산
+cluster_condition_df <- as.data.frame(
+  table(
+    cluster = integrated_obj$seurat_clusters,
+    condition = integrated_obj$condition
+  )
+)
+
+cluster_condition_df <- cluster_condition_df |>
+  dplyr::group_by(condition) |>
+  dplyr::mutate(
+    proportion = Freq / sum(Freq)
+  ) |>
+  dplyr::ungroup()
+
+# 16. 조건별 cluster 구성비 시각화
+cluster_composition <- ggplot(
+  cluster_condition_df,
+  aes(
+    x = condition,
+    y = proportion,
+    fill = cluster
+  )
+) +
+  geom_col(
+    width = 0.75,
+    color = "white",
+    linewidth = 0.2
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format()
+  ) +
+  labs(
+    x = NULL,
+    y = "Cell proportion",
+    fill = "Cluster",
+    title = "Cluster composition by condition"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+cluster_composition
 </code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>그림에서 확인할 내용</h6>
+      <ul class="mb-0">
+        <li><b>Samples:</b> 특정 cluster가 하나의 샘플에만 치우쳐 있는지 확인합니다.</li>
+        <li><b>Conditions:</b> ND와 WD 세포가 전체 UMAP에서 어떻게 분포하는지 확인합니다.</li>
+        <li><b>Clusters:</b> resolution 0.5에서 생성된 20개 cluster의 위치와 분리 정도를 확인합니다.</li>
+        <li><b>Condition split UMAP:</b> 같은 UMAP 좌표에서 조건별 cluster 분포를 비교합니다.</li>
+        <li><b>Cluster composition:</b> ND와 WD 내부에서 각 cluster가 차지하는 비율을 확인합니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>주의:</strong> UMAP과 구성비 그림은 차이를 탐색하는 시각화입니다.
+    특정 cluster가 ND 또는 WD에서 더 많아 보이더라도, 생물학적 반복 샘플을 고려한
+    정식 통계검정 없이 유의한 차이라고 결론내리면 안 됩니다.
+  </div>
+
+  <div class="card border-success mb-3">
+    <div class="card-header bg-success bg-opacity-10 fw-bold">불러오기 완료 기준</div>
+    <div class="card-body">
+      <ul class="mb-0">
+        <li>39,167 cells가 확인됩니다.</li>
+        <li>assay는 <code>RNA</code>와 <code>integrated</code>가 확인됩니다.</li>
+        <li>reduction은 <code>pca</code>와 <code>umap</code>이 확인됩니다.</li>
+        <li><code>seurat_clusters</code>에는 0~19의 20개 cluster가 저장되어 있습니다.</li>
+      </ul>
+    </div>
+  </div>
 
   <!-- Summary -->
   <section class="mt-4">
@@ -363,6 +623,7 @@ DimPlot(integrated_obj, label = TRUE)
           <li>Seurat integration은 anchor 기반으로 공통 구조를 찾고 데이터를 통합합니다.</li>
           <li>Harmony는 PCA 공간에서 batch effect를 보정하는 대안적 방법입니다.</li>
           <li>integration 전후를 반드시 비교하고, biological signal 손실 여부를 함께 확인해야 합니다.</li>
+          <li>이번 실습에서는 미리 처리한 <code>integrated_obj.rds</code>를 불러와 후속 분석을 진행합니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">
@@ -388,4 +649,3 @@ function copyCode(btn){
 
 </body>
 </html>
-
