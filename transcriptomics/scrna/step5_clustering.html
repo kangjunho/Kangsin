@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9S41Y6NWFB"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-9S41Y6NWFB');
-  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Step 05. Dimensional Reduction and Clustering</title>
@@ -133,6 +125,16 @@ Reductions(integrated_obj)
 table(integrated_obj$seurat_clusters)
 </code></pre>
 
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_object_summary.png?v=20260807"
+         alt="Console output showing the integrated Seurat object, assays, reductions, and cluster counts"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    통합 객체에는 RNA와 integrated assay, PCA와 UMAP reduction 및 0~19번 cluster 정보가 포함되어 있습니다.
+  </p>
+
   <div class="card border-success mb-3">
     <div class="card-header bg-success bg-opacity-10 fw-bold">저장 객체의 분석 상태</div>
     <div class="card-body">
@@ -159,28 +161,67 @@ DefaultAssay(integrated_obj) <- "integrated"
 
 # 저장된 PCA 확인
 integrated_obj[["pca"]]
+</code></pre>
 
-# PC별 주요 loading gene 확인
+  <h4 class="mt-4">C-1) PC별 주요 loading gene 확인</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># PC별 주요 loading gene 확인
 print(
   integrated_obj[["pca"]],
   dims = 1:5,
   nfeatures = 5
 )
+</code></pre>
 
-# PC 1과 PC 2의 주요 loading 시각화
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_pca_loading_console.png?v=20260807"
+         alt="Console output showing positive and negative loading genes for PCs 1 to 5"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    PC 1~5의 양·음 방향에 크게 기여하는 주요 loading gene 출력 예시
+  </p>
+
+  <h4 class="mt-4">C-2) PC 1과 PC 2 loading 시각화</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># PC 1과 PC 2의 주요 loading 시각화
 VizDimLoadings(
   integrated_obj,
   dims = 1:2,
   reduction = "pca"
 )
+</code></pre>
 
-# PCA 공간에서 세포 분포 확인
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_pca_loadings_plot.png?v=20260807"
+         alt="Visualization of the genes with major loadings on PC1 and PC2"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    점의 위치와 방향은 각 유전자가 해당 PC 축에 기여하는 loading의 크기와 방향을 나타냅니다.
+  </p>
+
+  <h4 class="mt-4">C-3) PCA 공간에서 세포 분포 확인</h4>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># PCA 공간에서 세포 분포 확인
 DimPlot(
   integrated_obj,
   reduction = "pca",
   group.by = "seurat_clusters"
 )
 </code></pre>
+
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_pca_cluster_plot.png?v=20260807"
+         alt="Cells displayed in PCA space and colored by Seurat cluster"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    PC 1과 PC 2 공간에서 20개 Seurat cluster의 분포를 확인한 결과
+  </p>
 
   <div class="card tip mb-3">
     <div class="card-body">
@@ -206,6 +247,16 @@ DimPlot(
   ndims = 30
 )
 </code></pre>
+
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_elbow_plot.png?v=20260807"
+         alt="Elbow plot displaying standard deviation for PCs 1 to 30"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    초기 PC에서 설명력이 빠르게 감소한 뒤 완만해지는 구간을 확인하여 사용할 dims 범위를 검토합니다.
+  </p>
 
   <ul class="note">
     <li>기울기가 급격히 완만해지는 elbow 전후의 PC를 후보로 고려합니다.</li>
@@ -312,6 +363,16 @@ p_cluster <- DimPlot(
 p_sample + p_condition + p_cluster
 </code></pre>
 
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_umap_overview.png?v=20260807"
+         alt="UMAP plots colored by sample, condition, and Seurat cluster"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    동일한 UMAP 좌표를 sample, condition 및 Seurat cluster 기준으로 표시한 결과
+  </p>
+
   <div class="card tip mb-3">
     <div class="card-body">
       <h6>세 그림에서 확인할 내용</h6>
@@ -336,6 +397,16 @@ p_sample + p_condition + p_cluster
   ncol = 2
 )
 </code></pre>
+
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_condition_split_umap.png?v=20260807"
+         alt="Seurat cluster UMAP split into ND and WD panels"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    같은 UMAP 좌표를 ND와 WD로 나누어 조건별 cluster 분포를 비교한 결과
+  </p>
 
   <p class="note">
     <code>split.by</code>는 같은 UMAP 좌표를 조건별 panel로 나누어 보여줍니다.
@@ -425,7 +496,19 @@ p_res_10 <- DimPlot(
 
 p_res_02 + p_res_10
 
-# 비교가 끝나면 임시 객체 제거
+</code></pre>
+
+  <div class="text-center mt-3">
+    <img src="https://kangjunho.github.io/Kangsin/assets/images/scrna_step5_resolution_comparison.png?v=20260807"
+         alt="Comparison of Seurat clustering results at resolutions 0.2 and 1.0"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    resolution 0.2에서는 14개 cluster, resolution 1.0에서는 31개 cluster로 세분화된 예시입니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 비교가 끝나면 임시 객체 제거
 rm(resolution_test_obj)
 gc()
 </code></pre>
