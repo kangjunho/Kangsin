@@ -30,6 +30,17 @@
       border-radius: 10px;
       box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
     }
+    .part-title {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: #eef4ff;
+      border-left: 6px solid #0d6efd;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0d6efd;
+    }
   </style>
 </head>
 
@@ -42,39 +53,46 @@
   </div>
 
   <p class="lead">
-    PCA를 이용해 고차원 유전자 발현 정보를 요약하고, 적절한 PC 수와 clustering resolution을
-    결정하여 다음 단계의 cell type annotation에 사용할 세포 집단을 구성합니다.
+    통합된 scRNA-seq 데이터를 PCA로 요약하고, 세포 간 이웃 관계를 바탕으로
+    cluster를 구성한 뒤 UMAP에서 세포 집단의 구조를 확인합니다.
   </p>
 
   <hr/>
 
+  <div class="part-title">Part 1. Theoretical Background</div>
+
   <!-- A -->
-  <h3>A) PCA와 clustering의 역할</h3>
+  <h3>A) PCA, neighbor graph, clustering과 UMAP의 관계</h3>
 
   <div class="table-responsive">
     <table class="table table-bordered align-middle">
       <thead>
         <tr>
-          <th style="width:24%">항목</th>
-          <th style="width:38%">의미</th>
-          <th style="width:38%">이번 데이터</th>
+          <th style="width:22%">단계</th>
+          <th style="width:38%">역할</th>
+          <th style="width:40%">이번 분석의 설정</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>PCA</td>
-          <td>수천 개 유전자의 변이를 소수의 축으로 요약합니다.</td>
+          <td>수천 개 유전자의 발현 변이를 소수의 principal component로 요약합니다.</td>
           <td>integrated assay에서 30개 PC 계산</td>
         </tr>
         <tr>
-          <td>dims</td>
-          <td>neighbor graph와 clustering에 사용할 PC 범위입니다.</td>
-          <td>Elbow plot을 참고하여 PC 1~20 사용</td>
+          <td>FindNeighbors</td>
+          <td>PCA 공간에서 각 세포의 이웃을 찾고 KNN/SNN graph를 생성합니다.</td>
+          <td>PC 1~20 사용</td>
         </tr>
         <tr>
-          <td>resolution</td>
-          <td>cluster를 어느 정도로 세분화할지 조절합니다.</td>
-          <td>우선 resolution 0.5에서 20개 cluster 사용</td>
+          <td>FindClusters</td>
+          <td>SNN graph에서 서로 밀접한 세포 community를 탐색합니다.</td>
+          <td>Louvain, resolution 0.5</td>
+        </tr>
+        <tr>
+          <td>UMAP</td>
+          <td>PCA 공간의 국소적 이웃 구조를 2차원에서 시각화합니다.</td>
+          <td>PC 1~20 사용</td>
         </tr>
       </tbody>
     </table>
@@ -82,128 +100,97 @@
 
   <div class="card tip mb-3">
     <div class="card-body">
-      <h6>이번 Step의 핵심 질문</h6>
+      <h6>핵심 개념</h6>
       <ul class="mb-0">
-        <li>몇 개의 PC를 clustering에 사용할 것인가?</li>
-        <li>Cell type을 어느 수준까지 나누기 위해 어떤 resolution을 사용할 것인가?</li>
+        <li>PCA는 neighbor graph와 clustering의 입력 공간입니다.</li>
+        <li>실제 clustering은 UMAP 좌표가 아니라 PCA 기반 SNN graph에서 수행됩니다.</li>
+        <li>UMAP은 cluster 구조를 보기 쉽게 표현하는 시각화 결과입니다.</li>
       </ul>
     </div>
   </div>
 
+  <div class="part-title">Part 2. PCA와 Clustering 결과 단계별 확인</div>
+
   <!-- B -->
-  <h3 class="mt-4">B) 실습 객체와 저장된 PCA 확인</h3>
+  <h3 class="mt-4">B) 이번 실습 객체 확인</h3>
 
   <p class="note">
-    Step 4에서 불러온 <code>integrated_obj</code>에는 PCA, UMAP 및 resolution 0.5의
-    clustering 결과가 이미 저장되어 있습니다.
+    Step 4에서 미리 처리된 통합 객체를 <code>integrated_obj</code>로 불러오고,
+    다른 임시 객체를 정리했습니다. Step 5에서는 이 객체를 다시 불러오지 않고 그대로 사용합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
-library(ggplot2)
-library(patchwork)
-
-integrated_obj
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>integrated_obj
 Assays(integrated_obj)
 Reductions(integrated_obj)
+table(integrated_obj$seurat_clusters)
+</code></pre>
 
+  <div class="card border-success mb-3">
+    <div class="card-header bg-success bg-opacity-10 fw-bold">저장 객체의 분석 상태</div>
+    <div class="card-body">
+      <ul class="mb-0">
+        <li>32,930 features와 39,167 cells</li>
+        <li><code>RNA</code> 및 <code>integrated</code> assay</li>
+        <li><code>pca</code>와 <code>umap</code> reduction</li>
+        <li>resolution 0.5에서 생성된 20개 cluster</li>
+        <li>ND 22,673 cells, WD 16,494 cells</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- C -->
+  <h3 class="mt-4">C) 저장된 PCA 결과 확인</h3>
+
+  <p class="note">
+    PCA는 이미 계산되어 있으므로 <code>RunPCA()</code>를 다시 실행하지 않고
+    저장된 결과를 확인합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># integrated assay를 분석 기준으로 지정
 DefaultAssay(integrated_obj) <- "integrated"
 
 # 저장된 PCA 확인
 integrated_obj[["pca"]]
-</code></pre>
 
-  <!-- C -->
-  <h3 class="mt-4">C) PC별 주요 loading gene 확인</h3>
-
-  <p class="note">
-    PCA loading은 각 PC를 구성하는 데 크게 기여한 유전자를 보여줍니다.
-    Positive와 negative 방향의 유전자는 해당 PC에서 서로 반대되는 발현 특성을 나타냅니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>print(
+# PC별 주요 loading gene 확인
+print(
   integrated_obj[["pca"]],
   dims = 1:5,
   nfeatures = 5
 )
-</code></pre>
 
-  <div class="text-center mt-3">
-    <img src="../../assets/images/scrna_step5_pca_loading_console.png"
-         alt="Top positive and negative loading genes for PCs 1 to 5"
-         class="section-img">
-  </div>
-
-  <p class="text-center text-muted mt-2">
-    PC 1~5의 positive 및 negative loading 상위 유전자 출력 결과
-  </p>
-
-  <div class="card tip mb-3">
-    <div class="card-body">
-      <h6>결과 읽는 방법</h6>
-      <ul class="mb-0">
-        <li>PC1은 extracellular matrix 관련 유전자와 면역 관련 유전자 등 서로 다른 발현 축을 포함합니다.</li>
-        <li>PC3에는 <code>Il2rb</code>, <code>Nkg7</code> 등 면역세포 관련 유전자가 확인됩니다.</li>
-        <li>PC4에는 <code>Birc5</code>, <code>Ccna2</code>, <code>Mki67</code>, <code>Top2a</code> 등 증식 관련 유전자가 포함됩니다.</li>
-        <li>각 PC가 기술적 noise가 아니라 해석 가능한 생물학적 신호를 포함하는지 확인합니다.</li>
-      </ul>
-    </div>
-  </div>
-
-  <h4 class="mt-4">C-1) PC 1과 PC 2 loading 시각화</h4>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>VizDimLoadings(
+# PC 1과 PC 2의 주요 loading 시각화
+VizDimLoadings(
   integrated_obj,
   dims = 1:2,
   reduction = "pca"
 )
-</code></pre>
 
-  <div class="text-center mt-3">
-    <img src="../../assets/images/scrna_step5_pca_loadings_plot.png"
-         alt="Visualization of gene loadings for PC1 and PC2"
-         class="section-img">
-  </div>
-
-  <p class="text-center text-muted mt-2">
-    PC1과 PC2의 주요 positive 및 negative loading gene
-  </p>
-
-  <p class="note">
-    그래프에서 0으로부터 멀리 떨어진 유전자일수록 해당 PC 방향을 구성하는 데 더 크게 기여합니다.
-    loading의 부호 자체가 유전자의 증가·감소 또는 좋은·나쁜 효과를 의미하는 것은 아닙니다.
-  </p>
-
-  <h4 class="mt-4">C-2) PCA 공간에서 cluster 분포 확인</h4>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>DimPlot(
+# PCA 공간에서 세포 분포 확인
+DimPlot(
   integrated_obj,
   reduction = "pca",
   group.by = "seurat_clusters"
 )
 </code></pre>
 
-  <div class="text-center mt-3">
-    <img src="../../assets/images/scrna_step5_pca_cluster_plot.png"
-         alt="Cells shown in PCA space and colored by Seurat cluster"
-         class="section-img">
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>PCA loading 해석</h6>
+      <p class="mb-0">
+        각 PC의 양·음의 방향에 큰 loading을 가진 유전자는 해당 축의 세포 차이를 만드는 데
+        크게 기여한 유전자입니다. 다만 integrated assay의 loading은 통합 공간을 설명하기 위한 값이므로,
+        실제 marker 발현 해석과 DEG 분석은 RNA assay에서 수행합니다.
+      </p>
+    </div>
   </div>
 
-  <p class="text-center text-muted mt-2">
-    PC1과 PC2 공간에서 확인한 20개 Seurat cluster의 분포
-  </p>
-
-  <p class="note">
-    PCA plot은 첫 두 PC에서 세포 집단이 어떻게 분리되는지 보여줍니다.
-    일부 cluster가 겹쳐 보이더라도 clustering은 PC1과 PC2만이 아니라
-    선택한 PC 1~20의 다차원 공간에서 수행되므로, 이 그림만으로 cluster 품질을 판단하지 않습니다.
-  </p>
-
   <!-- D -->
-  <h3 class="mt-4">D) Elbow plot을 이용한 dims 선택</h3>
+  <h3 class="mt-4">D) 사용할 PC 수 확인</h3>
 
   <p class="note">
-    Elbow plot은 PC가 추가될수록 설명하는 변이가 얼마나 감소하는지를 보여줍니다.
-    기울기가 급격히 낮아진 뒤 완만해지는 지점을 dims 선택의 참고점으로 사용합니다.
+    Elbow plot은 PC가 추가될수록 설명력이 감소하는 지점을 확인하는 도구입니다.
+    이번 처리에서는 PC 1~20을 neighbor graph와 UMAP에 사용했습니다.
   </p>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>ElbowPlot(
@@ -212,47 +199,29 @@ integrated_obj[["pca"]]
 )
 </code></pre>
 
-  <div class="text-center mt-3">
-    <img src="../../assets/images/scrna_step5_elbow_plot.png"
-         alt="Elbow plot of the first 30 principal components"
-         class="section-img">
-  </div>
-
-  <p class="text-center text-muted mt-2">
-    PC 1~30의 standard deviation을 나타낸 Elbow plot
-  </p>
-
-  <div class="card border-info mb-3">
-    <div class="card-header bg-info bg-opacity-10 fw-bold">왜 dims = 1:20을 사용했나요?</div>
-    <div class="card-body">
-      <p class="mb-2">
-        이 데이터는 초반 PC에서 standard deviation이 빠르게 감소하고,
-        이후 완만한 감소가 이어집니다. 하나의 뚜렷한 elbow만 존재하지는 않으므로
-        주요 신호를 충분히 포함하면서 지나치게 많은 후반 PC를 넣지 않는 절충값으로 PC 1~20을 사용했습니다.
-      </p>
-      <ul class="mb-0">
-        <li>dims가 너무 적으면 rare population이나 세부 세포 상태를 놓칠 수 있습니다.</li>
-        <li>dims가 너무 많으면 생물학적 신호가 적은 후반 PC와 noise가 포함될 수 있습니다.</li>
-        <li>Elbow plot뿐 아니라 loading gene, cluster 안정성 및 marker 해석 가능성을 함께 확인합니다.</li>
-      </ul>
-    </div>
-  </div>
+  <ul class="note">
+    <li>기울기가 급격히 완만해지는 elbow 전후의 PC를 후보로 고려합니다.</li>
+    <li>PC 수가 너무 적으면 세부 세포 집단을 놓칠 수 있습니다.</li>
+    <li>PC 수가 너무 많으면 noise가 neighbor graph에 포함될 수 있습니다.</li>
+    <li>Elbow plot만으로 결정하지 말고 PC loading, cluster 안정성과 known marker를 함께 확인합니다.</li>
+  </ul>
 
   <!-- E -->
-  <h3 class="mt-4">E) dims를 사용한 neighbor graph와 clustering</h3>
+  <h3 class="mt-4">E) 실제 처리 과정: neighbor graph와 clustering</h3>
 
   <div class="alert alert-warning mt-3" role="alert">
-    <strong>참고용 처리 코드:</strong> 저장된 객체에는 PC 1~20 기반 neighbor graph와
-    resolution 0.5 clustering이 이미 들어 있으므로 이번 실습에서는 다시 실행하지 않아도 됩니다.
+    <strong>이번 실습에서는 아래 코드를 다시 실행하지 않아도 됩니다.</strong><br>
+    저장된 객체에 PC 1~20 기반 neighbor graph와 resolution 0.5의 clustering 결과가 이미 포함되어 있습니다.
+    아래 코드는 실제 처리 과정을 이해하기 위한 참고용입니다.
   </div>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># neighbor graph 생성
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># PCA 공간에서 neighbor graph 생성
 integrated_obj <- FindNeighbors(
   integrated_obj,
   dims = 1:20
 )
 
-# resolution 0.5 clustering
+# SNN graph 기반 clustering
 integrated_obj <- FindClusters(
   integrated_obj,
   resolution = 0.5,
@@ -260,60 +229,153 @@ integrated_obj <- FindClusters(
 )
 </code></pre>
 
-  <!-- F -->
-  <h3 class="mt-4">F) 적절한 resolution은 어떻게 결정하나요?</h3>
-
-  <p class="note">
-    Resolution은 데이터마다 자동으로 정해지는 하나의 정답값이 아닙니다.
-    연구자가 어떤 수준의 cell population을 구분하려는지에 따라 선택합니다.
-  </p>
-
   <div class="table-responsive">
     <table class="table table-bordered align-middle">
       <thead>
         <tr>
-          <th style="width:24%">목적</th>
-          <th style="width:24%">Resolution 방향</th>
-          <th style="width:52%">확인할 내용</th>
+          <th style="width:25%">resolution</th>
+          <th style="width:75%">일반적인 경향</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>주요 cell class 구분</td>
-          <td>상대적으로 낮게</td>
-          <td>Epithelial, immune, stromal, endothelial 등 큰 세포 계통을 우선 구분합니다.</td>
+          <td>낮음 (예: 0.2)</td>
+          <td>cluster 수가 적고 큰 세포 집단으로 묶이는 경향이 있습니다.</td>
         </tr>
         <tr>
-          <td>세부 cell type 구분</td>
-          <td>중간 수준</td>
-          <td>T cell, B cell, myeloid, fibroblast subtype 등 해석 가능한 세부 집단을 확인합니다.</td>
+          <td>중간 (예: 0.5~0.8)</td>
+          <td>주요 세포 유형과 일부 세부 집단을 함께 구분할 수 있습니다.</td>
         </tr>
         <tr>
-          <td>세포 상태 또는 rare subtype 탐색</td>
-          <td>상대적으로 높게</td>
-          <td>Activation, cycling, inflammatory state 등을 세분화하되 과도한 분할을 주의합니다.</td>
+          <td>높음 (예: 1.0 이상)</td>
+          <td>cluster가 더 세분화되지만 과도한 분할 가능성도 증가합니다.</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <div class="card tip mb-3">
+  <!-- F -->
+  <h3 class="mt-4">F) 실제 처리 과정: UMAP</h3>
+
+  <p class="note">
+    UMAP도 이미 계산되어 있습니다. 아래 코드는 PC 1~20을 사용하여 현재 저장된
+    UMAP을 생성했던 실제 처리 과정입니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 참고용: 저장 객체에서는 재실행하지 않음
+integrated_obj <- RunUMAP(
+  integrated_obj,
+  dims = 1:20,
+  seed.use = 1234
+)
+</code></pre>
+
+  <div class="card warn-box mb-3">
     <div class="card-body">
-      <h6>이번 실습의 전략</h6>
-      <ol class="mb-0">
-        <li>우선 resolution 0.5에서 생성된 20개 cluster를 annotation합니다.</li>
-        <li>하나의 cluster에 서로 다른 major cell type marker가 섞여 있다면 resolution을 높이거나 해당 계통을 subset 분석합니다.</li>
-        <li>여러 cluster가 동일한 marker와 생물학적 의미를 보인다면 낮은 resolution을 검토하거나 annotation 단계에서 같은 cell type으로 묶을 수 있습니다.</li>
-      </ol>
+      <b>주의:</b> UMAP은 확률적 알고리즘이므로 같은 데이터라도 random seed나
+      패키지 버전이 달라지면 배치 방향과 세부 모양이 달라질 수 있습니다.
+      UMAP의 모양이 조금 다르다고 해서 분석 결과가 틀린 것은 아닙니다.
     </div>
   </div>
 
   <!-- G -->
-  <h3 class="mt-4">G) 여러 resolution 비교</h3>
+  <h3 class="mt-4">G) 이번 실습: 저장된 UMAP과 cluster 시각화</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>p_sample <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "orig.ident"
+) + ggtitle("Sample")
+
+p_condition <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "condition"
+) + ggtitle("Condition")
+
+p_cluster <- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Seurat clusters")
+
+p_sample + p_condition + p_cluster
+</code></pre>
+
+  <div class="card tip mb-3">
+    <div class="card-body">
+      <h6>세 그림에서 확인할 내용</h6>
+      <ul class="mb-0">
+        <li><b>Sample:</b> 특정 cluster가 한 샘플의 세포로만 구성되는지 확인합니다.</li>
+        <li><b>Condition:</b> ND와 WD 세포의 분포와 조건별 차이를 확인합니다.</li>
+        <li><b>Seurat clusters:</b> 0~19번 cluster의 위치와 분리 정도를 확인합니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- H -->
+  <h3 class="mt-4">H) 조건별 UMAP 비교</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  split.by = "condition",
+  label = TRUE,
+  repel = TRUE,
+  ncol = 2
+)
+</code></pre>
 
   <p class="note">
-    최종 <code>integrated_obj</code>를 덮어쓰지 않도록 별도의
-    <code>resolution_test_obj</code>에서 여러 값을 비교합니다.
+    <code>split.by</code>는 같은 UMAP 좌표를 조건별 panel로 나누어 보여줍니다.
+    cluster의 위치 자체보다는 각 조건에서 특정 cluster의 세포가 증가·감소하거나
+    거의 보이지 않는지를 우선 확인합니다. 정확한 비율 차이는 별도 통계로 검정해야 합니다.
+  </p>
+
+  <!-- I -->
+  <h3 class="mt-4">I) cluster별 세포 수와 구성 확인</h3>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># cluster별 세포 수
+cluster_count <- as.data.frame(
+  table(integrated_obj$seurat_clusters)
+)
+
+colnames(cluster_count) <- c(
+  "cluster",
+  "n_cells"
+)
+
+cluster_count
+
+# cluster와 condition 교차표
+cluster_condition <- table(
+  cluster = integrated_obj$seurat_clusters,
+  condition = integrated_obj$condition
+)
+
+cluster_condition
+
+# 각 condition 안에서 cluster 비율
+prop.table(
+  cluster_condition,
+  margin = 2
+)
+</code></pre>
+
+  <p class="note">
+    현재 cluster 0은 6,376 cells로 가장 크고, cluster 19는 76 cells로 가장 작습니다.
+    작은 cluster는 rare population일 수도 있지만 low-quality cell, doublet 잔존 또는
+    과도한 clustering 결과일 수도 있으므로 marker를 확인해야 합니다.
+  </p>
+
+  <!-- J -->
+  <h3 class="mt-4">J) resolution 비교: 원본 객체를 유지하는 방법</h3>
+
+  <p class="note">
+    여러 resolution을 비교할 때는 실습용 최종 객체를 덮어쓰지 않도록 별도의 임시 객체를 사용합니다.
   </p>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 원본 integrated_obj는 유지
@@ -323,7 +385,7 @@ resolution_test_obj <- FindClusters(
   random.seed = 1234
 )
 
-# 생성된 resolution metadata 확인
+# 생성된 resolution metadata 이름 확인
 resolution_columns <- grep(
   "_res\\.",
   colnames(resolution_test_obj@meta.data),
@@ -332,92 +394,273 @@ resolution_columns <- grep(
 
 resolution_columns
 
-# resolution별 cluster 수 확인
-resolution_cluster_count <- sapply(
-  resolution_columns,
-  function(column_name) {
-    length(
-      unique(
-        resolution_test_obj@meta.data[[column_name]]
-      )
-    )
-  }
-)
+# 예: resolution 0.2와 1.0 비교
+p_res_02 <- DimPlot(
+  resolution_test_obj,
+  reduction = "umap",
+  group.by = resolution_columns[
+    grepl("0.2$", resolution_columns)
+  ],
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Resolution 0.2")
 
-resolution_cluster_count
+p_res_10 <- DimPlot(
+  resolution_test_obj,
+  reduction = "umap",
+  group.by = resolution_columns[
+    grepl("1$", resolution_columns)
+  ],
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Resolution 1.0")
 
-# resolution별 UMAP 비교
-resolution_plots <- lapply(
-  resolution_columns,
-  function(column_name) {
-    DimPlot(
-      resolution_test_obj,
-      reduction = "umap",
-      group.by = column_name,
-      label = TRUE,
-      repel = TRUE
-    ) +
-      NoLegend() +
-      ggtitle(column_name)
-  }
-)
+p_res_02 + p_res_10
 
-wrap_plots(
-  resolution_plots,
-  ncol = 2
-)
+# 비교가 끝나면 임시 객체 제거
+rm(resolution_test_obj)
+gc()
 </code></pre>
 
   <div class="card warn-box mb-3">
     <div class="card-body">
-      <b>Resolution 선택 시 주의:</b>
-      cluster 수가 많아지는 것 자체는 좋은 결과가 아닙니다.
-      각 cluster가 고유하고 일관된 marker를 가지는지, 여러 생물학적 샘플에서 재현되는지,
-      doublet 또는 low-quality population이 아닌지를 다음 annotation 단계에서 확인해야 합니다.
+      <b>resolution 선택 기준:</b> cluster 수가 많아지는 것 자체가 좋은 결과는 아닙니다.
+      known marker가 자연스럽게 구분되는지, 작은 cluster가 재현 가능한지,
+      조건 또는 샘플 하나에만 치우친 cluster가 있는지를 함께 확인합니다.
     </div>
   </div>
 
-  <!-- H -->
-  <h3 class="mt-4">H) Cell type annotation 단계 준비</h3>
+  <!-- K -->
+  <h3 class="mt-4">K) 다음 annotation 단계 준비</h3>
 
   <p class="note">
-    PCA와 clustering은 integrated assay를 이용하지만,
-    marker gene의 실제 발현 확인과 DEG 분석은 원래 발현값이 보존된 RNA assay에서 수행합니다.
+    PCA, UMAP과 clustering은 integrated assay를 기준으로 수행하지만,
+    marker gene의 실제 발현 확인과 differential expression은 RNA assay를 사용합니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># resolution 비교용 임시 객체 정리
-rm(resolution_test_obj)
-gc()
-
-# 저장된 resolution 0.5 cluster를 identity로 지정
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 현재 cluster identity 확인
 Idents(integrated_obj) <- "seurat_clusters"
+levels(integrated_obj)
 
 # marker 분석을 위해 RNA assay로 전환
 DefaultAssay(integrated_obj) <- "RNA"
 
-# RNA assay 구조 확인
-class(integrated_obj[["RNA"]])
-levels(integrated_obj)
+# RNA assay가 Assay5 형식이고 layer가 분리된 경우에만 결합
+if (inherits(integrated_obj[["RNA"]], "Assay5")) {
+  integrated_obj <- JoinLayers(
+    integrated_obj,
+    assay = "RNA"
+  )
+}
+
 DefaultAssay(integrated_obj)
 Layers(integrated_obj[["RNA"]])
 </code></pre>
 
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>중요:</strong> <code>integrated</code> assay에서 marker DEG를 계산하면
+    batch-corrected 값에 기반한 결과가 됩니다. Cell type annotation을 위한 marker 탐색은
+    원래 발현값이 보존된 <code>RNA</code> assay에서 수행합니다.
+  </div>
+
   <div class="card tip mb-3">
     <div class="card-body">
-      <h6>이 객체에서는 JoinLayers()를 실행하지 않습니다</h6>
+      <h6>JoinLayers 오류를 피하는 이유</h6>
       <p class="mb-0">
-        현재 <code>RNA</code> assay는 기존 <code>Assay</code> 클래스이며
-        <code>counts</code>와 <code>data</code>가 각각 하나씩 존재합니다.
-        이미 하나의 발현 행렬로 정리되어 있으므로 layer를 합칠 필요가 없습니다.
-        <code>JoinLayers()</code>는 여러 sample layer가 분리되어 있는
-        Seurat v5 <code>Assay5</code> 객체에서 사용하는 함수입니다.
+        <code>JoinLayers()</code>는 Seurat v5의 <code>Assay5</code> 객체에 사용하는 함수입니다.
+        현재 RNA assay가 기존 <code>Assay</code> 형식이면 결합할 layer가 없으므로 실행하지 않아도 됩니다.
+        따라서 객체 유형을 먼저 확인한 뒤 필요한 경우에만 실행합니다.
       </p>
     </div>
   </div>
 
+  <div class="part-title">Part 3. Hands-on Practice — 전체 코드</div>
+
+  <!-- Integrated hands-on code -->
+  <h3 class="mt-5">L) 실습용 전체 코드</h3>
+
+  <p class="note">
+    아래 코드는 Step 4의 <code>integrated_obj</code>를 이어받아 PCA loading, elbow plot,
+    UMAP, cluster 구성 및 여러 resolution을 확인한 뒤 annotation에 사용할 RNA assay를 준비합니다.
+    패키지 호출과 파일 저장 코드는 포함하지 않습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># ============================================================
+# Step 05. PCA, clustering and UMAP
+# Step 04의 integrated_obj를 이어서 사용
+# ============================================================
+
+# 1. 통합 객체와 저장된 차원축소 결과 확인
+integrated_obj
+Assays(integrated_obj)
+Reductions(integrated_obj)
+table(integrated_obj$seurat_clusters)
+
+# 2. PCA와 clustering 확인에는 integrated assay 사용
+DefaultAssay(integrated_obj) &lt;- "integrated"
+
+# 3. PC별 주요 loading gene 확인
+print(
+  integrated_obj[["pca"]],
+  dims = 1:5,
+  nfeatures = 5
+)
+
+# 4. PC 1과 PC 2 loading 시각화
+VizDimLoadings(
+  integrated_obj,
+  dims = 1:2,
+  reduction = "pca"
+)
+
+# 5. PCA 공간의 cluster 분포 확인
+DimPlot(
+  integrated_obj,
+  reduction = "pca",
+  group.by = "seurat_clusters"
+)
+
+# 6. Elbow plot으로 사용할 PC 수 검토
+ElbowPlot(
+  integrated_obj,
+  ndims = 30
+)
+
+# 7. Sample, condition 및 cluster 기준 UMAP
+p_sample &lt;- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "orig.ident"
+) + ggtitle("Sample")
+
+p_condition &lt;- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "condition"
+) + ggtitle("Condition")
+
+p_cluster &lt;- DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Seurat clusters")
+
+p_sample + p_condition + p_cluster
+
+# 8. 조건별 cluster 분포 비교
+DimPlot(
+  integrated_obj,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  split.by = "condition",
+  label = TRUE,
+  repel = TRUE,
+  ncol = 2
+)
+
+# 9. Cluster별 세포 수와 조건 구성 확인
+cluster_count &lt;- as.data.frame(
+  table(integrated_obj$seurat_clusters)
+)
+
+colnames(cluster_count) &lt;- c(
+  "cluster",
+  "n_cells"
+)
+
+cluster_count
+
+cluster_condition &lt;- table(
+  cluster = integrated_obj$seurat_clusters,
+  condition = integrated_obj$condition
+)
+
+cluster_condition
+prop.table(cluster_condition, margin = 2)
+
+# 10. 원본 객체를 유지하면서 여러 resolution 비교
+resolution_test_obj &lt;- FindClusters(
+  integrated_obj,
+  resolution = c(0.2, 0.5, 0.8, 1.0),
+  random.seed = 1234
+)
+
+resolution_columns &lt;- grep(
+  "_res\\.",
+  colnames(resolution_test_obj@meta.data),
+  value = TRUE
+)
+
+resolution_columns
+
+p_res_02 &lt;- DimPlot(
+  resolution_test_obj,
+  reduction = "umap",
+  group.by = resolution_columns[
+    grepl("0.2$", resolution_columns)
+  ],
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Resolution 0.2")
+
+p_res_10 &lt;- DimPlot(
+  resolution_test_obj,
+  reduction = "umap",
+  group.by = resolution_columns[
+    grepl("1$", resolution_columns)
+  ],
+  label = TRUE,
+  repel = TRUE
+) + ggtitle("Resolution 1.0")
+
+p_res_02 + p_res_10
+
+# 11. Annotation을 위한 identity와 assay 설정
+Idents(integrated_obj) &lt;- "seurat_clusters"
+DefaultAssay(integrated_obj) &lt;- "RNA"
+
+# Assay5 형식인 경우에만 분리된 RNA layer 결합
+if (inherits(integrated_obj[["RNA"]], "Assay5")) {
+  integrated_obj &lt;- JoinLayers(
+    integrated_obj,
+    assay = "RNA"
+  )
+}
+
+DefaultAssay(integrated_obj)
+Layers(integrated_obj[["RNA"]])
+
+# 12. Step 06에 필요한 integrated_obj만 남기기
+rm(
+  list = setdiff(
+    ls(envir = .GlobalEnv),
+    "integrated_obj"
+  ),
+  envir = .GlobalEnv
+)
+
+gc()
+ls(envir = .GlobalEnv)
+</code></pre>
+
   <div class="alert alert-warning mt-3" role="alert">
-    <strong>중요:</strong> <code>integrated</code> assay는 cluster 구조와 batch-corrected 공간을 만드는 데 사용합니다.
-    Cell type marker를 찾을 때는 <code>RNA</code> assay를 사용해야 합니다.
+    <strong>환경 정리:</strong> resolution 비교 객체와 plotting용 객체는 제거하고
+    Step 6 annotation에 사용할 <code>integrated_obj</code>만 남깁니다.
+  </div>
+
+  <!-- Exercise -->
+  <h3 class="mt-5">M) 실습 문제</h3>
+
+  <div class="card border-primary">
+    <div class="card-body">
+      <ol class="mb-0">
+        <li>Elbow plot을 기준으로 PC 1~20 사용이 합리적인지 설명해 보세요.</li>
+        <li>resolution 0.2와 1.0에서 cluster 수와 세분화 정도가 어떻게 달라지는지 비교해 보세요.</li>
+        <li>다음 단계의 marker 탐색에서 <code>integrated</code> assay가 아니라 <code>RNA</code> assay를 사용하는 이유를 설명해 보세요.</li>
+      </ol>
+    </div>
   </div>
 
   <!-- Summary -->
@@ -426,11 +669,11 @@ Layers(integrated_obj[["RNA"]])
       <div class="card-header bg-primary text-white fw-bold">요약</div>
       <div class="card-body">
         <ul class="mb-3">
-          <li>PCA loading gene을 통해 각 PC가 해석 가능한 생물학적 신호를 포함하는지 확인합니다.</li>
-          <li>Elbow plot과 loading을 참고하여 이번 분석에서는 dims 1:20을 사용했습니다.</li>
-          <li>Resolution은 구분하려는 cell class, cell type 또는 cell state 수준에 따라 결정합니다.</li>
-          <li>우선 resolution 0.5의 20개 cluster를 annotation한 뒤 세분화 또는 병합 여부를 판단합니다.</li>
-          <li>다음 marker 분석과 annotation은 RNA assay에서 수행합니다.</li>
+          <li>이번 실습에서는 PCA, UMAP과 clustering이 완료된 <code>integrated_obj</code>를 사용합니다.</li>
+          <li>PCA와 SNN graph는 clustering의 분석 공간이고 UMAP은 시각화 공간입니다.</li>
+          <li>저장된 결과는 PC 1~20, resolution 0.5 및 20개 cluster를 사용합니다.</li>
+          <li>샘플·조건·cluster별 UMAP과 세포 구성표를 함께 확인합니다.</li>
+          <li>다음 marker 분석과 annotation은 <code>RNA</code> assay에서 수행합니다.</li>
         </ul>
 
         <div class="d-flex flex-wrap gap-2">

@@ -30,6 +30,17 @@
       border-radius: 10px;
       box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
     }
+    .part-title {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: #eef4ff;
+      border-left: 6px solid #0d6efd;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0d6efd;
+    }
   </style>
 </head>
 
@@ -48,6 +59,8 @@
   </p>
 
   <hr/>
+
+  <div class="part-title">Part 1. Theoretical Background</div>
 
   <!-- A -->
   <h3>A) 왜 Integration이 필요한가?</h3>
@@ -106,15 +119,17 @@
     <li>따라서 integration 전후 결과를 모두 비교하면서 해석해야 합니다.</li>
   </ul>
 
+  <div class="part-title">Part 2. Integration 처리 과정 이해하기 — 참고용</div>
+
   <!-- D -->
-  <h3 class="mt-4">D) Seurat Integration 기본 흐름</h3>
+  <h3 class="mt-4">D) Seurat Integration 기본 흐름: 실습에서는 실행하지 않음</h3>
   <p class="note">
     Seurat에서는 각 샘플을 개별적으로 전처리한 뒤, anchor를 찾고 데이터를 통합합니다.
   </p>
 
   <div class="alert alert-warning mt-3" role="alert">
-    <strong>참고용 처리 과정:</strong> D~G의 코드는 통합 객체를 생성한 실제 분석 과정을 설명하기 위한 것입니다.
-    이번 실습에서는 이 코드를 실행하지 않고, K에서 현재 디렉토리의
+    <strong>실행하지 마세요:</strong> D~G의 코드는 통합 객체를 생성한 실제 분석 과정을 설명하기 위한 참고 코드입니다.
+    이번 실습에서는 이 코드를 실행하지 않고, I에서 현재 디렉토리의
     <code>integrated_obj.rds</code>를 불러옵니다.
   </div>
 
@@ -129,9 +144,7 @@
     </div>
   </div>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
-
-# 이전 단계에서 사용하던 6개 sample 이름 확인
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 이전 단계에서 사용하던 6개 sample 이름 확인
 names(sample_list)
 
 # 각 sample에서 공통적으로 사용할 integration feature 선택
@@ -227,11 +240,11 @@ integrated_obj <- FindClusters(integrated_obj, resolution = 0.5)
 </code></pre>
 
   <!-- G -->
-  <h3 class="mt-4">G) 최종 실습 객체 검증 및 저장</h3>
+  <h3 class="mt-4">G) 최종 실습 객체 검증</h3>
 
   <p class="note">
     이번 실습에 사용할 객체는 integration뿐 아니라 scaling, PCA, UMAP 및 clustering까지
-    완료된 상태로 저장합니다. 저장 위치는 별도 하위 폴더가 아닌 현재 작업 디렉토리입니다.
+    완료된 상태입니다. 아래 코드는 실제 통합 처리 당시 객체의 구조를 검증한 과정입니다.
   </p>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 최종 객체 검증
@@ -249,18 +262,6 @@ stopifnot(
   "seurat_clusters" %in% colnames(integrated_obj@meta.data)
 )
 
-# 현재 작업 디렉토리에 저장
-getwd()
-
-saveRDS(
-  integrated_obj,
-  file = "integrated_obj.rds",
-  compress = FALSE
-)
-
-# 저장 여부와 파일 크기 확인
-file.exists("integrated_obj.rds")
-file.info("integrated_obj.rds")$size / 1024^3
 </code></pre>
 
   <div class="card tip mb-3">
@@ -283,10 +284,7 @@ file.info("integrated_obj.rds")$size / 1024^3
     Seurat integration과 함께 자주 비교되는 방법입니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
-library(harmony)
-
-# Harmony는 먼저 sample을 하나의 RNA assay 객체로 병합
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># Harmony는 먼저 sample을 하나의 RNA assay 객체로 병합
 harmony_obj <- merge(
   x = sample_list[[1]],
   y = sample_list[-1],
@@ -396,8 +394,10 @@ DimPlot(
     </div>
   </div>
 
+  <div class="part-title">Part 3. Hands-on Practice — 저장된 통합 객체 사용</div>
+
   <!-- I -->
-  <h3 class="mt-4">I) 실습용 전체 코드 예시</h3>
+  <h3 class="mt-4">I) 저장된 integrated_obj 불러오기 및 실습용 전체 코드</h3>
 
   <div class="alert alert-primary mt-3" role="alert">
     <strong>이번 실습에서는 앞에서 설명한 integration 과정을 직접 실행하지 않습니다.</strong><br>
@@ -408,11 +408,16 @@ DimPlot(
 
   <p class="note">
     이전 단계에서 생성된 객체와 임시 변수를 모두 제거하여 깨끗한 R environment에서 시작합니다.
-    아래의 <code>rm(list = ls())</code>는 현재 R session의 객체를 모두 삭제하므로,
-    저장하지 않은 분석 결과가 있다면 먼저 저장해야 합니다.
+    아래의 <code>rm(list = ls())</code>는 현재 R session의 객체를 모두 삭제합니다.
+    다른 분석을 함께 진행 중인 session에서는 실행하지 말고, 이번 실습 전용 session에서 실행하세요.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 1. 현재 R environment의 모든 객체 제거
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># ============================================================
+# Step 04. 저장된 통합 객체 불러오기와 결과 확인
+# Anchor 탐색과 IntegrateData는 이번 실습에서 실행하지 않음
+# ============================================================
+
+# 1. 현재 R environment의 모든 객체 제거
 rm(list = ls())
 gc()
 
@@ -420,27 +425,22 @@ gc()
 setwd("~/God_nas/Mouse_CRC")
 getwd()
 
-# 3. 분석 패키지 불러오기
-library(Seurat)
-library(ggplot2)
-library(patchwork)
-
-# 4. 현재 디렉토리의 통합 객체 존재 여부 확인
+# 3. 현재 디렉토리의 통합 객체 존재 여부 확인
 file.exists("integrated_obj.rds")
 
-# 5. 미리 처리된 통합 객체 불러오기
+# 4. 미리 처리된 통합 객체 불러오기
 integrated_obj <- readRDS(
   "integrated_obj.rds"
 )
 
-# 6. 객체 구조 확인
+# 5. 객체 구조 확인
 integrated_obj
 Assays(integrated_obj)
 Reductions(integrated_obj)
 table(integrated_obj$condition)
 table(integrated_obj$seurat_clusters)
 
-# 7. 저장된 PCA와 UMAP 확인
+# 6. 저장된 PCA와 UMAP 확인
 stopifnot(
   ncol(integrated_obj) == 39167,
   anyDuplicated(colnames(integrated_obj)) == 0,
@@ -449,10 +449,10 @@ stopifnot(
   "seurat_clusters" %in% colnames(integrated_obj@meta.data)
 )
 
-# 8. integrated assay를 기본 분석 assay로 지정
+# 7. integrated assay를 기본 분석 assay로 지정
 DefaultAssay(integrated_obj) <- "integrated"
 
-# 9. 샘플별 UMAP
+# 8. 샘플별 UMAP
 p_sample <- DimPlot(
   integrated_obj,
   reduction = "umap",
@@ -467,7 +467,7 @@ p_sample <- DimPlot(
     )
   )
 
-# 10. 조건별 UMAP
+# 9. 조건별 UMAP
 p_condition <- DimPlot(
   integrated_obj,
   reduction = "umap",
@@ -482,7 +482,7 @@ p_condition <- DimPlot(
     )
   )
 
-# 11. cluster별 UMAP
+# 10. cluster별 UMAP
 p_cluster <- DimPlot(
   integrated_obj,
   reduction = "umap",
@@ -500,7 +500,7 @@ p_cluster <- DimPlot(
     )
   )
 
-# 12. 세 개의 UMAP을 하나의 figure로 통합
+# 11. 세 개의 UMAP을 하나의 figure로 통합
 umap_overview <-
   p_sample +
   p_condition +
@@ -509,17 +509,7 @@ umap_overview <-
 
 umap_overview
 
-# 13. UMAP overview 저장
-ggsave(
-  filename = "Step4_integrated_UMAP_overview.png",
-  plot = umap_overview,
-  width = 16,
-  height = 5.5,
-  dpi = 300,
-  bg = "white"
-)
-
-# 14. ND와 WD를 나누어 cluster 분포 확인
+# 12. ND와 WD를 나누어 cluster 분포 확인
 condition_umap <- DimPlot(
   integrated_obj,
   reduction = "umap",
@@ -533,7 +523,7 @@ condition_umap <- DimPlot(
 
 condition_umap
 
-# 15. cluster별 조건 구성비 계산
+# 13. cluster별 조건 구성비 계산
 cluster_condition_df <- as.data.frame(
   table(
     cluster = integrated_obj$seurat_clusters,
@@ -548,7 +538,7 @@ cluster_condition_df <- cluster_condition_df |>
   ) |>
   dplyr::ungroup()
 
-# 16. 조건별 cluster 구성비 시각화
+# 14. 조건별 cluster 구성비 시각화
 cluster_composition <- ggplot(
   cluster_condition_df,
   aes(
@@ -580,6 +570,18 @@ cluster_composition <- ggplot(
   )
 
 cluster_composition
+
+# 15. Step 05에 필요한 integrated_obj만 남기기
+rm(
+  list = setdiff(
+    ls(envir = .GlobalEnv),
+    "integrated_obj"
+  ),
+  envir = .GlobalEnv
+)
+
+gc()
+ls(envir = .GlobalEnv)
 </code></pre>
 
   <div class="text-center mt-4">
@@ -659,6 +661,24 @@ cluster_composition
         <li>reduction은 <code>pca</code>와 <code>umap</code>이 확인됩니다.</li>
         <li><code>seurat_clusters</code>에는 0~19의 20개 cluster가 저장되어 있습니다.</li>
       </ul>
+    </div>
+  </div>
+
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>환경 정리:</strong> 통합 코드 마지막에는 plotting용 객체와 구성비 표를 제거하고
+    Step 5에서 사용할 <code>integrated_obj</code>만 남깁니다. 로드된 패키지는 유지됩니다.
+  </div>
+
+  <!-- Exercise -->
+  <h3 class="mt-5">J) 실습 문제</h3>
+
+  <div class="card border-primary">
+    <div class="card-body">
+      <ol class="mb-0">
+        <li><code>orig.ident</code> 기준 UMAP에서 특정 sample에만 치우친 cluster가 있는지 확인해 보세요.</li>
+        <li>ND와 WD의 cluster 구성비 그림에서 차이가 커 보이는 cluster 두 개를 찾아보세요.</li>
+        <li>UMAP에서 sample이 잘 섞이는 것이 항상 좋은 integration을 의미하지 않는 이유를 설명해 보세요.</li>
+      </ol>
     </div>
   </div>
 
