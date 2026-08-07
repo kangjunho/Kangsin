@@ -53,291 +53,165 @@
   </p>
 
   <h3 class="mt-4">C) Sample별 세포 조성 계산</h3>
-  <p class="note">각 sample을 분석 단위로 유지하고, 해당 sample의 전체 세포 수를 분모로 사용합니다. 함수 충돌을 막기 위해 <code>dplyr::</code>와 <code>tidyr::</code> namespace를 명시합니다.</p>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>sample_information &lt;- integrated_obj@meta.data |&gt;
-  dplyr::select(orig.ident, condition) |&gt;
-  dplyr::distinct()
-
-celltype_levels &lt;- sort(
+  <p class="note">세포 수가 많은 sample이 결과를 지배하지 않도록 각 sample의 전체 세포 수를 분모로 사용해 세포형별 비율을 계산합니다. 관찰되지 않은 세포형은 <code>complete()</code>로 0을 채웁니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>celltype_levels &lt;- sort(
   unique(integrated_obj$celltype_intermediate)
 )
 
 cell_composition &lt;- integrated_obj@meta.data |&gt;
-  dplyr::count(
+  count(
     orig.ident,
     condition,
     celltype_intermediate,
     name = "cell_count"
   ) |&gt;
-  tidyr::complete(
-    tidyr::nesting(orig.ident, condition),
+  complete(
+    nesting(orig.ident, condition),
     celltype_intermediate = celltype_levels,
     fill = list(cell_count = 0)
   ) |&gt;
-  dplyr::group_by(orig.ident, condition) |&gt;
-  dplyr::mutate(
+  group_by(orig.ident, condition) |&gt;
+  mutate(
     total_cells = sum(cell_count),
     proportion = cell_count / total_cells,
     percentage = proportion * 100
   ) |&gt;
-  dplyr::ungroup()
-
-cell_composition</code></pre>
+  ungroup()</code></pre>
 
   <h3 class="mt-4">D) 세포 조성 시각화</h3>
-  <p class="note">Sample별 누적 막대, 조건별 평균 조성, sample-level boxplot을 함께 봅니다. 조건 평균만 보면 생물학적 반복 간 변이가 가려질 수 있습니다.</p>
-
-  <h4 class="mt-3">D-1) Sample별 세포 조성</h4>
+  <p class="note">조건별 평균 막대만 보면 sample 간 변이를 알 수 없습니다. 따라서 sample별 누적 막대그래프와 세포형별 boxplot을 함께 확인합니다.</p>
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>p_composition_sample &lt;- ggplot(
   cell_composition,
-  aes(x = orig.ident, y = proportion, fill = celltype_intermediate)
+  aes(
+    x = orig.ident,
+    y = proportion,
+    fill = celltype_intermediate
+  )
 ) +
-  geom_col(width = 0.8, color = "white", linewidth = 0.15) +
-  facet_grid(~ condition, scales = "free_x", space = "free_x") +
+  geom_col(color = "white", linewidth = 0.15) +
+  facet_grid(
+    ~ condition,
+    scales = "free_x",
+    space = "free_x"
+  ) +
   scale_y_continuous(labels = scales::percent_format()) +
   labs(
-    title = "A. Cell-type composition by sample",
-    x = NULL, y = "Cell proportion", fill = "Cell type"
+    title = "Cell-type composition by sample",
+    x = NULL,
+    y = "Cell proportion",
+    fill = "Cell type"
   ) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p_composition_sample</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_composition_by_sample.png" alt="Cell-type composition for each ND and WD sample" class="section-img"></div>
-  <p class="text-center text-muted mt-2">각 생물학적 sample에서 중분류 세포형이 차지하는 상대적 비율</p>
+p_composition_sample
 
-  <h4 class="mt-4">D-2) 조건별 평균 세포 조성</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>condition_composition &lt;- cell_composition |&gt;
-  dplyr::group_by(condition, celltype_intermediate) |&gt;
-  dplyr::summarise(
-    mean_proportion = mean(proportion),
-    .groups = "drop"
-  )
-
-p_composition_condition &lt;- ggplot(
-  condition_composition,
-  aes(x = condition, y = mean_proportion, fill = celltype_intermediate)
-) +
-  geom_col(position = "fill", width = 0.7, color = "white", linewidth = 0.15) +
-  scale_y_continuous(labels = scales::percent_format()) +
-  labs(
-    title = "B. Mean cell-type composition by condition",
-    x = NULL, y = "Mean cell proportion", fill = "Cell type"
-  ) +
-  theme_classic()
-
-p_composition_condition</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_composition_by_condition.png" alt="Mean cell-type composition in ND and WD" class="section-img"></div>
-  <p class="text-center text-muted mt-2">ND와 WD의 평균적인 세포 조성 비교</p>
-
-  <h4 class="mt-4">D-3) 세포형별 sample-level 비율 비교</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>p_composition_box &lt;- ggplot(
+p_composition_box &lt;- ggplot(
   cell_composition,
   aes(x = condition, y = percentage, color = condition)
 ) +
-  geom_boxplot(outlier.shape = NA, width = 0.55) +
+  geom_boxplot(outlier.shape = NA) +
   geom_jitter(width = 0.08, size = 2) +
   facet_wrap(~ celltype_intermediate, scales = "free_y") +
   labs(
-    title = "C. Sample-level cell proportions",
-    x = NULL, y = "Cell proportion (%)"
+    title = "Sample-level cell proportions",
+    x = NULL,
+    y = "Cell proportion (%)"
   ) +
   theme_classic() +
-  theme(legend.position = "none", strip.text = element_text(size = 9))
+  theme(legend.position = "none")
 
 p_composition_box</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_composition_boxplot.png" alt="Sample-level cell proportions by condition for each cell type" class="section-img"></div>
 
-  <div class="card warn-box mb-4"><div class="card-body"><b>통계 단위 주의:</b> 반복수는 세포 39,167개가 아니라 ND 3개와 WD 3개 sample입니다. n=3/group에서는 검정력이 낮으므로 p-value뿐 아니라 sample별 분포와 효과크기를 함께 봅니다.</div></div>
+  <div class="card warn-box mb-4"><div class="card-body">
+    <b>통계 단위 주의:</b> 이 데이터의 생물학적 반복수는 세포 39,167개가 아니라 ND 3개와 WD 3개 sample입니다. 세포를 독립 반복으로 간주하면 pseudoreplication이 발생합니다. n=3/group에서 비율 검정은 검정력도 낮으므로 시각화와 효과크기를 중심으로 탐색적으로 해석합니다.
+  </div></div>
 
   <h3>E) Sample 단위의 탐색적 세포 비율 비교</h3>
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>composition_test &lt;- cell_composition |&gt;
-  dplyr::group_by(celltype_intermediate) |&gt;
-  dplyr::summarise(
+  group_by(celltype_intermediate) |&gt;
+  summarise(
     ND_mean_percent = mean(percentage[condition == "ND"]),
     WD_mean_percent = mean(percentage[condition == "WD"]),
     WD_minus_ND = WD_mean_percent - ND_mean_percent,
-    p_value = tryCatch(
-      wilcox.test(
-        percentage[condition == "WD"],
-        percentage[condition == "ND"],
-        exact = FALSE
-      )$p.value,
-      error = function(e) NA_real_
-    ),
+    p_value = wilcox.test(
+      percentage[condition == "WD"],
+      percentage[condition == "ND"],
+      exact = FALSE
+    )$p.value,
     .groups = "drop"
   ) |&gt;
-  dplyr::mutate(p_adj = p.adjust(p_value, method = "BH")) |&gt;
-  dplyr::arrange(p_value)
+  mutate(p_adj = p.adjust(p_value, method = "BH")) |&gt;
+  arrange(p_value)
 
 composition_test</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_composition_test_console.png" alt="Console output of sample-level exploratory cell composition tests" class="section-img"></div>
 
   <h3 class="mt-4">F) 세포형 내부에서 WD vs ND DEG 분석</h3>
-  <p class="note">Macrophage 내부에서 WD를 <code>ident.1</code>, ND를 <code>ident.2</code>로 비교합니다. 양의 <code>avg_log2FC</code>는 WD 상향, 음의 값은 WD 하향을 의미합니다.</p>
+  <p class="note">예시로 Macrophage만 선택한 뒤 WD를 <code>ident.1</code>, ND를 <code>ident.2</code>로 지정합니다. 따라서 양의 <code>avg_log2FC</code>는 WD에서 높은 유전자이고 음의 값은 ND에서 높은 유전자입니다.</p>
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>target_celltype &lt;- "Macrophage"
 
 target_obj &lt;- subset(
   integrated_obj,
   subset = celltype_intermediate == target_celltype
 )
+
 DefaultAssay(target_obj) &lt;- "RNA"
 Idents(target_obj) &lt;- "condition"
 
+table(target_obj$orig.ident)
+table(Idents(target_obj))
+
 deg_target &lt;- FindMarkers(
   target_obj,
-  ident.1 = "WD", ident.2 = "ND",
-  assay = "RNA", slot = "data",
-  test.use = "wilcox", only.pos = FALSE,
-  min.pct = 0.10, logfc.threshold = 0.25,
+  ident.1 = "WD",
+  ident.2 = "ND",
+  assay = "RNA",
+  slot = "data",
+  test.use = "wilcox",
+  only.pos = FALSE,
+  min.pct = 0.10,
+  logfc.threshold = 0.25,
   max.cells.per.ident = 1000,
   random.seed = 1234
 )
 
-deg_target$gene &lt;- rownames(deg_target)
-deg_target &lt;- deg_target |&gt;
-  dplyr::relocate(gene) |&gt;
-  dplyr::mutate(
-    direction = dplyr::case_when(
+deg_target$gene &lt;- rownames(deg_target)</code></pre>
+
+  <h3 class="mt-4">G) DEG 결과 시각화</h3>
+  <p class="note">Volcano plot으로 전체 DEG 분포를 보고, 상위 유전자는 <code>FeaturePlot()</code>과 <code>VlnPlot()</code>으로 실제 발현 패턴을 다시 확인합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>deg_target &lt;- deg_target |&gt;
+  mutate(
+    direction = case_when(
       p_val_adj &lt; 0.05 &amp; avg_log2FC &gt;= 0.25 ~ "Up_in_WD",
       p_val_adj &lt; 0.05 &amp; avg_log2FC &lt;= -0.25 ~ "Down_in_WD",
       TRUE ~ "Not_significant"
-    )
-  ) |&gt;
-  dplyr::arrange(p_val_adj)
-
-head(deg_target, 20)
-table(deg_target$direction)</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_deg_console.png" alt="Top macrophage WD versus ND differential expression results" class="section-img"></div>
-
-  <h3 class="mt-4">G) DEG 결과 시각화와 전체 세포형 확장</h3>
-  <p class="note">Volcano plot으로 방향과 유의성을 보고, 상위 DEG는 실제 발현 분포를 확인합니다. 이후 같은 분석을 모든 중분류 세포형에 반복합니다.</p>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>deg_target &lt;- deg_target |&gt;
-  dplyr::mutate(
+    ),
     minus_log10_padj = -log10(pmax(p_val_adj, 1e-300))
   )
 
-p_volcano &lt;- ggplot(
+ggplot(
   deg_target,
-  aes(x = avg_log2FC, y = minus_log10_padj, color = direction)
+  aes(avg_log2FC, minus_log10_padj, color = direction)
 ) +
   geom_point(alpha = 0.65, size = 1.2) +
-  geom_vline(xintercept = c(-0.25, 0.25), linetype = 2, color = "grey50") +
-  geom_hline(yintercept = -log10(0.05), linetype = 2, color = "grey50") +
+  geom_vline(xintercept = c(-0.25, 0.25), linetype = 2) +
+  geom_hline(yintercept = -log10(0.05), linetype = 2) +
   scale_color_manual(values = c(
     Up_in_WD = "#D73027",
     Down_in_WD = "#4575B4",
     Not_significant = "grey75"
   )) +
-  labs(
-    title = paste0(target_celltype, ": WD vs ND"),
-    x = "Average log2 fold change",
-    y = "-log10 adjusted p-value",
-    color = NULL
-  ) +
-  theme_classic()
+  theme_classic()</code></pre>
 
-p_volcano</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_volcano_plot.png" alt="Macrophage WD versus ND volcano plot" class="section-img"></div>
-
-  <h4 class="mt-4">G-1) 상위 DEG의 실제 발현 확인</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>top_deg_genes &lt;- deg_target |&gt;
-  dplyr::filter(direction != "Not_significant") |&gt;
-  dplyr::slice_min(order_by = p_val_adj, n = 6, with_ties = FALSE) |&gt;
-  dplyr::pull(gene)
-
-top_deg_genes &lt;- intersect(top_deg_genes, rownames(target_obj))
-
-if (length(top_deg_genes) &gt; 0) {
-  FeaturePlot(
-    target_obj,
-    features = top_deg_genes,
-    reduction = "umap",
-    split.by = "condition",
-    order = TRUE,
-    min.cutoff = "q05",
-    max.cutoff = "q95",
-    ncol = 2
-  )
-
-  VlnPlot(
-    target_obj,
-    features = top_deg_genes,
-    group.by = "condition",
-    pt.size = 0,
-    ncol = 3
-  )
-}</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_top_deg_violin.png" alt="Violin plots of top macrophage DEGs in ND and WD" class="section-img"></div>
-
-  <h4 class="mt-4">G-2) 모든 중분류 세포형의 DEG 계산</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>celltype_list &lt;- sort(
-  unique(integrated_obj$celltype_intermediate)
-)
-
-deg_all_celltypes &lt;- lapply(
-  celltype_list,
-  function(current_celltype) {
-    current_obj &lt;- subset(
-      integrated_obj,
-      subset = celltype_intermediate == current_celltype
-    )
-
-    condition_count &lt;- table(current_obj$condition)
-    if (
-      !all(c("ND", "WD") %in% names(condition_count)) ||
-      any(condition_count[c("ND", "WD")] &lt; 50)
-    ) return(NULL)
-
-    DefaultAssay(current_obj) &lt;- "RNA"
-    Idents(current_obj) &lt;- "condition"
-
-    current_deg &lt;- FindMarkers(
-      current_obj,
-      ident.1 = "WD", ident.2 = "ND",
-      assay = "RNA", slot = "data",
-      test.use = "wilcox", only.pos = FALSE,
-      min.pct = 0.10, logfc.threshold = 0.25,
-      max.cells.per.ident = 1000,
-      random.seed = 1234
-    )
-    current_deg$gene &lt;- rownames(current_deg)
-
-    current_deg |&gt;
-      dplyr::relocate(gene) |&gt;
-      dplyr::mutate(
-        celltype = current_celltype,
-        comparison = "WD_vs_ND",
-        direction = dplyr::case_when(
-          p_val_adj &lt; 0.05 &amp; avg_log2FC &gt;= 0.25 ~ "Up_in_WD",
-          p_val_adj &lt; 0.05 &amp; avg_log2FC &lt;= -0.25 ~ "Down_in_WD",
-          TRUE ~ "Not_significant"
-        )
-      )
-  }
-)
-
-deg_all_celltypes &lt;- dplyr::bind_rows(deg_all_celltypes)
-head(deg_all_celltypes)</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step7_all_celltypes_deg_console.png" alt="Console output after DEG analysis across all intermediate cell types" class="section-img"></div>
-
-  <h3 class="mt-4">H) Cell-level DEG와 pseudobulk DEG의 차이</h3>
-  <div class="table-responsive"><table class="table table-bordered align-middle">
-    <thead><tr><th>항목</th><th>Cell-level Wilcoxon</th><th>Sample-level pseudobulk</th></tr></thead>
-    <tbody>
-      <tr><td>분석 단위</td><td>개별 세포</td><td>각 sample에서 합산한 raw counts</td></tr>
-      <tr><td>장점</td><td>빠르고 직관적이며 탐색에 유용</td><td>생물학적 반복을 올바르게 반영</td></tr>
-      <tr><td>주요 한계</td><td>동일 mouse의 세포를 독립 반복처럼 취급할 위험</td><td>sample 수가 적으면 검정력이 제한됨</td></tr>
-      <tr><td>권장 용도</td><td>교육·탐색·marker 후보 확인</td><td>조건 간 DEG의 통계적 추론과 논문 결과</td></tr>
-    </tbody>
-  </table></div>
-  <p class="note"><b>Pseudobulk</b>는 동일한 cell type 안에서 각 mouse의 raw count를 유전자별로 합산하여 mouse 하나를 하나의 RNA-seq sample처럼 분석합니다. 따라서 ND 3개와 WD 3개가 실제 반복수입니다. 반면 cell-level 결과는 세포 상태의 방향을 빠르게 찾는 데 유용하지만 p-value가 지나치게 작아질 수 있습니다.</p>
-  <div class="card tip mb-3"><div class="card-body"><ul class="mb-0">
-    <li><code>AggregateExpression()</code>으로 sample별 raw counts를 합산합니다.</li>
-    <li><code>edgeR</code>에서는 library size 보정, dispersion 추정과 sample-level 통계 검정을 수행합니다.</li>
-    <li>두 방법에서 방향이 일치하고 여러 sample에서 일관된 유전자를 우선 해석합니다.</li>
-    <li>특정 sample 하나가 결과를 주도하거나 sample당 세포 수가 너무 적으면 결론을 보류합니다.</li>
-  </ul></div></div>
+  <h3 class="mt-4">H) 왜 pseudobulk가 필요한가?</h3>
+  <p class="note">Cell-level Wilcoxon은 빠르고 교육용 탐색에 편리하지만 같은 mouse에서 나온 수천 개 세포를 독립 반복처럼 취급할 수 있습니다. 논문용 조건 간 DEG에서는 각 cell type의 counts를 sample별로 합산하고 sample을 반복 단위로 분석하는 pseudobulk가 권장됩니다.</p>
+  <div class="card tip mb-3"><div class="card-body">
+    <ul class="mb-0">
+      <li><code>AggregateExpression()</code>: 동일 sample·cell type의 raw counts를 합산</li>
+      <li><code>edgeR</code>: ND 3개와 WD 3개 pseudobulk profile을 비교</li>
+      <li>세포 수가 지나치게 적은 sample-cell type 조합은 제외하거나 결과를 보류</li>
+    </ul>
+  </div></div>
   <p class="note">참고: <a href="https://satijalab.org/seurat/articles/de_vignette" target="_blank" rel="noopener">Seurat differential expression 및 pseudobulk vignette</a>, <a href="https://www.nature.com/articles/s41467-021-25960-2" target="_blank" rel="noopener">biological replicate를 고려한 single-cell DEG 연구</a>.</p>
 
   <div class="part-title">Part 3. 통합 실습 코드</div>
@@ -375,24 +249,24 @@ celltype_levels &lt;- sort(
 )
 
 cell_composition &lt;- integrated_obj@meta.data |&gt;
-  dplyr::count(
+  count(
     orig.ident,
     condition,
     celltype_intermediate,
     name = "cell_count"
   ) |&gt;
-  tidyr::complete(
-    tidyr::nesting(orig.ident, condition),
+  complete(
+    nesting(orig.ident, condition),
     celltype_intermediate = celltype_levels,
     fill = list(cell_count = 0)
   ) |&gt;
-  dplyr::group_by(orig.ident, condition) |&gt;
-  dplyr::mutate(
+  group_by(orig.ident, condition) |&gt;
+  mutate(
     total_cells = sum(cell_count),
     proportion = cell_count / total_cells,
     percentage = proportion * 100
   ) |&gt;
-  dplyr::ungroup()
+  ungroup()
 
 cell_composition
 
@@ -440,11 +314,11 @@ p_composition_sample
 
 
 condition_composition &lt;- cell_composition |&gt;
-  dplyr::group_by(
+  group_by(
     condition,
     celltype_intermediate
   ) |&gt;
-  dplyr::summarise(
+  summarise(
     mean_proportion = mean(proportion),
     sd_proportion = sd(proportion),
     se_proportion = sd_proportion / sqrt(n()),
@@ -522,8 +396,8 @@ p_composition_box
 # n=3/group이므로 Wilcoxon p-value는 탐색적으로 해석합니다.
 
 composition_test &lt;- cell_composition |&gt;
-  dplyr::group_by(celltype_intermediate) |&gt;
-  dplyr::summarise(
+  group_by(celltype_intermediate) |&gt;
+  summarise(
     ND_mean_percent = mean(
       percentage[condition == "ND"]
     ),
@@ -542,13 +416,13 @@ composition_test &lt;- cell_composition |&gt;
     ),
     .groups = "drop"
   ) |&gt;
-  dplyr::mutate(
+  mutate(
     p_adj = p.adjust(
       p_value,
       method = "BH"
     )
   ) |&gt;
-  dplyr::arrange(p_value)
+  arrange(p_value)
 
 composition_test
 
@@ -591,9 +465,9 @@ deg_target &lt;- FindMarkers(
 deg_target$gene &lt;- rownames(deg_target)
 
 deg_target &lt;- deg_target |&gt;
-  dplyr::relocate(gene) |&gt;
-  dplyr::mutate(
-    direction = dplyr::case_when(
+  relocate(gene) |&gt;
+  mutate(
+    direction = case_when(
       p_val_adj &lt; 0.05 &amp;
         avg_log2FC &gt;= 0.25 ~ "Up_in_WD",
       p_val_adj &lt; 0.05 &amp;
@@ -601,7 +475,7 @@ deg_target &lt;- deg_target |&gt;
       TRUE ~ "Not_significant"
     )
   ) |&gt;
-  dplyr::arrange(p_val_adj)
+  arrange(p_val_adj)
 
 head(deg_target, 20)
 table(deg_target$direction)
@@ -612,7 +486,7 @@ table(deg_target$direction)
 # ============================================================
 
 deg_target &lt;- deg_target |&gt;
-  dplyr::mutate(
+  mutate(
     minus_log10_padj = -log10(
       pmax(p_val_adj, 1e-300)
     )
@@ -663,13 +537,13 @@ p_volcano
 
 # 상위 DEG의 실제 발현 확인
 top_deg_genes &lt;- deg_target |&gt;
-  dplyr::filter(direction != "Not_significant") |&gt;
-  dplyr::slice_min(
+  filter(direction != "Not_significant") |&gt;
+  slice_min(
     order_by = p_val_adj,
     n = 6,
     with_ties = FALSE
   ) |&gt;
-  dplyr::pull(gene)
+  pull(gene)
 
 top_deg_genes &lt;- intersect(
   top_deg_genes,
@@ -753,11 +627,11 @@ deg_all_celltypes &lt;- lapply(
     current_deg$gene &lt;- rownames(current_deg)
 
     current_deg |&gt;
-      dplyr::relocate(gene) |&gt;
-      dplyr::mutate(
+      relocate(gene) |&gt;
+      mutate(
         celltype = current_celltype,
         comparison = "WD_vs_ND",
-        direction = dplyr::case_when(
+        direction = case_when(
           p_val_adj &lt; 0.05 &amp;
             avg_log2FC &gt;= 0.25 ~ "Up_in_WD",
           p_val_adj &lt; 0.05 &amp;
@@ -768,7 +642,7 @@ deg_all_celltypes &lt;- lapply(
   }
 )
 
-deg_all_celltypes &lt;- dplyr::bind_rows(
+deg_all_celltypes &lt;- bind_rows(
   deg_all_celltypes
 )
 
@@ -882,7 +756,7 @@ pb_metadata &lt;- pb_obj@meta.data |&gt;
   )
 
   pseudobulk_deg &lt;- pseudobulk_deg |&gt;
-    dplyr::relocate(gene)
+    relocate(gene)
 
 print(
   head(pseudobulk_deg, 20)

@@ -49,23 +49,21 @@
   <div class="part-title">Part 2. Functional annotation과 Cell–cell interaction 단계별 실습</div>
 
   <h3 class="mt-4">B) WD 상향·하향 DEG 분리</h3>
-  <p class="note">Step 7 환경 정리에서는 <code>deg_target</code>과 <code>integrated_obj</code>만 남겼으므로 분석 대상 이름을 다시 정의합니다. Step 7에서 Macrophage DEG를 만들었기 때문에 여기서는 <code>target_celltype &lt;- "Macrophage"</code>로 지정합니다.</p>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>target_celltype &lt;- "Macrophage"
-
-functional_deg &lt;- deg_target |&gt;
-  dplyr::filter(
+  <p class="note">Step 7에서 <code>ident.1 = "WD"</code>, <code>ident.2 = "ND"</code>로 분석했으므로 양의 log2FC는 WD 상향, 음의 log2FC는 WD 하향 유전자입니다. 방향을 섞어 enrichment하면 서로 반대되는 생물학적 변화를 구분할 수 없으므로 반드시 분리합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>functional_deg &lt;- deg_target |&gt;
+  filter(
     p_val_adj &lt; 0.05,
     abs(avg_log2FC) &gt;= 0.25
   )
 
 up_gene_symbol &lt;- functional_deg |&gt;
-  dplyr::filter(avg_log2FC &gt; 0) |&gt;
-  dplyr::pull(gene) |&gt;
+  filter(avg_log2FC &gt; 0) |&gt;
+  pull(gene) |&gt;
   unique()
 
 down_gene_symbol &lt;- functional_deg |&gt;
-  dplyr::filter(avg_log2FC &lt; 0) |&gt;
-  dplyr::pull(gene) |&gt;
+  filter(avg_log2FC &lt; 0) |&gt;
+  pull(gene) |&gt;
   unique()</code></pre>
 
   <h3 class="mt-4">C) Mouse gene ID 변환과 background 설정</h3>
@@ -89,49 +87,10 @@ down_gene_map &lt;- clusterProfiler::bitr(
   fromType = "SYMBOL",
   toType = "ENTREZID",
   OrgDb = org.Mm.eg.db
-)
-
-universe_entrez &lt;- unique(all_gene_map$ENTREZID)
-up_entrez &lt;- unique(up_gene_map$ENTREZID)
-down_entrez &lt;- unique(down_gene_map$ENTREZID)</code></pre>
+)</code></pre>
 
   <h3 class="mt-4">D) GO와 KEGG enrichment</h3>
-  <p class="note">GO에서는 Biological Process, KEGG에서는 mouse organism code <code>mmu</code>를 사용합니다. 이번 실습에서는 유의하지 않은 항목까지 반환받아 결과 구조를 확인할 수 있도록 <code>pvalueCutoff</code>와 <code>qvalueCutoff</code>를 1로 지정합니다.</p>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>run_go &lt;- function(gene_ids) {
-  if (length(gene_ids) &lt; 10) return(NULL)
-
-  clusterProfiler::enrichGO(
-    gene = gene_ids,
-    universe = universe_entrez,
-    OrgDb = org.Mm.eg.db,
-    keyType = "ENTREZID",
-    ont = "BP",
-    pAdjustMethod = "BH",
-    pvalueCutoff = 1,
-    qvalueCutoff = 1,
-    readable = TRUE
-  )
-}
-
-run_kegg &lt;- function(gene_ids) {
-  if (length(gene_ids) &lt; 10) return(NULL)
-
-  clusterProfiler::enrichKEGG(
-    gene = gene_ids,
-    universe = universe_entrez,
-    organism = "mmu",
-    keyType = "kegg",
-    pAdjustMethod = "BH",
-    pvalueCutoff = 1,
-    qvalueCutoff = 1
-  )
-}
-
-go_up &lt;- run_go(up_entrez)
-go_down &lt;- run_go(down_entrez)
-kegg_up &lt;- run_kegg(up_entrez)
-kegg_down &lt;- run_kegg(down_entrez)</code></pre>
-  <div class="card warn-box mb-3"><div class="card-body"><b>해석 주의:</b> cutoff를 1로 설정하는 것은 모든 후보 term을 반환받기 위한 설정입니다. 이를 모두 유의한 결과로 해석하면 안 되며, 최종 해석에서는 <code>p.adjust &lt; 0.05</code>와 gene count, biological relevance를 확인합니다.</div></div>
+  <p class="note">GO에서는 Biological Process를 사용하고, KEGG의 mouse organism code는 <code>mmu</code>입니다. DEG가 너무 적으면 의미 있는 enrichment가 나오지 않을 수 있으며, 이는 오류가 아니라 입력 유전자 수와 통계력의 문제일 수 있습니다.</p>
 
   <h3 class="mt-4">E) GO·KEGG 상향·하향 결과를 하나의 panel로 표시</h3>
   <p class="note">최종 그림의 위쪽에는 GO BP, 아래쪽에는 KEGG를 배치하고 왼쪽은 WD 상향, 오른쪽은 WD 하향 결과로 구성합니다.</p>
@@ -146,26 +105,10 @@ kegg_down &lt;- run_kegg(down_entrez)</code></pre>
     title = paste0(
       target_celltype,
       ": functional annotation of WD vs ND DEGs"
-    ),
-    theme = theme(
-      plot.title = element_text(
-        face = "bold",
-        size = 16,
-        hjust = 0.5
-      )
     )
   )
 
 functional_annotation_panel</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_functional_annotation_panel.png" alt="GO and KEGG enrichment results for up- and down-regulated macrophage DEGs" class="section-img"></div>
-  <p class="text-center text-muted mt-2">GO BP와 KEGG의 WD 상향·하향 결과를 비교한 2×2 panel</p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 결과 table 확인
-head(as.data.frame(go_up))
-head(as.data.frame(go_down))
-head(as.data.frame(kegg_up))
-head(as.data.frame(kegg_down))</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_enrichment_table_console.png" alt="Console output of GO and KEGG enrichment tables" class="section-img"></div>
 
   <div class="card warn-box mb-4"><div class="card-body">
     <b>ORA 해석 주의:</b> 유의한 pathway는 해당 과정이 반드시 활성화되었다는 직접 증거가 아니라 선택된 DEG에 관련 유전자가 기대보다 많이 포함되었다는 의미입니다. DEG cutoff, background gene과 gene ID 변환률에 따라 결과가 달라질 수 있습니다.
@@ -198,81 +141,9 @@ cellchat_WD &lt;- run_cellchat(
   condition_name = "WD",
   max_cells_per_type = 300
 )</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_cellchat_run_console.png" alt="Console output while CellChat runs for ND and WD" class="section-img"></div>
-  <p class="text-center text-muted mt-2">조건별 CellChat 계산이 진행되는 Console 출력 예시</p>
 
   <h3 class="mt-4">H) Communication network 비교</h3>
   <p class="note">Circle plot에서는 node가 세포형, edge가 예측된 communication을 나타냅니다. 이후 두 CellChat 객체를 병합하여 interaction 수, 강도 및 signaling pathway 순위를 비교합니다.</p>
-  <h4 class="mt-3">H-1) 조건별 interaction network</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>par(mfrow = c(1, 2), xpd = TRUE)
-
-CellChat::netVisual_circle(
-  cellchat_ND@net$count,
-  vertex.weight = as.numeric(table(cellchat_ND@idents)),
-  weight.scale = TRUE,
-  label.edge = FALSE,
-  title.name = "ND: interaction number"
-)
-
-CellChat::netVisual_circle(
-  cellchat_WD@net$count,
-  vertex.weight = as.numeric(table(cellchat_WD@idents)),
-  weight.scale = TRUE,
-  label.edge = FALSE,
-  title.name = "WD: interaction number"
-)
-
-par(mfrow = c(1, 1))</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_cellchat_circle.png" alt="CellChat circle plots showing the number of interactions in ND and WD" class="section-img"></div>
-
-  <h4 class="mt-4">H-2) 전체 interaction 수와 강도 비교</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>cellchat_list &lt;- list(ND = cellchat_ND, WD = cellchat_WD)
-
-cellchat_merged &lt;- CellChat::mergeCellChat(
-  cellchat_list,
-  add.names = names(cellchat_list)
-)
-
-p_interaction_number &lt;- CellChat::compareInteractions(
-  cellchat_merged,
-  group = c(1, 2),
-  show.legend = FALSE
-) + ggtitle("Number of interactions")
-
-p_interaction_strength &lt;- CellChat::compareInteractions(
-  cellchat_merged,
-  group = c(1, 2),
-  show.legend = FALSE,
-  measure = "weight"
-) + ggtitle("Interaction strength")
-
-p_interaction_number + p_interaction_strength</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_interaction_summary.png" alt="Comparison of CellChat interaction number and interaction strength in ND and WD" class="section-img"></div>
-
-  <h4 class="mt-4">H-3) 차등 interaction number</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>CellChat::netVisual_diffInteraction(
-  cellchat_merged,
-  weight.scale = TRUE,
-  measure = "count"
-)</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_diff_interaction_number.png" alt="Differential number of CellChat interactions between WD and ND" class="section-img"></div>
-
-  <h4 class="mt-4">H-4) 차등 interaction strength</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>CellChat::netVisual_diffInteraction(
-  cellchat_merged,
-  weight.scale = TRUE,
-  measure = "weight"
-)</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_diff_interaction_strength.png" alt="Differential CellChat interaction strength between WD and ND" class="section-img"></div>
-
-  <h4 class="mt-4">H-5) Signaling pathway별 information flow</h4>
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>CellChat::rankNet(
-  cellchat_merged,
-  mode = "comparison",
-  stacked = TRUE,
-  do.stat = TRUE
-)</code></pre>
-  <div class="text-center mt-3"><img src="../../assets/images/scrna_step8_ranknet.png" alt="Relative information flow of CellChat signaling pathways in ND and WD" class="section-img"></div>
   <div class="card warn-box mb-4"><div class="card-body">
     <b>해석상의 제한:</b> CellChat 결과는 transcript expression과 database에 기반한 예측입니다. 단백질 수준, 공간적 인접성 및 실제 ligand–receptor 결합을 직접 측정한 결과가 아니므로 후보 상호작용으로 해석해야 합니다.
   </div></div>
@@ -303,23 +174,20 @@ p_interaction_number + p_interaction_strength</code></pre>
 # 1. WD 상향·하향 DEG 분리
 # ============================================================
 
-# Step 7 환경 정리 후에도 분석 대상명을 명확하게 다시 지정
-target_celltype &lt;- "Macrophage"
-
 functional_deg &lt;- deg_target |&gt;
-  dplyr::filter(
+  filter(
     p_val_adj &lt; 0.05,
     abs(avg_log2FC) &gt;= 0.25
   )
 
 up_gene_symbol &lt;- functional_deg |&gt;
-  dplyr::filter(avg_log2FC &gt; 0) |&gt;
-  dplyr::pull(gene) |&gt;
+  filter(avg_log2FC &gt; 0) |&gt;
+  pull(gene) |&gt;
   unique()
 
 down_gene_symbol &lt;- functional_deg |&gt;
-  dplyr::filter(avg_log2FC &lt; 0) |&gt;
-  dplyr::pull(gene) |&gt;
+  filter(avg_log2FC &lt; 0) |&gt;
+  pull(gene) |&gt;
   unique()
 
 length(up_gene_symbol)
@@ -381,8 +249,8 @@ run_go &lt;- function(gene_ids) {
     keyType = "ENTREZID",
     ont = "BP",
     pAdjustMethod = "BH",
-    pvalueCutoff = 1,
-    qvalueCutoff = 1,
+    pvalueCutoff = 0.05,
+    qvalueCutoff = 0.20,
     readable = TRUE
   )
 }
@@ -407,8 +275,8 @@ run_kegg &lt;- function(gene_ids) {
     organism = "mmu",
     keyType = "kegg",
     pAdjustMethod = "BH",
-    pvalueCutoff = 1,
-    qvalueCutoff = 1
+    pvalueCutoff = 0.05,
+    qvalueCutoff = 0.20
   )
 }
 
