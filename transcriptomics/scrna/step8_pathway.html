@@ -13,6 +13,7 @@
     .warn-box{border-left:4px solid #ffc107;background:#fffdf3}
     .step-badge{border:1px solid #0d6efd;border-radius:999px;padding:.25rem .6rem;color:#0d6efd;font-weight:600}
     .table thead th{background:#f3f6ff}
+    .part-title{margin:2.5rem 0 1.25rem;padding:.75rem 1rem;border-left:6px solid #0d6efd;background:#eef5ff;font-weight:700;font-size:1.25rem}
   </style>
 </head>
 <body>
@@ -33,6 +34,8 @@
     </ol>
   </div></div>
 
+  <div class="part-title">Part 1. 이론적 배경</div>
+
   <h3>A) Functional annotation이란?</h3>
   <div class="table-responsive"><table class="table table-bordered align-middle">
     <thead><tr><th>분석</th><th>질문</th><th>특징</th></tr></thead>
@@ -42,6 +45,8 @@
       <tr><td>CellChat</td><td>어떤 세포가 ligand를 보내고 어떤 세포가 receptor로 받는가?</td><td>발현 기반 예측이며 물리적 상호작용의 직접 증명은 아님</td></tr>
     </tbody>
   </table></div>
+
+  <div class="part-title">Part 2. Functional annotation과 Cell–cell interaction 단계별 실습</div>
 
   <h3 class="mt-4">B) WD 상향·하향 DEG 분리</h3>
   <p class="note">Step 7에서 <code>ident.1 = "WD"</code>, <code>ident.2 = "ND"</code>로 분석했으므로 양의 log2FC는 WD 상향, 음의 log2FC는 WD 하향 유전자입니다. 방향을 섞어 enrichment하면 서로 반대되는 생물학적 변화를 구분할 수 없으므로 반드시 분리합니다.</p>
@@ -143,6 +148,8 @@ cellchat_WD &lt;- run_cellchat(
     <b>해석상의 제한:</b> CellChat 결과는 transcript expression과 database에 기반한 예측입니다. 단백질 수준, 공간적 인접성 및 실제 ligand–receptor 결합을 직접 측정한 결과가 아니므로 후보 상호작용으로 해석해야 합니다.
   </div></div>
   <p class="note">참고: <a href="https://github.com/jinworks/CellChat" target="_blank" rel="noopener">CellChat 공식 튜토리얼</a>, <a href="https://www.nature.com/articles/s41467-021-21246-9" target="_blank" rel="noopener">CellChat Nature Communications 논문</a>, <a href="https://yulab-smu.top/biomedical-knowledge-mining-book/029-compareCluster.html" target="_blank" rel="noopener">clusterProfiler functional profile comparison</a>.</p>
+
+  <div class="part-title">Part 3. 통합 실습 코드</div>
 
   <h3 class="mt-5">I) 실습용 전체 코드</h3>
   <p class="note">아래 코드는 Step 7의 <code>deg_target</code>과 Step 6의 <code>integrated_obj</code>에서 연속해서 실행합니다. 별도의 패키지 호출이나 파일 저장 코드는 포함하지 않습니다.</p>
@@ -640,6 +647,30 @@ CellChat::rankNet(
       <li>선택한 ligand–receptor 관계를 추가로 검증하려면 어떤 실험 또는 데이터가 필요한지 설명합니다.</li>
     </ol>
   </div></div>
+
+  <h3 class="mt-5">K) 실습 종료 후 환경 정리</h3>
+  <p class="note">최종 annotation 객체와 대표 결과만 남기고 계산 과정에서 생성된 중간 객체를 제거합니다. 결과를 더 살펴볼 예정이라면 아래 보존 목록에 객체 이름을 추가할 수 있습니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>keep_objects &lt;- intersect(
+  c(
+    "integrated_obj",
+    "deg_target",
+    "functional_annotation_panel",
+    "cellchat_merged"
+  ),
+  ls(envir = .GlobalEnv)
+)
+
+rm(
+  list = setdiff(
+    ls(envir = .GlobalEnv),
+    keep_objects
+  ),
+  envir = .GlobalEnv
+)
+rm(keep_objects)
+gc()
+
+ls(envir = .GlobalEnv)</code></pre>
 
   <section class="mt-5"><div class="card border-primary">
     <div class="card-header bg-primary text-white fw-bold">전체 실습 요약</div>

@@ -13,6 +13,7 @@
     .warn-box{border-left:4px solid #ffc107;background:#fffdf3}
     .step-badge{border:1px solid #0d6efd;border-radius:999px;padding:.25rem .6rem;color:#0d6efd;font-weight:600}
     .table thead th{background:#f3f6ff}
+    .part-title{margin:2.5rem 0 1.25rem;padding:.75rem 1rem;border-left:6px solid #0d6efd;background:#eef5ff;font-weight:700;font-size:1.25rem}
   </style>
 </head>
 <body>
@@ -31,6 +32,8 @@
     </ol>
   </div></div>
 
+  <div class="part-title">Part 1. 이론적 배경</div>
+
   <h3>A) 세포 비율과 DEG는 다른 질문이다</h3>
   <div class="table-responsive"><table class="table table-bordered align-middle">
     <thead><tr><th>분석</th><th>비교 대상</th><th>해석</th></tr></thead>
@@ -40,6 +43,8 @@
       <tr><td>전체 세포 DEG</td><td>모든 ND 세포와 모든 WD 세포</td><td>세포 조성 차이와 세포 내부 변화가 혼합되어 해석이 어려움</td></tr>
     </tbody>
   </table></div>
+
+  <div class="part-title">Part 2. Cell composition과 DEG 단계별 실습</div>
 
   <h3 class="mt-4">B) Step 6 결과에서 연속해서 시작하기</h3>
   <p class="note">
@@ -209,6 +214,8 @@ ggplot(
   </div></div>
   <p class="note">참고: <a href="https://satijalab.org/seurat/articles/de_vignette" target="_blank" rel="noopener">Seurat differential expression 및 pseudobulk vignette</a>, <a href="https://www.nature.com/articles/s41467-021-25960-2" target="_blank" rel="noopener">biological replicate를 고려한 single-cell DEG 연구</a>.</p>
 
+  <div class="part-title">Part 3. 통합 실습 코드</div>
+
   <h3 class="mt-5">I) 실습용 전체 코드</h3>
   <p class="note">아래 코드는 Step 6의 annotation 객체에서 이어서 sample별 세포 조성, 탐색적 비율 검정, cell-type-specific DEG와 pseudobulk edgeR까지 연속적으로 실행합니다. 실습 중에는 별도의 CSV, RDS 또는 그림 파일을 생성하지 않고 R 객체와 Plot 창에서 결과를 확인합니다.</p>
   <div class="card tip mb-3"><div class="card-body">
@@ -231,11 +238,11 @@ ggplot(
 # ============================================================
 
 sample_information &lt;- integrated_obj@meta.data |&gt;
-  select(
+  dplyr::select(
     orig.ident,
     condition
   ) |&gt;
-  distinct()
+  dplyr::distinct()
 
 celltype_levels &lt;- sort(
   unique(integrated_obj$celltype_intermediate)
@@ -649,15 +656,7 @@ head(deg_all_celltypes)
 # 같은 mouse에서 나온 세포를 독립 반복으로 취급할 수 있습니다.
 # 논문용 추론에서는 sample을 반복 단위로 하는 pseudobulk를 권장합니다.
 
-# 설치가 필요한 경우 한 번만 실행
-# if (!requireNamespace("BiocManager", quietly = TRUE)) {
-#   install.packages("BiocManager")
-# }
-# BiocManager::install("edgeR")
-
-if (requireNamespace("edgeR", quietly = TRUE)) {
-
-  target_celltype_pb &lt;- "Macrophage"
+target_celltype_pb &lt;- "Macrophage"
 
   pb_obj &lt;- subset(
     integrated_obj,
@@ -686,12 +685,12 @@ if (requireNamespace("edgeR", quietly = TRUE)) {
     return.seurat = FALSE
   )$RNA
 
-  pb_metadata &lt;- pb_obj@meta.data |&gt;
-    select(
+pb_metadata &lt;- pb_obj@meta.data |&gt;
+    dplyr::select(
       orig.ident,
       condition
     ) |&gt;
-    distinct()
+    dplyr::distinct()
 
   pb_metadata &lt;- pb_metadata[
     match(
@@ -759,10 +758,9 @@ if (requireNamespace("edgeR", quietly = TRUE)) {
   pseudobulk_deg &lt;- pseudobulk_deg |&gt;
     relocate(gene)
 
-  print(
-    head(pseudobulk_deg, 20)
-  )
-}
+print(
+  head(pseudobulk_deg, 20)
+)
 
 
 # ============================================================
@@ -787,6 +785,25 @@ if (requireNamespace("edgeR", quietly = TRUE)) {
       <li>두 분석 결과가 다를 수 있는 이유를 biological replicate와 pseudoreplication 관점에서 설명합니다.</li>
     </ol>
   </div></div>
+
+  <h3 class="mt-5">K) 다음 분석을 위한 환경 정리</h3>
+  <p class="note">Step 8에서 필요한 annotation 객체와 Macrophage DEG 결과만 남기고, Step 7에서 생성한 중간 객체를 제거합니다.</p>
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>keep_objects &lt;- c(
+  "integrated_obj",
+  "deg_target"
+)
+
+rm(
+  list = setdiff(
+    ls(envir = .GlobalEnv),
+    keep_objects
+  ),
+  envir = .GlobalEnv
+)
+rm(keep_objects)
+gc()
+
+ls(envir = .GlobalEnv)</code></pre>
 
   <section class="mt-5"><div class="card border-primary">
     <div class="card-header bg-primary text-white fw-bold">요약</div>
