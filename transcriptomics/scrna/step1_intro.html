@@ -316,7 +316,48 @@
   </p>
 
   <!-- I -->
-  <h3 class="mt-4">I) 작업 디렉토리 설정</h3>
+  <h3 class="mt-4">I) 전체 실습에 필요한 패키지 불러오기</h3>
+
+  <p class="note">
+    패키지는 Step 1에서 한 번만 불러오고, Step 2 이후에는 동일한 R session을 이어서 사용합니다.
+    실습 페이지에는 패키지 설치 코드를 포함하지 않습니다. 아래 패키지가 로드되지 않으면
+    실습 시작 전에 담당자에게 알려주세요.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># Seurat object 처리와 시각화
+library(Seurat)
+library(ggplot2)
+library(patchwork)
+
+# Data manipulation
+library(dplyr)
+library(tidyr)
+library(scales)
+
+# QC와 doublet 탐지
+library(SingleCellExperiment)
+library(scDblFinder)
+
+# Integration
+library(harmony)
+
+# DEG와 functional annotation
+library(edgeR)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(enrichplot)
+
+# Cell-cell interaction
+library(CellChat)
+</code></pre>
+
+  <div class="alert alert-info mt-3" role="alert">
+    <strong>운영 원칙:</strong> 패키지 설치는 서버 관리자가 실습 전에 완료합니다.
+    교육생은 설치 명령을 실행하지 않고 위 패키지를 불러온 뒤 분석을 시작합니다.
+  </div>
+
+  <!-- J -->
+  <h3 class="mt-4">J) 작업 디렉토리 설정</h3>
 
   <p class="note">
     실습을 시작하기 전에 현재 작업 경로를 확인하고,
@@ -331,17 +372,15 @@ getwd()
 list.files()
 </code></pre>
 
-  <!-- J -->
-  <h3 class="mt-4">J) Seurat object 불러오기</h3>
+  <!-- K -->
+  <h3 class="mt-4">K) Seurat object 불러오기</h3>
 
   <p class="note">
     아래 예시는 6개 샘플을 모두 불러오고, 각 샘플에 식이 조건 정보를 metadata로 추가한 뒤
     <code>sample_list</code>를 만드는 코드입니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
-
-obj_nd1 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND1/DA250003-ND1_Seurat.rds")
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>obj_nd1 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND1/DA250003-ND1_Seurat.rds")
 obj_nd2 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND2/DA250003-ND2_Seurat.rds")
 obj_nd3 <- readRDS("~/God_nas/Mouse_CRC/SevenBridges/ND3/DA250003-ND3_Seurat.rds")
 
@@ -369,8 +408,8 @@ sample_list <- list(
 names(sample_list)
 </code></pre>
 
-  <!-- K -->
-  <h3 class="mt-4">K) Expected output</h3>
+  <!-- L -->
+  <h3 class="mt-4">L) Expected output</h3>
 
   <p class="note">
     아래는 6개 샘플( ND1~3, WD1~3 )을 불러오고, condition metadata를 추가한 뒤
@@ -395,8 +434,8 @@ names(sample_list)
     <li><code>names(sample_list)</code> 결과는 ND1, ND2, ND3, WD1, WD2, WD3 순서로 확인됩니다.</li>
   </ul>
 
-  <!-- L -->
-  <h3 class="mt-4">L) Seurat object의 내부 구조 이해하기</h3>
+  <!-- M -->
+  <h3 class="mt-4">M) Seurat object의 내부 구조 이해하기</h3>
 
   <p class="note">
     <code>sample_list</code>의 각 element는 하나의 Seurat object입니다.
@@ -476,7 +515,7 @@ head(Embeddings(obj_nd3, reduction = "umap"))
 length(VariableFeatures(obj_nd3))
 </code></pre>
 
-  <h3 class="mt-5">M) Seurat object를 분석 가능한 상태로 만드는 과정</h3>
+  <h3 class="mt-5">N) Seurat object를 분석 가능한 상태로 만드는 과정</h3>
 
   <p class="note">
     앞의 그림이 <strong>Seurat object 안에 무엇이 저장되는지</strong> 보여주었다면,
@@ -532,7 +571,7 @@ length(VariableFeatures(obj_nd3))
   </div>
 
   <!-- Integrated hands-on code -->
-  <h3 class="mt-5">N) 실습용 전체 코드</h3>
+  <h3 class="mt-5">O) 실습용 전체 코드</h3>
 
   <p class="note">
     앞에서는 각 코드의 의미를 나누어 살펴보았습니다. 실제 실습에서는 아래 코드를 위에서부터
@@ -549,8 +588,21 @@ length(VariableFeatures(obj_nd3))
 # Step 01. Seurat object 불러오기와 sample_list 생성
 # ============================================================
 
-# 1. 패키지 불러오기
+# 1. 전체 실습에서 사용할 패키지 불러오기
 library(Seurat)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(tidyr)
+library(scales)
+library(SingleCellExperiment)
+library(scDblFinder)
+library(harmony)
+library(edgeR)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(enrichplot)
+library(CellChat)
 
 # 2. 작업 디렉토리 설정
 setwd("~/God_nas/Mouse_CRC")
