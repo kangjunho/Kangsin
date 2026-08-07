@@ -817,7 +817,7 @@ representative_markers &lt;- intersect(
   rownames(integrated_obj)
 )
 
-FeaturePlot(
+p_representative_feature &lt;- FeaturePlot(
   integrated_obj,
   features = representative_markers,
   reduction = "umap",
@@ -827,14 +827,39 @@ FeaturePlot(
   ncol = 4
 )
 
-DotPlot(
+p_representative_feature
+</code></pre>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_representative_featureplot.png"
+         alt="UMAP FeaturePlots showing representative marker expression for annotated cell types"
+         class="section-img">
+  </div>
+  <p class="text-center text-muted mt-2">
+    대표 marker가 예상한 UMAP 세포 집단에서 선택적으로 발현되는지 확인한 결과
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 세포형별 대표 marker 발현율과 평균 발현을 한 번에 비교
+p_representative_dot &lt;- DotPlot(
   integrated_obj,
   features = representative_markers,
   group.by = "celltype_intermediate",
   assay = "RNA"
 ) +
   RotatedAxis() +
-  ggtitle("Representative marker validation")</code></pre>
+  ggtitle("Representative marker validation")
+
+p_representative_dot
+</code></pre>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_representative_dotplot.png"
+         alt="Dot plot comparing representative marker expression across intermediate cell types"
+         class="section-img">
+  </div>
+  <p class="text-center text-muted mt-2">
+    점의 크기는 발현 세포 비율, 색은 세포형별 평균 발현량을 나타냅니다.
+  </p>
 
   <h4 class="mt-4">H-1) Cluster 5 marker 검증 예시</h4>
   <div class="text-center mt-3">
@@ -1720,37 +1745,6 @@ p_representative_dot
 
 
 # ============================================================
-# 실습 문제
-# ============================================================
-# 1) top10_markers 또는 all_markers에서 각 세포 유형을 대표할
-#    유전자 하나씩을 선택합니다.
-# 2) FeaturePlot으로 선택한 유전자의 UMAP 발현 위치를 확인합니다.
-# 3) DotPlot으로 해당 유전자가 목표 세포형에 선택적으로 발현되는지
-#    발현 세포 비율과 평균 발현량을 함께 확인합니다.
-#
-# 예시:
-# student_genes &lt;- c("C1qc", "Cd3e", "Ncr1", "Ankrd1", "Postn", "Cldn5")
-# student_genes &lt;- intersect(student_genes, rownames(integrated_obj))
-#
-# FeaturePlot(
-#   integrated_obj,
-#   features = student_genes,
-#   reduction = "umap",
-#   order = TRUE,
-#   min.cutoff = "q05",
-#   max.cutoff = "q95",
-#   ncol = 3
-# )
-#
-# DotPlot(
-#   integrated_obj,
-#   features = student_genes,
-#   group.by = "celltype_intermediate",
-#   assay = "RNA"
-# ) + RotatedAxis()
-
-
-# ============================================================
 # 11. 최종 annotation 결과 확인
 # ============================================================
 
@@ -1767,6 +1761,25 @@ table(integrated_obj$celltype_intermediate)
 # 3) epithelial marker 근거가 없으면 epithelial cluster는 생성되지 않습니다.
 # 4) 0.05 score margin과 10% 검출 기준은 실습용 점검 기준입니다.
 #    데이터 특성에 따라 조정할 수 있습니다.
+
+
+# ============================================================
+# 12. Step 7을 위한 환경 정리
+# ============================================================
+# celltype_major와 celltype_intermediate annotation은
+# integrated_obj의 metadata에 저장되어 있습니다.
+# integrated_obj만 남기고 중간 계산 객체를 제거합니다.
+
+rm(
+  list = setdiff(
+    ls(envir = .GlobalEnv),
+    "integrated_obj"
+  ),
+  envir = .GlobalEnv
+)
+
+gc()
+ls(envir = .GlobalEnv)
   </code></pre>
   <!-- J: exercise -->
   <h3 class="mt-5">J) 실습 문제: 대표 유전자로 annotation 검증하기</h3>
@@ -1809,30 +1822,6 @@ DotPlot(
   group.by = "celltype_intermediate",
   assay = "RNA"
 ) + RotatedAxis()</code></pre>
-
-  <!-- K: cleanup -->
-  <h3 class="mt-5">K) Step 7을 위한 환경 정리</h3>
-
-  <p class="note">
-    실습 문제를 완료한 뒤에는 annotation이 저장된 <code>integrated_obj</code>만 남기고
-    score matrix, marker table 및 plotting용 임시 객체를 제거합니다.
-  </p>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>rm(
-  list = setdiff(
-    ls(envir = .GlobalEnv),
-    "integrated_obj"
-  ),
-  envir = .GlobalEnv
-)
-
-gc()
-ls(envir = .GlobalEnv)</code></pre>
-
-  <div class="alert alert-warning mt-3" role="alert">
-    <strong>실행 시점:</strong> 이 코드는 위 실습 문제를 모두 마친 뒤 실행합니다.
-    Step 7에서는 annotation metadata가 포함된 <code>integrated_obj</code>를 그대로 이어서 사용합니다.
-  </div>
 
   <!-- Summary -->
   <section class="mt-4">
