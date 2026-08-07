@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040">
+  <defs>
+    <style>
+      .title{font:700 38px Arial,'Noto Sans KR',sans-serif;fill:#172b4d}
+      .subtitle{font:500 19px Arial,'Noto Sans KR',sans-serif;fill:#526174}
+      .head{font:700 21px Arial,'Noto Sans KR',sans-serif;fill:#ffffff}
+      .group{font:700 22px Arial,'Noto Sans KR',sans-serif;fill:#1f2d3d}
+      .cell{font:600 20px Arial,'Noto Sans KR',sans-serif;fill:#243447}
+      .marker{font:500 18px Arial,'Noto Sans KR',sans-serif;fill:#34495e;font-style:italic}
+      .range{font:700 20px Arial,'Noto Sans KR',sans-serif;fill:#243447}
+      .note{font:500 17px Arial,'Noto Sans KR',sans-serif;fill:#334155}
+      .line{stroke:#d8dee8;stroke-width:1.5}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1040" fill="#ffffff"/>
+  <text x="70" y="62" class="title">마우스 대장암 scRNA-seq의 주요 세포 구성과 1차 annotation 전략</text>
+  <text x="70" y="98" class="subtitle">문헌 기반 참고 범위이며, 실제 비율은 채취 부위·점막/근육층 포함 여부·세포 분리법·종양 상태에 따라 크게 달라질 수 있음</text>
+
+  <rect x="55" y="135" width="1490" height="58" rx="10" fill="#284b75"/>
+  <text x="95" y="172" class="head">계통</text>
+  <text x="340" y="172" class="head">실습용 1차 세포군</text>
+  <text x="745" y="172" class="head">문헌상 참고 범위</text>
+  <text x="995" y="172" class="head">대표 마우스 marker 조합</text>
+
+  <!-- epithelial -->
+  <rect x="55" y="193" width="1490" height="105" fill="#fff5e8"/>
+  <rect x="55" y="193" width="245" height="105" fill="#f6b45f"/>
+  <text x="82" y="238" class="group">Epithelial</text>
+  <text x="82" y="268" class="note">상피 계통</text>
+  <text x="340" y="238" class="cell">Enterocyte·Colonocyte, Goblet,</text>
+  <text x="340" y="267" class="cell">Stem/TA 및 종양 epithelial</text>
+  <text x="745" y="252" class="range">약 30–50%</text>
+  <text x="995" y="238" class="marker">Epcam · Cdh1 · Krt8 · Krt18 · Krt19</text>
+  <text x="995" y="267" class="marker">Krt20 · Vil1 · Muc2</text>
+
+  <!-- T/NK -->
+  <rect x="55" y="298" width="1490" height="105" fill="#eef7e4"/>
+  <rect x="55" y="298" width="245" height="315" fill="#78ad3e"/>
+  <text x="82" y="350" class="group" fill="#ffffff">Immune</text>
+  <text x="82" y="380" class="note" fill="#ffffff">면역 계통</text>
+  <text x="340" y="355" class="cell">T cell · NK cell</text>
+  <text x="745" y="355" class="range">약 15–25%</text>
+  <text x="995" y="340" class="marker">Cd3d · Cd3e · Trbc1/2 · Cd4 · Cd8a</text>
+  <text x="995" y="370" class="marker">Nkg7 · Klrd1 · Prf1</text>
+  <line x1="300" y1="403" x2="1545" y2="403" class="line"/>
+
+  <!-- myeloid -->
+  <rect x="300" y="403" width="1245" height="105" fill="#f4faed"/>
+  <text x="340" y="460" class="cell">Myeloid</text>
+  <text x="745" y="460" class="range">약 10–20%</text>
+  <text x="995" y="445" class="marker">Lyz2 · Csf1r · Adgre1 · Itgam</text>
+  <text x="995" y="475" class="marker">Fcgr3 · Ctss · Tyrobp</text>
+  <line x1="300" y1="508" x2="1545" y2="508" class="line"/>
+
+  <!-- B/plasma -->
+  <rect x="300" y="508" width="1245" height="105" fill="#eef7e4"/>
+  <text x="340" y="565" class="cell">B cell · Plasma cell</text>
+  <text x="745" y="565" class="range">약 5–15%</text>
+  <text x="995" y="550" class="marker">Cd79a · Ms4a1 · Cd19 · Cd74</text>
+  <text x="995" y="580" class="marker">Jchain · Mzb1 · Sdc1</text>
+
+  <!-- fibroblast -->
+  <rect x="55" y="613" width="1490" height="105" fill="#f3effb"/>
+  <rect x="55" y="613" width="245" height="210" fill="#8e79bd"/>
+  <text x="82" y="665" class="group" fill="#ffffff">Stromal</text>
+  <text x="82" y="695" class="note" fill="#ffffff">기질 계통</text>
+  <text x="340" y="670" class="cell">Fibroblast · CAF</text>
+  <text x="745" y="670" class="range">약 10–20%</text>
+  <text x="995" y="655" class="marker">Dcn · Lum · Col1a1 · Col1a2</text>
+  <text x="995" y="685" class="marker">Col3a1 · Pdgfra · Thy1</text>
+  <line x1="300" y1="718" x2="1545" y2="718" class="line"/>
+
+  <!-- muscle/pericyte -->
+  <rect x="300" y="718" width="1245" height="105" fill="#f8f5fc"/>
+  <text x="340" y="775" class="cell">Smooth muscle · Pericyte</text>
+  <text x="745" y="775" class="range">조직층에 따라 변동</text>
+  <text x="995" y="760" class="marker">Myh11 · Actg2 · Tagln · Cnn1</text>
+  <text x="995" y="790" class="marker">Rgs5 · Pdgfrb · Cspg4 · Mcam</text>
+
+  <!-- endothelial -->
+  <rect x="55" y="823" width="1490" height="90" fill="#e9f7f7"/>
+  <rect x="55" y="823" width="245" height="90" fill="#4ba6a5"/>
+  <text x="82" y="877" class="group" fill="#ffffff">Vascular</text>
+  <text x="340" y="877" class="cell">Endothelial cell</text>
+  <text x="745" y="877" class="range">약 3–8%</text>
+  <text x="995" y="877" class="marker">Pecam1 · Cdh5 · Kdr · Esam · Emcn · Flt1</text>
+
+  <!-- rare -->
+  <rect x="55" y="913" width="1490" height="72" fill="#f3f4f6"/>
+  <rect x="55" y="913" width="245" height="72" fill="#6b7280"/>
+  <text x="82" y="957" class="group" fill="#ffffff">Rare / optional</text>
+  <text x="340" y="946" class="cell">Enteric glia · neuron</text>
+  <text x="340" y="972" class="note">자동 분류에서 제외하고 실제 marker 확인 후 추가</text>
+  <text x="745" y="957" class="range">대개 매우 희귀</text>
+  <text x="995" y="946" class="marker">Glia: Sox10 · S100b · Plp1</text>
+  <text x="995" y="972" class="marker">Neuron: Tubb3 · Elavl4 · Snap25 · Syp</text>
+
+  <rect x="55" y="998" width="1490" height="30" rx="8" fill="#fff7da"/>
+  <text x="800" y="1020" text-anchor="middle" class="note">현재 데이터의 세포 비율은 UMAP 모양이 아니라 marker 조합과 cluster별 발현 결과로 최종 판정</text>
+</svg>
