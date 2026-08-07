@@ -30,6 +30,17 @@
       border-radius: 10px;
       box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
     }
+    .part-title {
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: #eef4ff;
+      border-left: 6px solid #0d6efd;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0d6efd;
+    }
   </style>
 </head>
 
@@ -48,6 +59,8 @@
   </p>
 
   <hr/>
+
+  <div class="part-title">Part 1. Theoretical Background</div>
 
   <!-- A -->
   <h3>A) 고임팩트 장 조직 atlas에서 사용하는 계층적 annotation</h3>
@@ -133,6 +146,8 @@
     </div>
   </div>
 
+  <div class="part-title">Part 2. Cell Type Annotation 단계별 확인</div>
+
   <!-- B -->
   <h3 class="mt-4">B) Step 5 결과에서 이어서 시작하기</h3>
 
@@ -142,12 +157,7 @@
     <code>JoinLayers()</code>는 실행하지 않습니다.
   </p>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>library(Seurat)
-library(dplyr)
-library(ggplot2)
-library(patchwork)
-
-# 저장된 cluster를 identity로 지정
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 저장된 cluster를 identity로 지정
 Idents(integrated_obj) <- "seurat_clusters"
 
 # marker 발현 분석은 RNA assay에서 수행
@@ -172,7 +182,7 @@ table(Idents(integrated_obj))
   <div class="alert alert-info mt-3" role="alert">
     <strong>실습 구성:</strong> C–F는 marker score와 계층적 annotation 원리를 단계별로 이해하기 위한 설명입니다.
     실제 최종 분석은 검출률·score margin·계통별 후보 제한과 전문가 검토가 모두 반영된
-    페이지 하단 K의 전체 R 스크립트를 사용합니다.
+    페이지 하단 I의 전체 R 스크립트를 사용합니다.
   </div>
 
   <p class="note">
@@ -358,6 +368,42 @@ DimPlot(
 )
 </code></pre>
 
+  <h4 class="mt-4">C-5) 최종 대분류를 Epithelial·Immune·Stromal·Other로 정리</h4>
+
+  <p class="note">
+    하단 통합 코드에서는 score margin과 core marker 검출을 함께 반영하여
+    <code>major_annotation</code>을 만든 뒤, 세부 component를 실습용 대분류로 다시 묶습니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>major_annotation$celltype_major &lt;- dplyr::case_when(
+  major_annotation$component_auto ==
+    "Epithelial" ~ "Epithelial",
+  major_annotation$component_auto ==
+    "Immune" ~ "Immune",
+  major_annotation$component_auto %in%
+    c(
+      "Fibroblast",
+      "Endothelial",
+      "Muscle_Pericyte"
+    ) ~ "Stromal",
+  major_annotation$component_auto ==
+    "ENS" ~ "Other",
+  TRUE ~ "Unresolved"
+)
+
+print(major_annotation)
+</code></pre>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_major_annotation_console.png"
+         alt="Console output of cluster-level major cell class annotation"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    Cluster별 자동 component와 최종 major cell class를 확인한 결과
+  </p>
+
   <!-- D -->
   <h3 class="mt-4">D) FindAllMarkers로 자동 annotation 검증</h3>
 
@@ -388,38 +434,23 @@ head(all_markers)
   <div class="card warn-box mb-3">
     <div class="card-body">
       <b>계산 시간:</b> marker 탐색도 세포 수와 cluster 수에 따라 시간이 걸릴 수 있습니다.
-      강의 전에 한 번 계산해 <code>all_markers.csv</code>로 저장하면,
-      실습에서는 아래처럼 바로 불러올 수 있습니다.
+      Console 출력이 계속 갱신되는 동안에는 중단하지 말고 완료될 때까지 기다립니다.
     </div>
   </div>
-
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code># 계산 결과 저장
-write.csv(
-  all_markers,
-  file = "all_markers.csv",
-  row.names = FALSE
-)
-
-# 저장된 결과를 사용할 때
-all_markers <- read.csv(
-  "all_markers.csv",
-  check.names = FALSE
-)
-</code></pre>
 
   <h4 class="mt-4">D-1) Cluster별 상위 marker 확인</h4>
 
   <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>top10_markers <- all_markers |>
-  group_by(cluster) |>
-  slice_max(
+  dplyr::group_by(cluster) |>
+  dplyr::slice_max(
     order_by = avg_log2FC,
     n = 10,
     with_ties = FALSE
   ) |>
-  ungroup()
+  dplyr::ungroup()
 
 top10_markers |>
-  select(
+  dplyr::select(
     cluster,
     gene,
     avg_log2FC,
@@ -542,6 +573,44 @@ DotPlot(
   ggtitle("Stromal and vascular markers")
 </code></pre>
 
+  <h4 class="mt-4">F-4) 중분류 annotation table 생성과 namespace 충돌 방지</h4>
+
+  <p class="note">
+    여러 패키지가 <code>select()</code>라는 같은 이름의 함수를 제공할 수 있습니다.
+    이때 <code>dplyr</code>가 아닌 다른 <code>select()</code>가 호출되면 data.frame에 적용할 메서드를
+    찾지 못했다는 오류가 발생할 수 있습니다.
+  </p>
+
+  <div class="text-center mt-3">
+    <img src="../../assets/images/scrna_step6_dplyr_select_error.png"
+         alt="R console error caused by a select function namespace conflict"
+         class="section-img">
+  </div>
+
+  <p class="text-center text-muted mt-2">
+    다른 패키지의 <code>select()</code>가 호출되면서 발생한 namespace 충돌 오류 예시
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>intermediate_annotation &lt;- major_annotation |&gt;
+  dplyr::select(
+    cluster,
+    component_auto,
+    celltype_major
+  ) |&gt;
+  dplyr::mutate(
+    celltype_intermediate = "Unresolved",
+    intermediate_top_score = NA_real_,
+    intermediate_margin = NA_real_
+  )
+
+head(intermediate_annotation)
+</code></pre>
+
+  <div class="alert alert-success mt-3" role="alert">
+    <strong>해결:</strong> <code>dplyr::select()</code>와 <code>dplyr::mutate()</code>처럼
+    package namespace를 명시하면 현재 로드 순서와 관계없이 원하는 함수를 확실하게 사용할 수 있습니다.
+  </div>
+
   <div class="card tip mb-3">
     <div class="card-body">
       <h6>중분류의 핵심</h6>
@@ -617,14 +686,31 @@ intermediate_annotation$celltype_intermediate[
 
 intermediate_annotation$celltype_intermediate[
   intermediate_annotation$cluster == "19"
-] &lt;- "Endothelial"</code></pre>
+] &lt;- "Endothelial"
+
+print(intermediate_annotation)
+</code></pre>
 
   <div class="text-center mt-3">
-    <img src="../../assets/images/scrna_step6_final_annotation.png?v=20260806-2"
+    <img src="../../assets/images/scrna_step6_final_annotation.png"
          alt="Final major and intermediate cell annotation"
          class="section-img">
   </div>
   <p class="text-center text-muted mt-2">대분류와 marker 검증을 거친 최종 중분류 결과</p>
+
+  <div class="card border-info mb-3">
+    <div class="card-header bg-info bg-opacity-10 fw-bold">이전 자동 결과와 달라진 이유</div>
+    <div class="card-body">
+      <p class="mb-0">
+        자동 score 결과를 그대로 사용하지 않고 top marker, canonical marker 조합, UMAP 위치와
+        sample 분포를 추가 검토했기 때문입니다. Cluster 5는 설명적 명칭인
+        <code>ANKRD1_positive_CAF</code>, cluster 11은 <code>ECM_CAF</code>, cluster 19는
+        <code>Endothelial</code>로 수정하는 것이 현재 결과와 일치합니다.
+        대분류에서는 fibroblast와 endothelial을 모두 <code>Stromal</code>로 묶고,
+        중분류에서 서로 구분하므로 두 패널의 표기가 다른 것은 정상입니다.
+      </p>
+    </div>
+  </div>
 
   <!-- H: marker expression -->
   <h3 class="mt-5">H) 각 세포형의 대표 marker 발현 확인</h3>
@@ -685,11 +771,13 @@ DotPlot(
     <code>ANKRD1_positive_CAF</code>라는 설명적 명칭을 사용합니다.
   </p>
 
+  <div class="part-title">Part 3. Hands-on Practice — 전체 Annotation 코드</div>
+
   <!-- I: full practical code -->
   <h3 class="mt-5">I) 실습용 전체 코드</h3>
   <p class="note">
     전체 R 스크립트에는 기존의 계층형 marker score 계산, 검출률과 score margin 기준,
-    희귀 neural/glial 검증, 5·11·19번 최종 보정, 대표 marker 시각화 및 저장 과정이
+    희귀 neural/glial 검증, 5·11·19번 최종 보정 및 대표 marker 시각화가
     한 번에 실행되도록 정리되어 있습니다.
   </p>
   <div class="card tip mb-3">
@@ -699,7 +787,7 @@ DotPlot(
         <li>Step 5에서 생성하거나 불러온 <code>integrated_obj</code>가 있는지 확인합니다.</li>
         <li>아래 전체 코드를 한 번에 복사하여 새로운 R script에서 실행합니다.</li>
         <li><code>major_annotation</code>과 <code>intermediate_annotation</code>을 확인합니다.</li>
-        <li>대표 marker plot을 검토한 뒤 annotation 객체를 저장합니다.</li>
+        <li>대표 marker plot을 검토한 뒤 Step 7에서 사용할 객체만 남깁니다.</li>
       </ol>
     </div>
   </div>
@@ -711,11 +799,6 @@ DotPlot(
 # 중분류까지만 수행
 # 시작 객체: integrated_obj
 # ============================================================
-
-library(Seurat)
-library(dplyr)
-library(ggplot2)
-library(patchwork)
 
 set.seed(1234)
 
@@ -1016,7 +1099,7 @@ major_annotation$component_auto &lt;- ifelse(
   "Unresolved"
 )
 
-major_annotation$celltype_major &lt;- case_when(
+major_annotation$celltype_major &lt;- dplyr::case_when(
   major_annotation$component_auto ==
     "Epithelial" ~ "Epithelial",
   major_annotation$component_auto ==
@@ -1206,12 +1289,12 @@ allowed_intermediate &lt;- list(
 # ============================================================
 
 intermediate_annotation &lt;- major_annotation |&gt;
-  select(
+  dplyr::select(
     cluster,
     component_auto,
     celltype_major
   ) |&gt;
-  mutate(
+  dplyr::mutate(
     celltype_intermediate = "Unresolved",
     intermediate_top_score = NA_real_,
     intermediate_margin = NA_real_
@@ -1560,33 +1643,11 @@ p_representative_dot
 
 
 # ============================================================
-# 11. 결과 저장
+# 11. 최종 annotation 결과 확인
 # ============================================================
 
-hierarchical_annotation &lt;- left_join(
-  major_annotation,
-  intermediate_annotation,
-  by = c(
-    "cluster",
-    "celltype_major"
-  )
-)
-
-write.csv(
-  hierarchical_annotation,
-  file = "hierarchical_annotation_result.csv",
-  row.names = FALSE
-)
-
-saveRDS(
-  integrated_obj,
-  file = "integrated_obj_annotated.rds",
-  compress = FALSE
-)
-
-file.exists(
-  "integrated_obj_annotated.rds"
-)
+table(integrated_obj$celltype_major)
+table(integrated_obj$celltype_intermediate)
 
 
 # ============================================================
@@ -1641,22 +1702,29 @@ DotPlot(
   assay = "RNA"
 ) + RotatedAxis()</code></pre>
 
-  <!-- K: save -->
-  <h3 class="mt-5">K) Annotation 결과 저장</h3>
+  <!-- K: cleanup -->
+  <h3 class="mt-5">K) Step 7을 위한 환경 정리</h3>
 
-  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>saveRDS(
-  integrated_obj,
-  file = "integrated_obj_annotated.rds",
-  compress = FALSE
+  <p class="note">
+    실습 문제를 완료한 뒤에는 annotation이 저장된 <code>integrated_obj</code>만 남기고
+    score matrix, marker table 및 plotting용 임시 객체를 제거합니다.
+  </p>
+
+  <pre><button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyCode(this)">Copy</button><code>rm(
+  list = setdiff(
+    ls(envir = .GlobalEnv),
+    "integrated_obj"
+  ),
+  envir = .GlobalEnv
 )
 
-write.csv(
-  hierarchical_annotation,
-  file = "hierarchical_annotation_result.csv",
-  row.names = FALSE
-)
+gc()
+ls(envir = .GlobalEnv)</code></pre>
 
-file.exists("integrated_obj_annotated.rds")</code></pre>
+  <div class="alert alert-warning mt-3" role="alert">
+    <strong>실행 시점:</strong> 이 코드는 위 실습 문제를 모두 마친 뒤 실행합니다.
+    Step 7에서는 annotation metadata가 포함된 <code>integrated_obj</code>를 그대로 이어서 사용합니다.
+  </div>
 
   <!-- Summary -->
   <section class="mt-4">
