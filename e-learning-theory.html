@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bioinformatics Theory - Kang's Bioinformatics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .category-nav .nav-link{border:2px solid #0d6efd;color:#0d6efd;font-weight:700;background:#fff;margin:.25rem;border-radius:.6rem}
+    .category-nav .nav-link.active{color:#fff;background:#0d6efd}
+    .theory-card{height:100%;border:0;border-top:4px solid #0d6efd;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+    .lesson-number{display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;border-radius:50%;color:#fff;background:#0d6efd;font-weight:700}
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar"><div class="container">
+    <a class="navbar-brand" href="index.html"><img src="assets/images/logo.png" alt="Dongsan Medical Center Logo"><span class="brand-text">Kang's Bioinformatics</span></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarNav"><ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link" href="index.html">Home</a></li><li class="nav-item"><a class="nav-link" href="about.html">About</a></li><li class="nav-item"><a class="nav-link" href="members.html">Members</a></li><li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li><li class="nav-item"><a class="nav-link active" href="e-learning.html">E-learning</a></li><li class="nav-item"><a class="nav-link" href="bioinformatics-analysis.html">Bioinformatics Analysis</a></li></ul></div>
+  </div></nav>
+  <main class="py-5"><div class="container">
+    <div class="text-center mb-4"><span class="badge text-bg-primary mb-2">THEORY</span><h1>Bioinformatics Theory</h1><p class="text-muted">Core concepts for understanding biological data and analysis results</p></div>
+    <ul class="nav nav-pills category-nav justify-content-center mb-5" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#genomics" type="button">Genomics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#transcriptomics" type="button">Transcriptomics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#public-data" type="button">Public Data</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#microbiomics" type="button">Microbiomics</button></li>
+    </ul>
+    <div class="tab-content">
+      <section class="tab-pane fade show active" id="genomics"><div class="row g-4"><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">1</span><h2 class="h5 mt-3">Genome Fundamentals</h2><p>DNA structure, genes, chromosomes, reference genomes, and human genome variation.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">2</span><h2 class="h5 mt-3">Sequencing Technologies</h2><p>Sanger, short-read, and long-read sequencing principles and data characteristics.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">3</span><h2 class="h5 mt-3">Variant Interpretation</h2><p>Germline and somatic variants, variant evidence, annotation, and clinical meaning.</p></div></article></div></div></section>
+      <section class="tab-pane fade" id="transcriptomics"><div class="row g-4"><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">1</span><h2 class="h5 mt-3">Gene Expression</h2><p>Transcription, RNA processing, expression measurement, and normalization concepts.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">2</span><h2 class="h5 mt-3">Bulk Transcriptomics</h2><p>Microarray and RNA-seq design, differential expression, and pathway analysis.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">3</span><h2 class="h5 mt-3">Single-cell &amp; Spatial</h2><p>Cellular heterogeneity, cell annotation, trajectories, and spatial context.</p></div></article></div></div></section>
+      <section class="tab-pane fade" id="public-data"><div class="row g-4"><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">1</span><h2 class="h5 mt-3">Repositories</h2><p>GEO, SRA, TCGA, and major sources of reusable biomedical datasets.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">2</span><h2 class="h5 mt-3">Study Selection</h2><p>Research questions, metadata, platforms, cohorts, and dataset suitability.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">3</span><h2 class="h5 mt-3">Reproducibility</h2><p>Bias, batch effects, validation, documentation, and responsible data reuse.</p></div></article></div></div></section>
+      <section class="tab-pane fade" id="microbiomics"><div class="row g-4"><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">1</span><h2 class="h5 mt-3">Microbial Communities</h2><p>Microbiota, microbiome, taxonomy, ecology, and host-microbe relationships.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">2</span><h2 class="h5 mt-3">Profiling Strategies</h2><p>16S amplicon and shotgun metagenomic sequencing principles and tradeoffs.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">3</span><h2 class="h5 mt-3">Diversity &amp; Interpretation</h2><p>Alpha/beta diversity, differential abundance, compositionality, and function.</p></div></article></div></div></section>
+    </div>
+    <div class="d-flex justify-content-between mt-5"><a class="btn btn-outline-secondary" href="e-learning.html">← E-learning</a><a class="btn btn-primary" href="e-learning-practice.html">Go to Hands-on →</a></div>
+  </div></main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body></html>
