@@ -43,6 +43,21 @@
             color: #333;
         }
 
+        @media (min-width: 576px) and (max-width: 900px) {
+            .navbar-brand .brand-text {
+                display: none;
+            }
+
+            .navbar-nav .nav-link {
+                font-size: 0.82rem;
+                white-space: nowrap;
+            }
+
+            .main-card {
+                margin: 10px;
+            }
+        }
+
         /* 메인 헤더 텍스트 수정 */
         header h1 {
             font-size: 3rem;
@@ -89,11 +104,11 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-sm navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.html">
                 <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
-                Kang's Bioinformatics
+                <span class="brand-text">Kang's Bioinformatics</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -104,8 +119,8 @@
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
                     <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
-                    <li class="nav-item"><a class="nav-link" href="Highlighted_Publications.html">Highlights</a></li>
                     <li class="nav-item"><a class="nav-link" href="e-learning.html">E-learning</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#bioinformatics-analysis">Bioinformatics Analysis</a></li>
                     <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
                 </ul>
             </div>
@@ -123,21 +138,21 @@
     <!-- Section 3: Main Image Cards -->
     <section id="main-images" class="py-5">
         <div class="container">
-            <div class="row">
-                <!-- Card 1: 연구클리닉 -->
-                <div class="col-md-4">
-                    <a href="https://www.dsmc.or.kr:49848/content/01dsmc/14_0103.php" target="_blank">
+            <div class="row justify-content-center">
+                <!-- Card 1: Publications -->
+                <div class="col-sm-4">
+                    <a href="publications.html">
                         <div class="card main-card">
-                            <img src="assets/images/research_clinic.jpg" class="card-img-top" alt="Research Clinic">
+                            <img src="assets/images/publications.png" class="card-img-top" alt="Publications">
                             <div class="card-body">
-                                <h5 class="card-title">연구클리닉</h5>
-                                <p class="card-text">Explore research clinics focusing on multi-disciplinary approaches to medical science.</p>
+                                <h5 class="card-title">Publications</h5>
+                                <p class="card-text">Explore peer-reviewed publications in genomics, transcriptomics, and biomedical research.</p>
                             </div>
                         </div>
                     </a>
                 </div>
                 <!-- Card 2: E-learning -->
-                <div class="col-md-4">
+                <div class="col-sm-4">
                     <a href="e-learning.html">
                         <div class="card main-card">
                             <img src="assets/images/e_learning.jpg" class="card-img-top" alt="E-learning">
@@ -149,23 +164,19 @@
                     </a>
                 </div>
                 <!-- Card 3: Bioinformatics Analysis -->
-                <div class="col-md-4">
-                    <div class="card main-card">
-                        <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
-                        <div class="card-body">
-                            <h5 class="card-title">Bioinformatics Analysis</h5>
-                            <p class="card-text">Leverage cutting-edge bioinformatics tools for genomics and transcriptomics analysis.</p>
+                <div class="col-sm-4">
+                    <a href="index.html#bioinformatics-analysis" id="bioinformatics-analysis">
+                        <div class="card main-card">
+                            <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
+                            <div class="card-body">
+                                <h5 class="card-title">Bioinformatics Analysis</h5>
+                                <p class="card-text">Leverage cutting-edge bioinformatics tools for genomics and transcriptomics analysis.</p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Link Section -->
-    <section class="link-section">
-        <a href="https://www.youtube.com/@%EA%B3%84%EB%AA%85%EB%8C%80%ED%95%99%EA%B5%90%EB%8F%99%EC%82%B0%EC%9D%98-m5r" target="_blank">연구처 유튜브</a>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeQXVT9fJPkncWknhuIcm8KJBNkTg3ZpzNygZMpPmgwwtZTVQ/viewform" target="_blank">연구클리닉 신청</a>
     </section>
 
     <!-- Footer Section -->
