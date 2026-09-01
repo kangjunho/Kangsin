@@ -44,15 +44,6 @@
         }
 
         @media (min-width: 576px) and (max-width: 900px) {
-            .navbar-brand .brand-text {
-                display: none;
-            }
-
-            .navbar-nav .nav-link {
-                font-size: 0.82rem;
-                white-space: nowrap;
-            }
-
             .main-card {
                 margin: 10px;
             }
@@ -104,23 +95,23 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-sm navbar-light bg-light">
+    <nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar">
         <div class="container">
             <a class="navbar-brand" href="index.html">
                 <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
                 <span class="brand-text">Kang's Bioinformatics</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
                     <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
                     <li class="nav-item"><a class="nav-link" href="e-learning.html">E-learning</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.html#bioinformatics-analysis">Bioinformatics Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bioinformatics-analysis.html">Bioinformatics Analysis</a></li>
                 </ul>
             </div>
         </div>
@@ -163,7 +154,7 @@
                 </div>
                 <!-- Card 3: Bioinformatics Analysis -->
                 <div class="col-sm-4">
-                    <a href="index.html#bioinformatics-analysis" id="bioinformatics-analysis">
+                    <a href="bioinformatics-analysis.html">
                         <div class="card main-card">
                             <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
                             <div class="card-body">
@@ -181,5 +172,6 @@
     <footer>
         &copy; 2024 Kang's Bioinformatics Lab. All rights reserved.
     </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
