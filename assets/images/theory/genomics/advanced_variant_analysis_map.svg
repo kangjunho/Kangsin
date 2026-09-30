@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Advanced analysis after variant calling</title>
+  <desc id="desc">Filtered variant calls are normalized, annotated and analyzed differently for germline, somatic, copy-number and mitochondrial questions before cohort integration and reporting.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#347bb7"/></marker></defs>
+  <rect width="1200" height="760" rx="28" fill="#f6faff"/>
+  <text x="600" y="50" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">From Filtered Calls to Biological Interpretation</text>
+  <text x="600" y="80" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">Advanced analysis begins after technical validity has been established</text>
+  <g font-family="Arial">
+    <rect x="410" y="110" width="380" height="66" rx="15" fill="#173f68"/><text x="600" y="139" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">PASS calls + supporting QC</text><text x="600" y="161" text-anchor="middle" font-size="13" fill="#cfe3f7">VCF · segments · BAM evidence · sample metadata</text>
+    <line x1="600" y1="176" x2="600" y2="212" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <rect x="260" y="222" width="680" height="82" rx="16" fill="#fff" stroke="#6aa6dc" stroke-width="3"/>
+    <text x="600" y="253" text-anchor="middle" font-size="20" font-weight="700" fill="#0756a5">Normalize · harmonize · annotate</text>
+    <text x="600" y="280" text-anchor="middle" font-size="14" fill="#526b83">left-align/split multiallelic · build/transcript · gene consequence · population frequency · disease/cancer databases</text>
+    <line x1="600" y1="304" x2="600" y2="338" stroke="#347bb7" stroke-width="4"/>
+    <line x1="165" y1="338" x2="1035" y2="338" stroke="#347bb7" stroke-width="4"/>
+    <line x1="165" y1="338" x2="165" y2="370" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/><line x1="455" y1="338" x2="455" y2="370" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/><line x1="745" y1="338" x2="745" y2="370" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/><line x1="1035" y1="338" x2="1035" y2="370" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="35" y="380" width="260" height="215" rx="17" fill="#e8f3ff" stroke="#6aa6dc" stroke-width="2"/>
+    <text x="165" y="416" text-anchor="middle" font-size="21" font-weight="700" fill="#0756a5">Germline</text>
+    <text x="65" y="452" font-size="14" fill="#173f68">• Population allele frequency</text><text x="65" y="482" font-size="14" fill="#173f68">• Inheritance / segregation</text><text x="65" y="512" font-size="14" fill="#173f68">• Phenotype and gene validity</text><text x="65" y="542" font-size="14" fill="#173f68">• ACMG/AMP evidence</text><text x="65" y="572" font-size="14" fill="#173f68">• Pathogenic ↔ benign classes</text>
+
+    <rect x="325" y="380" width="260" height="215" rx="17" fill="#f1ebfb" stroke="#9574c5" stroke-width="2"/>
+    <text x="455" y="416" text-anchor="middle" font-size="21" font-weight="700" fill="#684889">Somatic</text>
+    <text x="355" y="452" font-size="14" fill="#173f68">• Driver / actionability evidence</text><text x="355" y="482" font-size="14" fill="#173f68">• TMB and MSI</text><text x="355" y="512" font-size="14" fill="#173f68">• Mutational signatures</text><text x="355" y="542" font-size="14" fill="#173f68">• Purity-adjusted clonality</text><text x="355" y="572" font-size="14" fill="#173f68">• Longitudinal tumor evolution</text>
+
+    <rect x="615" y="380" width="260" height="215" rx="17" fill="#e9f8f3" stroke="#46ad8d" stroke-width="2"/>
+    <text x="745" y="416" text-anchor="middle" font-size="21" font-weight="700" fill="#24745f">Copy number</text>
+    <text x="645" y="452" font-size="14" fill="#173f68">• Purity and ploidy</text><text x="645" y="482" font-size="14" fill="#173f68">• Absolute copy number</text><text x="645" y="512" font-size="14" fill="#173f68">• Focal vs arm-level events</text><text x="645" y="542" font-size="14" fill="#173f68">• LOH / copy-neutral LOH</text><text x="645" y="572" font-size="14" fill="#173f68">• Recurrent cohort peaks</text>
+
+    <rect x="905" y="380" width="260" height="215" rx="17" fill="#fff5df" stroke="#e3b341" stroke-width="2"/>
+    <text x="1035" y="416" text-anchor="middle" font-size="21" font-weight="700" fill="#8d5d08">Mitochondrial</text>
+    <text x="935" y="452" font-size="14" fill="#173f68">• Heteroplasmy distribution</text><text x="935" y="482" font-size="14" fill="#173f68">• Tissue / time comparison</text><text x="935" y="512" font-size="14" fill="#173f68">• Haplogroup and lineage</text><text x="935" y="542" font-size="14" fill="#173f68">• mtDNA copy number</text><text x="935" y="572" font-size="14" fill="#173f68">• NUMT / contamination review</text>
+
+    <line x1="165" y1="595" x2="165" y2="630" stroke="#347bb7" stroke-width="3"/><line x1="455" y1="595" x2="455" y2="630" stroke="#347bb7" stroke-width="3"/><line x1="745" y1="595" x2="745" y2="630" stroke="#347bb7" stroke-width="3"/><line x1="1035" y1="595" x2="1035" y2="630" stroke="#347bb7" stroke-width="3"/><line x1="165" y1="630" x2="1035" y2="630" stroke="#347bb7" stroke-width="3"/><line x1="600" y1="630" x2="600" y2="652" stroke="#347bb7" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="220" y="660" width="760" height="62" rx="15" fill="#173f68"/><text x="600" y="687" text-anchor="middle" font-size="19" font-weight="700" fill="#fff">Integrated interpretation and reporting</text><text x="600" y="710" text-anchor="middle" font-size="13" fill="#cfe3f7">cohort recurrence · pathway · phenotype · outcome · multi-omics · IGV/orthogonal validation · reproducible report</text>
+  </g>
+</svg>

@@ -1,17 +1,356 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>03. Genomic Variant Analysis</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="../../assets/css/theory-course.css"></head><body>
-<nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar"><div class="container"><a class="navbar-brand" href="../../index.html"><img src="../../assets/images/logo.png" alt="Dongsan Medical Center Logo"><span class="brand-text">Kang's Bioinformatics</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="navbarNav"><ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li><li class="nav-item"><a class="nav-link" href="../../about.html">About</a></li><li class="nav-item"><a class="nav-link" href="../../members.html">Members</a></li><li class="nav-item"><a class="nav-link" href="../../publications.html">Publications</a></li><li class="nav-item"><a class="nav-link active" href="../../e-learning.html">E-learning</a></li><li class="nav-item"><a class="nav-link" href="../../bioinformatics-analysis.html">Bioinformatics Analysis</a></li></ul></div></div></nav>
-<header class="course-hero text-center"><div class="container"><span class="badge text-bg-primary mb-2">GENOMICS · CHAPTER 03</span><h1>Genomic Variant Analysis</h1><p class="lead mb-0">Raw sequencing read에서 신뢰할 수 있는 variant를 찾는 과정</p></div></header>
-<main class="py-5"><div class="container"><div class="course-layout"><aside><nav class="course-sidebar"><a class="active" href="#objectives">Learning Objectives</a><a href="#workflow">1. Workflow</a><a href="#qc">2. Raw Data QC</a><a href="#alignment">3. Alignment</a><a href="#bam">4. BAM Processing</a><a href="#calling">5. Variant Calling</a><a href="#types">6. Variant Types</a><a href="#filtering">7. Filtering</a><a href="#annotation">8. Annotation</a><a href="#tools">9. Tools</a><a href="#summary">Summary &amp; Check</a></nav></aside><div>
-<section class="chapter-section" id="objectives"><h2>Learning Objectives</h2><div class="learning-objectives"><ul class="mb-0"><li>FASTQ에서 annotated VCF까지의 분석 흐름을 설명할 수 있다.</li><li>Germline과 somatic variant calling의 설계 차이를 이해한다.</li><li>주요 variant type과 filtering 지표를 구분할 수 있다.</li><li>Variant annotation이 제공하는 정보와 한계를 설명할 수 있다.</li></ul></div></section>
-<section class="chapter-section" id="workflow"><h2>1. Overview of the Workflow</h2><div class="process-flow"><span>FASTQ</span><b>→</b><span>QC</span><b>→</b><span>Alignment</span><b>→</b><span>BAM/CRAM</span><b>→</b><span>Variant Calling</span><b>→</b><span>VCF</span><b>→</b><span>Filtering</span><b>→</b><span>Annotation</span></div><p>각 단계는 독립적이지 않습니다. 예를 들어 낮은 base quality와 잘못된 alignment는 variant caller의 false positive로 이어질 수 있습니다. 따라서 최종 VCF만 확인하는 것이 아니라 upstream QC를 함께 검토해야 합니다.</p></section>
-<section class="chapter-section" id="qc"><h2>2. Raw Data Quality Control</h2><div class="concept-grid"><div class="concept-card"><strong>Per-base quality</strong>Read 위치별 Phred score 분포를 확인합니다.</div><div class="concept-card"><strong>GC content</strong>예상 분포와 과도한 편향 여부를 확인합니다.</div><div class="concept-card"><strong>Adapter content</strong>Library adapter가 read에 남아 있는지 확인합니다.</div></div><h3>QC의 목적</h3><p>QC는 좋은 sample과 나쁜 sample을 단순히 구분하는 과정이 아니라, 이후 분석에 영향을 줄 수 있는 기술적 특성을 파악하는 과정입니다. Trimming은 필요할 때만 적용하며, 무조건적인 trimming은 유용한 정보를 제거할 수 있습니다.</p></section>
-<section class="chapter-section" id="alignment"><h2>3. Read Alignment</h2><p>Alignment는 sequencing read를 reference genome의 가장 적절한 위치에 배치하는 과정입니다.</p><div class="table-responsive"><table class="table table-bordered"><thead class="table-light"><tr><th>개념</th><th>의미</th></tr></thead><tbody><tr><td>Mapped read</td><td>Reference의 특정 위치에 정렬된 read</td></tr><tr><td>Unmapped read</td><td>충분히 신뢰할 수 있는 위치를 찾지 못한 read</td></tr><tr><td>Multi-mapped read</td><td>반복서열 등으로 여러 위치에 정렬 가능한 read</td></tr><tr><td>Mapping quality</td><td>선택된 정렬 위치가 맞을 가능성에 대한 신뢰도</td></tr><tr><td>CIGAR string</td><td>Match, insertion, deletion 등 read-reference 관계</td></tr></tbody></table></div><div class="caution-box"><strong>주의:</strong> Reference genome의 build와 contig 이름이 downstream annotation resource와 일치해야 합니다.</div></section>
-<section class="chapter-section" id="bam"><h2>4. BAM Processing</h2><div class="process-flow"><span>Sort</span><b>→</b><span>Index</span><b>→</b><span>Duplicate marking</span><b>→</b><span>Recalibration</span><b>→</b><span>BAM QC</span></div><ul><li><strong>Sorting:</strong> Alignment를 genomic coordinate 순으로 정렬합니다.</li><li><strong>Indexing:</strong> 특정 영역을 빠르게 조회할 수 있게 합니다.</li><li><strong>Duplicate marking:</strong> PCR·optical duplicate 후보를 표시합니다.</li><li><strong>BQSR:</strong> 알려진 변이와 기술적 요인을 이용해 base quality를 보정합니다.</li></ul><p>사용하는 pipeline과 sequencing platform에 따라 일부 과정은 통합되거나 생략될 수 있습니다.</p></section>
-<section class="chapter-section" id="calling"><h2>5. Variant Calling</h2><div class="table-responsive"><table class="table table-hover"><thead><tr><th>분석</th><th>목적</th><th>주요 설계</th></tr></thead><tbody><tr><td>Germline calling</td><td>개인이 선천적으로 보유한 variant 탐색</td><td>Haplotype 기반 calling, joint genotyping 가능</td></tr><tr><td>Somatic calling</td><td>종양 또는 특정 세포집단에서 후천적으로 발생한 variant 탐색</td><td>Tumor-normal paired 또는 tumor-only</td></tr></tbody></table></div><h3>Tumor-normal paired analysis</h3><p>Tumor와 matched normal을 비교하면 germline variant와 개인 특이적 sequencing artifact를 효과적으로 구분할 수 있습니다. Tumor-only 분석에서는 panel of normals와 population database 의존도가 높아집니다.</p><div class="key-point"><strong>Key point:</strong> 말초혈액 genomic DNA 자체를 분석하는 연구라면 일반적으로 germline variant 분석으로 기술해야 합니다. 종양 또는 clonal population과 비교하지 않고 somatic variant라고 부르면 분석 목적과 맞지 않을 수 있습니다.</div></section>
-<section class="chapter-section" id="types"><h2>6. Variant Types</h2><div class="concept-grid"><div class="concept-card"><strong>SNV</strong>한 개 염기의 치환입니다.</div><div class="concept-card"><strong>Indel</strong>짧은 염기서열의 삽입 또는 결실입니다.</div><div class="concept-card"><strong>CNV</strong>유전체 구간의 copy number 증감입니다.</div><div class="concept-card"><strong>SV</strong>큰 결실, 중복, 역위 또는 전좌입니다.</div><div class="concept-card"><strong>Gene fusion</strong>두 유전자 또는 유전체 영역의 비정상 결합입니다.</div><div class="concept-card"><strong>Mitochondrial variant</strong>미토콘드리아 유전체의 변이와 heteroplasmy입니다.</div></div><p class="mt-3">Variant type마다 적절한 caller와 검증 전략이 다르며, 하나의 SNV caller로 모든 변이를 검출할 수 없습니다.</p></section>
-<section class="chapter-section" id="filtering"><h2>7. Variant Filtering</h2><div class="table-responsive"><table class="table table-bordered"><thead class="table-light"><tr><th>Metric</th><th>확인하는 내용</th></tr></thead><tbody><tr><td>DP / depth</td><td>해당 위치를 지지하는 전체 read 수</td></tr><tr><td>AD</td><td>Reference 및 alternative allele을 지지하는 read 수</td></tr><tr><td>VAF</td><td>Alternative allele read의 비율</td></tr><tr><td>Base quality</td><td>Variant base 판독의 신뢰도</td></tr><tr><td>Mapping quality</td><td>Variant-supporting read 정렬 위치의 신뢰도</td></tr><tr><td>Strand bias</td><td>Variant evidence가 한 방향 read에 편중되는지 여부</td></tr></tbody></table></div><div class="caution-box"><strong>주의:</strong> 모든 연구에 적용되는 하나의 절대 cutoff는 없습니다. Platform, depth, 시료 순도, variant type과 분석 목적에 따라 기준을 정해야 합니다.</div></section>
-<section class="chapter-section" id="annotation"><h2>8. Variant Annotation</h2><p>Annotation은 variant에 유전자, transcript, 단백질 변화, 인구집단 빈도, 질환 및 기능 예측 정보를 연결합니다.</p><div class="process-flow"><span>Genomic coordinate</span><b>→</b><span>Gene / transcript</span><b>→</b><span>Protein consequence</span><b>→</b><span>Population frequency</span><b>→</b><span>Disease evidence</span></div><div class="caution-box"><strong>Transcript 주의:</strong> 동일한 genomic variant도 선택한 transcript에 따라 coding consequence가 달라질 수 있습니다. Genome build와 transcript version을 함께 기록해야 합니다.</div></section>
-<section class="chapter-section" id="tools"><h2>9. Common Tools</h2><div class="table-responsive"><table class="table table-hover"><thead><tr><th>단계</th><th>대표 도구</th></tr></thead><tbody><tr><td>QC</td><td>FastQC, MultiQC</td></tr><tr><td>Alignment</td><td>BWA-MEM2, DRAGEN, minimap2</td></tr><tr><td>BAM processing</td><td>SAMtools, Picard, GATK</td></tr><tr><td>Germline calling</td><td>GATK HaplotypeCaller, DRAGEN</td></tr><tr><td>Somatic calling</td><td>Mutect2, DRAGEN</td></tr><tr><td>Annotation</td><td>VEP, ANNOVAR, Funcotator</td></tr><tr><td>Review</td><td>IGV</td></tr></tbody></table></div><p>도구 이름보다 중요한 것은 각 단계가 해결하는 문제와 입력·출력 데이터의 의미를 이해하는 것입니다.</p></section>
-<section class="chapter-section" id="summary"><h2>Key Takeaways</h2><ul><li>Variant quality는 sequencing부터 annotation까지 모든 단계의 영향을 받습니다.</li><li>Germline과 somatic 분석은 생물학적 질문과 비교 설계가 다릅니다.</li><li>Variant type별로 다른 검출 알고리즘이 필요합니다.</li><li>Filtering 기준은 연구 목적과 데이터 특성에 맞게 설정해야 합니다.</li></ul><h3>Check Your Understanding</h3><ol><li>Matched normal이 somatic calling에 도움이 되는 이유는 무엇인가요?</li><li>Depth와 VAF는 각각 무엇을 의미하나요?</li><li>Annotation 결과가 transcript마다 달라질 수 있는 이유는 무엇인가요?</li></ol></section>
-<nav class="chapter-pagination"><a class="btn btn-outline-secondary" href="02_sequencing.html">← Chapter 02</a><a class="btn btn-primary" href="04_variant_interpretation.html">Next: Interpretation →</a></nav>
-</div></div></div></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03. Genomic Variant Analysis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/theory-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar">
+    <div class="container">
+      <a class="navbar-brand" href="../../index.html">
+        <img src="../../assets/images/logo.png" alt="Dongsan Medical Center Logo">
+        <span class="brand-text">Kang's Bioinformatics</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../members.html">Members</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../publications.html">Publications</a></li>
+          <li class="nav-item"><a class="nav-link active" href="../../e-learning.html">E-learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../bioinformatics-analysis.html">Bioinformatics Analysis</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="course-hero text-center">
+    <div class="container">
+      <span class="badge text-bg-primary mb-2">GENOMICS · CHAPTER 03</span>
+      <h1>Genomic Variant Analysis</h1>
+      <p class="lead mb-0">GATK4 전처리에서 목적별 variant calling과 고급 분석까지</p>
+    </div>
+  </header>
+
+  <main class="py-5">
+    <div class="container">
+      <div class="course-layout">
+        <aside>
+          <nav class="course-sidebar" aria-label="Chapter navigation">
+            <a class="active" href="#objectives">Learning Objectives</a>
+            <a href="#overview">Analysis Overview</a>
+            <a href="#preprocessing">Part I. Preprocessing</a>
+            <a href="#pre-qc">Preprocessing QC</a>
+            <a href="#calling">Part II. Variant Calling</a>
+            <a href="#germline">Germline</a>
+            <a href="#somatic">Somatic</a>
+            <a href="#cnv">Copy Number</a>
+            <a href="#mitochondrial">Mitochondrial</a>
+            <a href="#advanced">Part III. Advanced Analysis</a>
+            <a href="#references">References</a>
+            <a href="#summary">Summary &amp; Check</a>
+          </nav>
+        </aside>
+
+        <div>
+          <section class="chapter-section" id="objectives">
+            <h2>Learning Objectives</h2>
+            <div class="learning-objectives">
+              <ul class="mb-0">
+                <li>GATK4 Best Practices의 전처리 순서와 각 단계가 해결하는 기술적 문제를 설명할 수 있다.</li>
+                <li>Read group, duplicate marking, BQSR와 analysis-ready BAM/CRAM의 의미를 이해한다.</li>
+                <li>Germline, somatic, copy-number, mitochondrial calling의 입력자료·대조군·출력을 구분할 수 있다.</li>
+                <li>GVCF와 VCF, joint genotyping과 tumor–normal calling의 차이를 설명할 수 있다.</li>
+                <li>Variant annotation, prioritization, mutational signature, TMB/MSI, clonality, LOH와 heteroplasmy의 역할을 이해한다.</li>
+                <li>최종 callset만 보지 않고 upstream QC와 read-level evidence를 함께 평가할 수 있다.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="chapter-section" id="overview">
+            <h2>Analysis Overview</h2>
+            <p>Variant analysis는 FASTQ에서 VCF를 만드는 단일 명령이 아닙니다. 첫째, read를 정확한 reference에 배치하고 기술적 오류를 통제한 analysis-ready BAM/CRAM을 만듭니다. 둘째, 변이의 생물학적 기원에 맞는 caller와 대조군을 선택합니다. 셋째, 후보 변이를 정규화·주석화하고 sample·cohort·질환 맥락에서 해석합니다.</p>
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/variant_analysis_three_parts.svg" alt="데이터 전처리, 네 종류의 variant calling, advanced analysis로 구성된 유전체 변이 분석의 전체 구조">
+              <figcaption>Figure 1. Chapter 03의 전체 구조. Reference build, sample identity, QC와 software/resource version은 세 부분 전체를 연결하는 공통 관리 항목입니다.</figcaption>
+            </figure>
+            <div class="key-point"><strong>핵심 원칙:</strong> Variant caller가 출력한 record는 “후보”입니다. 분석 설계, 정렬 품질, 통계적 필터, 데이터베이스 근거와 원본 read 검토를 통과해야 신뢰할 수 있는 결과가 됩니다.</div>
+          </section>
+
+          <section class="chapter-section" id="preprocessing">
+            <div class="part-heading"><span class="part-number">I</span><h2>Data Preprocessing: GATK4 Best Practices</h2></div>
+            <p>GATK4 전처리의 목적은 read의 정렬 위치, sample/library 정보, 중복 여부와 base quality를 caller가 일관되게 사용할 수 있는 상태로 만드는 것입니다. 아래 순서는 Illumina short-read DNA sequencing을 기준으로 한 개념적 흐름이며, DRAGEN 같은 통합 pipeline에서는 여러 단계가 한 번에 수행될 수 있습니다.</p>
+
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/gatk4_preprocessing_workflow.svg" alt="Reference 준비, FASTQ QC, BWA-MEM2 정렬, sample별 merge와 coordinate sort, duplicate marking, BQSR, 최종 QC로 이어지는 GATK4 전처리 과정">
+              <figcaption>Figure 2. GATK4-style short-read preprocessing. 구현 방식이 달라도 reference 일치, read group, duplicate flag, BQSR와 QC의 의미는 유지됩니다.</figcaption>
+            </figure>
+
+            <h3>1. Reference bundle과 분석 범위를 먼저 고정한다</h3>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>자료</th><th>역할</th><th>확인사항</th></tr></thead>
+                <tbody>
+                  <tr><td><code>reference.fa</code></td><td>Read alignment와 REF allele의 기준</td><td>GRCh37/GRCh38 등 build와 primary/ALT/decoy 구성</td></tr>
+                  <tr><td><code>.fai</code> / <code>.dict</code></td><td>Reference의 빠른 접근과 contig 순서·길이 제공</td><td>FASTA와 함께 생성된 동일 bundle인지 확인</td></tr>
+                  <tr><td>Known-sites VCF</td><td>BQSR에서 실제 polymorphism을 sequencing error로 학습하지 않도록 masking</td><td>Reference build와 contig 이름 일치</td></tr>
+                  <tr><td>Target interval</td><td>WES/panel capture 영역과 calling 범위 정의</td><td>Padding 포함 여부와 BED/interval_list 좌표체계</td></tr>
+                  <tr><td>Population/PON resources</td><td>Somatic germline prior, artifact 제거, CNV denoising</td><td>분석 assay·build·population에 적절한지 확인</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="caution-box"><strong>Build mismatch는 치명적입니다.</strong> FASTA, BAM, known-sites, interval, population database와 annotation이 서로 다른 build이거나 <code>chr1</code>/<code>1</code> 표기가 다르면 오류가 나거나 더 위험하게는 잘못된 위치에 주석이 붙을 수 있습니다.</div>
+
+            <h3>2. FASTQ QC와 trimming 여부를 결정한다</h3>
+            <p>FastQC/MultiQC로 per-base quality, adapter, read length, N content, duplication과 GC 분포를 확인합니다. Trimming은 adapter가 실제로 남았거나 낮은 품질 말단이 downstream 분석을 방해할 때 수행합니다. 단순히 Warning이 있다는 이유로 일률적으로 자르면 짧아진 read 때문에 오히려 mapping uniqueness가 떨어질 수 있습니다.</p>
+
+            <h3>3. Read group을 포함하여 reference에 정렬한다</h3>
+            <p>BWA-MEM2 같은 aligner로 read를 reference에 배치합니다. 이때 <code>@RG</code> 정보는 sample, library, platform unit과 sequencing platform을 구분하며 BQSR과 sample별 분석에 사용됩니다.</p>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light"><tr><th>Read-group tag</th><th>의미</th><th>예시</th></tr></thead>
+                <tbody>
+                  <tr><td><code>SM</code></td><td>Biological sample 이름</td><td><code>Patient01_Tumor</code></td></tr>
+                  <tr><td><code>LB</code></td><td>Library</td><td><code>Patient01_T_Lib1</code></td></tr>
+                  <tr><td><code>PU</code></td><td>Platform unit; 보통 flow cell/lane/barcode 조합</td><td><code>FC001.2.ATCACG</code></td></tr>
+                  <tr><td><code>PL</code></td><td>Platform</td><td><code>ILLUMINA</code></td></tr>
+                  <tr><td><code>ID</code></td><td>Read group의 고유 ID</td><td><code>FC001.2</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Lane별 read group을 유지한 채 정렬한 뒤 동일 sample의 자료를 병합하고 genomic coordinate 순으로 정렬합니다. 서로 다른 biological sample을 하나의 BAM으로 단순 병합하면 안 됩니다.</p>
+
+            <h3>4. Duplicate를 표시한다</h3>
+            <p>PCR 또는 optical duplicate는 동일한 원래 분자를 여러 번 관측한 것처럼 보여 depth와 VAF를 부풀릴 수 있습니다. <code>MarkDuplicates</code> 또는 <code>MarkDuplicatesSpark</code>는 동일한 시작·끝 위치 등의 정보를 이용해 duplicate 후보에 flag를 부여합니다. 일반적인 short-variant workflow에서는 read를 물리적으로 삭제하기보다 <strong>표시</strong>하여 caller가 제외하거나 적절히 처리하게 합니다.</p>
+            <div class="key-point"><strong>Duplicate rate 해석:</strong> 높은 duplicate rate는 sequencing 자체가 나쁘다는 뜻만은 아닙니다. 낮은 library complexity, 과도한 PCR, capture/amplicon 설계 또는 이미 충분히 깊게 읽은 library를 반영할 수 있습니다. UMI가 있는 assay는 coordinate-only duplicate와 다른 molecule-level 처리가 필요합니다.</div>
+
+            <h3>5. BQSR: Base Quality Score Recalibration</h3>
+            <p><code>BaseRecalibrator</code>는 reported quality, machine cycle, sequence context와 read group에 따른 실제 mismatch 패턴을 학습합니다. Known-sites는 진짜 변이가 오류로 학습되는 것을 줄이는 데 사용합니다. 이어 <code>ApplyBQSR</code>가 모델을 BAM/CRAM의 base quality에 적용합니다.</p>
+            <div class="term-pair">
+              <div><strong>BQSR가 하는 일</strong><br>각 base observation의 오류확률이 경험적 데이터와 더 잘 맞도록 quality score를 조정합니다.</div>
+              <div><strong>BQSR가 하지 않는 일</strong><br>염기서열 자체를 수정하거나 variant를 확정하지 않습니다. BQSR는 variant filtering인 VQSR와도 다른 과정입니다.</div>
+            </div>
+            <div class="caution-box"><strong>Known-sites가 부족한 종:</strong> 신뢰할 수 있는 known polymorphism resource가 없다면 bootstrapping 또는 다른 전략이 필요합니다. 인간 GRCh38 workflow의 명령을 다른 종에 그대로 복사하면 안 됩니다.</div>
+          </section>
+
+          <section class="chapter-section" id="pre-qc">
+            <h2>Preprocessing QC: Calling 전에 멈춰 확인할 것</h2>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>QC 영역</th><th>대표 지표</th><th>문제가 있을 때 의심할 원인</th></tr></thead>
+                <tbody>
+                  <tr><td>Sample identity</td><td>Fingerprint concordance, sex concordance, contamination</td><td>Sample swap, cross-contamination, tumor/normal pairing 오류</td></tr>
+                  <tr><td>Alignment</td><td>Mapping rate, MAPQ, secondary/supplementary alignment</td><td>잘못된 reference, 오염, 반복서열, read 품질</td></tr>
+                  <tr><td>Paired-end</td><td>Proper-pair rate, insert-size distribution</td><td>Library size selection, chimeric fragment, orientation 오류</td></tr>
+                  <tr><td>Library</td><td>Duplicate rate, estimated library size</td><td>낮은 투입량, 과도한 PCR, over-sequencing</td></tr>
+                  <tr><td>Coverage</td><td>Mean depth, ≥10×/20×/30× breadth, target dropout</td><td>Capture 실패, GC bias, 불충분한 output</td></tr>
+                  <tr><td>BQSR</td><td>Cycle/context별 empirical vs reported quality</td><td>Read-group 누락, 부적절한 known-sites, run-specific error</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>이 기준을 통과한 coordinate-sorted, duplicate-marked, BQSR-applied BAM/CRAM과 index를 <strong>analysis-ready</strong> 자료로 사용합니다. 다만 “analysis-ready”는 모든 variant가 정확하다는 의미가 아니라, caller가 요구하는 기술적 전처리가 완료되었다는 뜻입니다.</p>
+          </section>
+
+          <section class="chapter-section" id="calling">
+            <div class="part-heading"><span class="part-number">II</span><h2>Variant Calling</h2></div>
+            <p>Germline, somatic, copy number와 mitochondrial variant는 생성되는 생물학적 과정과 관측되는 신호가 다릅니다. 따라서 같은 VCF를 만든 뒤 이름만 바꾸는 것이 아니라 입력자료, 대조군, statistical model과 필터링을 처음부터 다르게 설계해야 합니다.</p>
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/variant_calling_four_branches.svg" alt="Analysis-ready BAM에서 germline, somatic, copy number, mitochondrial 변이를 각각 다른 GATK4 workflow로 검출하는 네 갈래 과정">
+              <figcaption>Figure 3. 네 종류의 variant calling workflow. CNV는 segment table, mitochondrial 분석은 heteroplasmy 정보처럼 short-variant VCF와 다른 결과 구조를 가질 수 있습니다.</figcaption>
+            </figure>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>분석</th><th>핵심 질문</th><th>이상적인 입력/대조군</th><th>대표 출력</th></tr></thead>
+                <tbody>
+                  <tr><td>Germline</td><td>개인이 선천적으로 가진 genotype은 무엇인가?</td><td>Normal DNA; cohort 또는 family</td><td>Joint-genotyped VCF</td></tr>
+                  <tr><td>Somatic</td><td>Tumor/clone에서 후천적으로 생긴 변이는 무엇인가?</td><td>Tumor + matched normal, PoN, germline resource</td><td>Filtered somatic VCF</td></tr>
+                  <tr><td>Copy number</td><td>어느 구간이 gain/loss/LOH 되었는가?</td><td>Read counts + allelic counts; normal PoN 또는 matched normal</td><td>Segment/call tables, plots</td></tr>
+                  <tr><td>Mitochondrial</td><td>mtDNA variant와 heteroplasmy는 어느 정도인가?</td><td>chrM reads, standard + shifted mt reference</td><td>mtDNA VCF with allele fraction</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="chapter-section" id="germline">
+            <h2>1. Germline SNV and Indel Calling</h2>
+            <p>말초혈액·타액 등 normal genomic DNA에서 개인의 constitutional variant를 찾는 분석입니다. GATK <code>HaplotypeCaller</code>는 변이 가능성이 있는 active region에서 read를 국소적으로 재조립하여 SNV와 small indel을 함께 평가합니다.</p>
+            <div class="process-flow tool-chain">
+              <span><code>HaplotypeCaller -ERC GVCF</code></span><b>→</b><span><code>GenomicsDBImport</code></span><b>→</b><span><code>GenotypeGVCFs</code></span><b>→</b><span>VQSR / hard filtering</span>
+            </div>
+            <h3>왜 sample별 GVCF를 만드는가?</h3>
+            <p>일반 VCF는 주로 variant site를 기록하지만, GVCF는 non-variant block까지 포함해 각 sample이 해당 위치에서 어떤 근거로 reference인지 표현합니다. Sample별 GVCF를 저장하면 새로운 sample이 추가될 때 FASTQ부터 다시 분석하지 않고 cohort-level joint genotyping을 확장할 수 있습니다.</p>
+            <ul>
+              <li><strong>Joint genotyping:</strong> 여러 sample의 evidence를 같은 locus에서 함께 평가해 genotype을 일관되게 결정합니다.</li>
+              <li><strong>VQSR:</strong> 충분히 큰 callset과 신뢰할 training resources가 있을 때 annotation 조합을 모델링합니다.</li>
+              <li><strong>Hard filtering:</strong> 작은 cohort 또는 VQSR 조건이 맞지 않을 때 사전에 정한 QC 기준을 적용합니다.</li>
+            </ul>
+            <div class="key-point"><strong>분석 명칭:</strong> 말초혈액 genomic DNA만으로 개인이 보유한 변이를 분석한다면 기본적으로 <em>germline variant analysis</em>입니다. 종양·clonal population과의 비교 없이 somatic variant라고 기술하면 연구설계와 맞지 않습니다.</div>
+          </section>
+
+          <section class="chapter-section" id="somatic">
+            <h2>2. Somatic SNV and Indel Calling</h2>
+            <p>Somatic calling은 tumor VCF에서 normal VCF를 단순히 빼는 과정이 아닙니다. <code>Mutect2</code>는 tumor와 normal read evidence를 함께 모델링하며, population germline resource와 Panel of Normals(PoN)를 이용해 germline 가능성과 반복되는 기술적 artifact를 평가합니다.</p>
+            <div class="process-flow tool-chain">
+              <span>Tumor + matched normal</span><b>+</b><span>Germline resource + PoN</span><b>→</b><span><code>Mutect2</code></span><b>→</b><span>Contamination / orientation model</span><b>→</b><span><code>FilterMutectCalls</code></span>
+            </div>
+            <div class="concept-grid">
+              <div class="concept-card"><strong>Matched normal</strong>동일 환자의 constitutional variant와 개인 특이 artifact를 직접 구분합니다. 가장 강한 대조군입니다.</div>
+              <div class="concept-card"><strong>Panel of Normals</strong>여러 normal sample에서 반복 관찰되는 assay/site-specific artifact를 제거합니다. Matched normal을 대체하지 않습니다.</div>
+              <div class="concept-card"><strong>Germline resource</strong>Population allele frequency를 prior로 이용해 germline 가능성을 모델링합니다. Population mismatch를 고려해야 합니다.</div>
+            </div>
+            <h3>Mutect2 이후에도 필요한 모델</h3>
+            <ul>
+              <li><code>GetPileupSummaries</code>와 <code>CalculateContamination</code>으로 cross-sample contamination과 segmentation 정보를 추정합니다.</li>
+              <li>F1R2 자료와 <code>LearnReadOrientationModel</code>로 FFPE 등에서 나타나는 orientation-specific artifact를 학습합니다.</li>
+              <li><code>FilterMutectCalls</code>가 이러한 evidence를 함께 이용해 각 call에 PASS 또는 구체적인 filter reason을 부여합니다.</li>
+            </ul>
+            <div class="caution-box"><strong>Tumor-only의 한계:</strong> Matched normal이 없으면 rare germline variant와 true somatic variant를 완전히 구분하기 어렵습니다. PoN과 population database는 도움을 주지만 개인의 normal DNA를 대신하지 않습니다. 또한 혈액 normal은 고령 환자의 clonal hematopoiesis 여부를 고려해야 합니다.</div>
+          </section>
+
+          <section class="chapter-section" id="cnv">
+            <h2>3. Copy-Number Variant Analysis</h2>
+            <p>CNV는 한 위치의 ALT read를 세는 대신 genomic interval별 read depth 변화와 heterozygous site의 allele imbalance를 이용합니다. GATK somatic CNV workflow에서는 normal sample로 만든 read-count PoN을 이용해 systematic bias를 줄이고, tumor의 denoised log2 copy ratio와 allelic counts를 함께 segment합니다.</p>
+            <div class="process-flow tool-chain">
+              <span><code>CollectReadCounts</code></span><b>+</b><span>Read-count PoN</span><b>→</b><span><code>DenoiseReadCounts</code></span><b>+</b><span><code>CollectAllelicCounts</code></span><b>→</b><span><code>ModelSegments</code></span><b>→</b><span><code>CallCopyRatioSegments</code></span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>신호</th><th>의미</th><th>주의점</th></tr></thead>
+                <tbody>
+                  <tr><td>Log2 copy ratio</td><td>기대 coverage 대비 상대적 gain/loss</td><td>Purity와 ploidy 때문에 같은 copy number도 amplitude가 달라짐</td></tr>
+                  <tr><td>BAF / minor-allele fraction</td><td>Heterozygous site에서 두 allele의 균형</td><td>LOH와 subclonality 정보를 주지만 informative SNP가 필요</td></tr>
+                  <tr><td>Segment</td><td>유사한 copy-ratio/allelic signal을 공유하는 연속 구간</td><td>짧은 segment는 noise일 수 있고 breakpoint 해상도는 assay에 의존</td></tr>
+                  <tr><td>Gain / neutral / loss</td><td>상대적인 copy-ratio 상태</td><td>절대 copy number와 동일하지 않으며 purity/ploidy 추정이 필요</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Somatic CNV와 germline CNV는 구분한다</h3>
+            <p><code>ModelSegments</code> 기반 workflow는 주로 somatic copy-ratio alteration을 다룹니다. Cohort의 rare/common inherited CNV를 찾는 germline 목적에는 <code>GermlineCNVCaller</code>처럼 systematic bias와 population model을 함께 학습하는 별도 gCNV workflow를 사용합니다.</p>
+            <div class="caution-box"><strong>WES/panel CNV:</strong> Capture efficiency와 GC bias가 커서 WGS보다 bin 간 coverage가 불균일합니다. 동일 assay·library design으로 만든 충분한 normal PoN과 target-specific QC가 특히 중요합니다.</div>
+          </section>
+
+          <section class="chapter-section" id="mitochondrial">
+            <h2>4. Mitochondrial Variant Calling</h2>
+            <p>미토콘드리아 유전체는 작고 원형이며 한 세포 안에 여러 copy가 존재합니다. 따라서 diploid nuclear genotype 대신 <strong>heteroplasmy</strong>, 즉 전체 mtDNA molecule 중 ALT allele이 차지하는 비율을 평가합니다.</p>
+            <div class="process-flow tool-chain">
+              <span>Extract chrM reads</span><b>→</b><span>Standard + shifted reference alignment</span><b>→</b><span><code>Mutect2 --mitochondria-mode</code></span><b>→</b><span>Shift back / merge</span><b>→</b><span><code>FilterMutectCalls</code></span>
+            </div>
+            <h3>왜 shifted reference가 필요한가?</h3>
+            <p>Linear FASTA는 원형 mtDNA를 임의의 한 지점에서 끊어 표현합니다. 이 인공적인 시작/끝 경계를 가로지르는 read는 정렬과 variant calling이 불리할 수 있습니다. 경계를 반대 위치로 옮긴 shifted reference에서도 분석한 뒤 좌표를 원래 reference로 되돌려 합치면 이 구간을 보완할 수 있습니다.</p>
+            <ul>
+              <li><strong>Heteroplasmy:</strong> 낮은 allele fraction 변이일수록 depth, base/mapping quality와 strand evidence가 중요합니다.</li>
+              <li><strong>NUMT:</strong> Nuclear genome에 삽입된 mtDNA 유사서열이 chrM read처럼 잘못 정렬될 수 있습니다.</li>
+              <li><strong>Contamination:</strong> 다른 sample의 mtDNA는 낮은 heteroplasmy처럼 보일 수 있어 sample identity 검토가 필요합니다.</li>
+              <li><strong>Tissue specificity:</strong> Heteroplasmy는 조직, 나이, 질환과 시간에 따라 달라질 수 있습니다.</li>
+            </ul>
+            <div class="key-point"><strong>해석 포인트:</strong> mtDNA variant는 존재 여부만으로 충분하지 않습니다. Heteroplasmy 수준, depth, tissue, haplogroup, nuclear background와 임상 phenotype을 함께 봐야 합니다.</div>
+          </section>
+
+          <section class="chapter-section" id="advanced">
+            <div class="part-heading"><span class="part-number">III</span><h2>Advanced Analysis</h2></div>
+            <p>Advanced analysis는 PASS variant를 더 많이 필터링하는 단계가 아니라, 기술적으로 신뢰할 수 있는 call을 생물학적 질문과 연결하는 과정입니다. Germline과 somatic 결과는 같은 gene annotation을 공유할 수 있지만, population frequency·inheritance·actionability·clonality처럼 평가해야 할 근거는 다릅니다.</p>
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/advanced_variant_analysis_map.svg" alt="Filtered variant를 정규화하고 주석한 뒤 germline, somatic, copy number, mitochondrial 고급 분석과 통합 해석으로 진행하는 과정">
+              <figcaption>Figure 4. Calling 이후의 고급 분석 지도. 각 분석은 최종적으로 cohort, pathway, phenotype, outcome, multi-omics 및 검증 결과와 통합됩니다.</figcaption>
+            </figure>
+
+            <h3>1. Variant normalization and annotation</h3>
+            <ul>
+              <li><strong>Normalization:</strong> Indel left-alignment, multiallelic splitting과 REF/ALT 확인으로 같은 변이가 같은 방식으로 표현되게 합니다.</li>
+              <li><strong>Gene/transcript consequence:</strong> VEP 또는 Funcotator로 gene, transcript, exon, coding consequence와 protein change를 연결합니다.</li>
+              <li><strong>Population evidence:</strong> gnomAD 등에서 allele frequency와 population-specific 빈도를 확인합니다.</li>
+              <li><strong>Disease/cancer evidence:</strong> ClinVar, ClinGen, COSMIC 등에서 질환 연관성과 암 재발성 근거를 연결합니다.</li>
+              <li><strong>Version control:</strong> Genome build, MANE/GENCODE/Ensembl transcript와 database release를 결과에 기록합니다.</li>
+            </ul>
+            <div class="caution-box"><strong>Annotation은 판정이 아닙니다.</strong> 동일 genomic variant도 transcript에 따라 consequence가 달라질 수 있으며, database의 과거 분류가 현재 근거와 충돌할 수 있습니다. 자동화된 prediction만으로 pathogenic 또는 driver를 확정하지 않습니다.</div>
+
+            <h3>2. Germline advanced analysis</h3>
+            <div class="concept-grid">
+              <div class="concept-card"><strong>Rare variant prioritization</strong>Population frequency, inheritance model, gene–phenotype 관계와 predicted consequence를 단계적으로 결합합니다.</div>
+              <div class="concept-card"><strong>Family and cohort analysis</strong>Trio de novo, recessive, compound heterozygous, segregation, burden 또는 SKAT 같은 설계를 사용합니다.</div>
+              <div class="concept-card"><strong>Clinical classification</strong>ACMG/AMP와 ClinGen의 gene/disease-specific specification에 따라 P/LP/VUS/LB/B 근거를 기록합니다.</div>
+            </div>
+
+            <h3>3. Somatic advanced analysis</h3>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>분석</th><th>질문</th><th>핵심 주의점</th></tr></thead>
+                <tbody>
+                  <tr><td>Driver/actionability</td><td>종양 발생·치료·예후와 연관된 변이인가?</td><td>Cancer type, evidence level, drug indication과 germline 가능성 구분</td></tr>
+                  <tr><td>TMB</td><td>평가 가능한 Mb당 somatic mutation 수는 얼마인가?</td><td>Panel territory, callable bases, filtering과 assay-specific validation</td></tr>
+                  <tr><td>MSI</td><td>Microsatellite length instability가 존재하는가?</td><td>Assay와 caller에 맞는 validated threshold, tumor purity</td></tr>
+                  <tr><td>Mutational signature</td><td>어떤 endogenous/exogenous mutational process가 흔적을 남겼는가?</td><td>Mutation 수와 genome territory가 부족하면 과적합 가능</td></tr>
+                  <tr><td>Clonality</td><td>변이가 clonal인가 subclonal인가?</td><td>VAF만으로 판단하지 말고 local copy number, purity와 ploidy 보정</td></tr>
+                  <tr><td>Tumor evolution</td><td>Primary–metastasis 또는 치료 전후 clone이 어떻게 변했는가?</td><td>동일 환자 multiple region/time point와 sampling bias 고려</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>4. CNV and mitochondrial advanced analysis</h3>
+            <div class="term-pair">
+              <div><strong>CNV</strong><br>Purity·ploidy를 추정해 absolute copy number, focal/arm-level event, amplification/deletion, LOH와 copy-neutral LOH를 구분합니다. Cohort에서는 recurrent peak와 affected genes/pathways를 평가합니다.</div>
+              <div><strong>Mitochondrial</strong><br>Heteroplasmy 분포, tissue/time 변화, haplogroup, mtDNA copy number와 phenotype을 연결합니다. 낮은 heteroplasmy는 NUMT·contamination·strand/read-position artifact를 반드시 재검토합니다.</div>
+            </div>
+
+            <h3>5. Integrated review and validation</h3>
+            <div class="process-flow">
+              <span>QC review</span><b>→</b><span>IGV read review</span><b>→</b><span>Orthogonal validation</span><b>→</b><span>Cohort / pathway</span><b>→</b><span>Clinical &amp; biological report</span>
+            </div>
+            <p>중요 변이는 IGV에서 depth, ALT read, read direction, base position, MAPQ, soft clipping과 주변 반복서열을 확인합니다. 연구 목적과 변이 유형에 따라 Sanger, ddPCR, independent library, long-read sequencing 또는 다른 assay로 검증합니다. 모든 결과에는 software, parameter, reference/resource version과 필터링 이력을 남겨야 합니다.</p>
+          </section>
+
+          <section class="chapter-section" id="references">
+            <h2>References &amp; Official Workflows</h2>
+            <ol class="references">
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035535912-Data-pre-processing-for-variant-discovery" target="_blank" rel="noopener">Data pre-processing for variant discovery</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR" target="_blank" rel="noopener">Base Quality Score Recalibration</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035535932-Germline-short-variant-discovery-SNPs-Indels" target="_blank" rel="noopener">Germline short variant discovery</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890411-Calling-variants-on-cohorts-of-samples-using-the-HaplotypeCaller-in-GVCF-mode" target="_blank" rel="noopener">HaplotypeCaller GVCF mode and joint genotyping</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035894731-Somatic-short-variant-discovery-SNVs-Indels" target="_blank" rel="noopener">Somatic short variant discovery</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890631-Panel-of-Normals-PON" target="_blank" rel="noopener">Panel of Normals</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035531092--How-to-part-I-Sensitively-detect-copy-ratio-alterations-and-allelic-segments" target="_blank" rel="noopener">Somatic copy-ratio workflow, part I</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890011--How-to-part-II-Sensitively-detect-copy-ratio-alterations-and-allelic-segments" target="_blank" rel="noopener">Somatic copy-ratio workflow, part II</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/4403870837275-Mitochondrial-short-variant-discovery-SNVs-Indels" target="_blank" rel="noopener">Mitochondrial short variant discovery</a>.</li>
+              <li>GATK. <a href="https://gatk.broadinstitute.org/hc/en-us/articles/35967429156891-Funcotator" target="_blank" rel="noopener">Funcotator functional annotation</a>.</li>
+              <li>Ensembl. <a href="https://www.ensembl.org/Tools/VEP" target="_blank" rel="noopener">Variant Effect Predictor</a>.</li>
+              <li>ClinGen. <a href="https://www.clinicalgenome.org/working-groups/sequence-variant-interpretation/" target="_blank" rel="noopener">Sequence Variant Interpretation Working Group</a>.</li>
+              <li>NCI. <a href="https://dceg.cancer.gov/tools/analysis/mutational-signatures" target="_blank" rel="noopener">Integrative Mutational Signature Portal</a>.</li>
+            </ol>
+          </section>
+
+          <section class="chapter-section" id="summary">
+            <h2>Key Takeaways</h2>
+            <ul class="takeaway-list">
+              <li>GATK4 전처리는 reference와 read-group 일치, duplicate marking, BQSR와 QC를 통해 caller가 사용할 evidence를 표준화합니다.</li>
+              <li>BQSR는 base quality를 재보정하며 variant filtering인 VQSR와 다릅니다.</li>
+              <li>Germline은 GVCF와 joint genotyping, somatic은 matched normal·PoN·contamination/artifact model이 핵심입니다.</li>
+              <li>CNV는 read depth와 allele imbalance를 segment하며, mitochondrial 분석은 원형 유전체와 heteroplasmy를 고려합니다.</li>
+              <li>Advanced analysis는 annotation뿐 아니라 inheritance, driver, TMB/MSI, signature, clonality, purity/ploidy, LOH와 heteroplasmy를 질문에 맞게 연결합니다.</li>
+              <li>최종 결론은 VCF 한 줄이 아니라 upstream QC, BAM evidence, database version과 검증 결과를 포함해야 합니다.</li>
+            </ul>
+            <h3>Check Your Understanding</h3>
+            <ol class="check-list">
+              <li>BQSR에서 known-sites가 필요한 이유와 BQSR가 염기서열 자체를 수정하지 않는다는 말의 의미는 무엇인가요?</li>
+              <li>GVCF와 일반 VCF의 차이, joint genotyping이 cohort 분석에 유리한 이유를 설명해보세요.</li>
+              <li>Matched normal, somatic PoN과 population germline resource는 각각 어떤 문제를 해결하나요?</li>
+              <li>종양 purity가 낮을 때 somatic VAF와 CNV log2 ratio는 어떻게 달라질 수 있나요?</li>
+              <li>Mitochondrial calling에서 shifted reference와 NUMT 검토가 필요한 이유는 무엇인가요?</li>
+            </ol>
+          </section>
+
+          <nav class="chapter-pagination">
+            <a class="btn btn-outline-secondary" href="02_sequencing.html">← Chapter 02</a>
+            <a class="btn btn-primary" href="04_variant_interpretation.html">Next: Variant Interpretation →</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

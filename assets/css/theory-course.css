@@ -137,6 +137,78 @@
   text-align: center;
 }
 
+.code-example {
+  padding: 1rem 1.2rem;
+  border-radius: 10px;
+  color: #eef7ff;
+  background: #172536;
+  overflow-x: auto;
+  font: .92rem/1.65 "Courier New", monospace;
+}
+
+.formula-box {
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  border: 1px solid #b9d5f0;
+  border-radius: 10px;
+  background: #eef7ff;
+  color: #173f68;
+  text-align: center;
+}
+
+.formula-box strong {
+  display: block;
+  margin-bottom: .25rem;
+  color: #0756a5;
+  font-size: 1.2rem;
+}
+
+.table-note {
+  margin-top: -.5rem;
+  color: #607080;
+  font-size: .84rem;
+}
+
+.term-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.term-pair > div {
+  padding: 1rem;
+  border-radius: 9px;
+  background: #f5f9ff;
+}
+
+.part-heading {
+  display: flex;
+  gap: .9rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.part-heading .part-number {
+  display: inline-flex;
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #0756a5;
+  font-weight: 700;
+}
+
+.part-heading h2 {
+  margin: 0;
+}
+
+.tool-chain code {
+  white-space: nowrap;
+}
+
 .history-timeline {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -195,6 +267,10 @@
   }
 
   .history-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .term-pair {
     grid-template-columns: 1fr;
   }
 

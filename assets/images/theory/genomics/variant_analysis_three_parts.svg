@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">Three-part structure of genomic variant analysis</title>
+  <desc id="desc">Genomic variant analysis consists of GATK-style preprocessing, variant calling for germline, somatic, copy number and mitochondrial variants, and advanced annotation and interpretation.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#347bb7"/></marker></defs>
+  <rect width="1200" height="560" rx="28" fill="#f6faff"/>
+  <text x="600" y="52" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">Genomic Variant Analysis: Three Connected Parts</text>
+  <text x="600" y="82" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">A final variant is only as reliable as the upstream reads, model, filtering, and biological context</text>
+
+  <g font-family="Arial">
+    <rect x="55" y="125" width="320" height="290" rx="20" fill="#e8f3ff" stroke="#6aa6dc" stroke-width="3"/>
+    <circle cx="102" cy="169" r="25" fill="#0756a5"/><text x="102" y="177" text-anchor="middle" font-size="22" font-weight="700" fill="#fff">1</text>
+    <text x="145" y="176" font-size="24" font-weight="700" fill="#0756a5">Data preprocessing</text>
+    <text x="85" y="224" font-size="16" font-weight="700" fill="#173f68">FASTQ → analysis-ready BAM/CRAM</text>
+    <text x="85" y="262" font-size="15" fill="#526b83">• Reference and read groups</text><text x="85" y="293" font-size="15" fill="#526b83">• Alignment and coordinate sorting</text><text x="85" y="324" font-size="15" fill="#526b83">• Duplicate marking</text><text x="85" y="355" font-size="15" fill="#526b83">• Base quality recalibration</text><text x="85" y="386" font-size="15" fill="#526b83">• Sample and alignment QC</text>
+
+    <line x1="380" y1="270" x2="430" y2="270" stroke="#347bb7" stroke-width="5" marker-end="url(#arrow)"/>
+    <rect x="440" y="125" width="320" height="290" rx="20" fill="#f1ebfb" stroke="#9574c5" stroke-width="3"/>
+    <circle cx="487" cy="169" r="25" fill="#7451a5"/><text x="487" y="177" text-anchor="middle" font-size="22" font-weight="700" fill="#fff">2</text>
+    <text x="530" y="176" font-size="24" font-weight="700" fill="#684889">Variant calling</text>
+    <text x="470" y="224" font-size="16" font-weight="700" fill="#173f68">Different biology → different models</text>
+    <rect x="475" y="251" width="112" height="48" rx="10" fill="#fff"/><text x="531" y="281" text-anchor="middle" font-size="15" fill="#684889">Germline</text>
+    <rect x="613" y="251" width="112" height="48" rx="10" fill="#fff"/><text x="669" y="281" text-anchor="middle" font-size="15" fill="#684889">Somatic</text>
+    <rect x="475" y="321" width="112" height="48" rx="10" fill="#fff"/><text x="531" y="351" text-anchor="middle" font-size="15" fill="#684889">Copy number</text>
+    <rect x="613" y="321" width="112" height="48" rx="10" fill="#fff"/><text x="669" y="351" text-anchor="middle" font-size="15" fill="#684889">Mitochondrial</text>
+    <text x="600" y="398" text-anchor="middle" font-size="14" fill="#526b83">VCF / gVCF · segment tables · QC evidence</text>
+
+    <line x1="765" y1="270" x2="815" y2="270" stroke="#347bb7" stroke-width="5" marker-end="url(#arrow)"/>
+    <rect x="825" y="125" width="320" height="290" rx="20" fill="#e9f8f3" stroke="#46ad8d" stroke-width="3"/>
+    <circle cx="872" cy="169" r="25" fill="#24856b"/><text x="872" y="177" text-anchor="middle" font-size="22" font-weight="700" fill="#fff">3</text>
+    <text x="915" y="176" font-size="24" font-weight="700" fill="#24745f">Advanced analysis</text>
+    <text x="855" y="224" font-size="16" font-weight="700" fill="#173f68">Candidates → biological conclusions</text>
+    <text x="855" y="262" font-size="15" fill="#526b83">• Normalize and annotate</text><text x="855" y="293" font-size="15" fill="#526b83">• Population / cancer evidence</text><text x="855" y="324" font-size="15" fill="#526b83">• Signatures, TMB, MSI, clonality</text><text x="855" y="355" font-size="15" fill="#526b83">• Purity, ploidy, LOH, heteroplasmy</text><text x="855" y="386" font-size="15" fill="#526b83">• Cohort, pathway and clinical review</text>
+
+    <rect x="55" y="450" width="1090" height="67" rx="15" fill="#fff" stroke="#cadbea" stroke-width="2"/>
+    <text x="600" y="480" text-anchor="middle" font-size="17" font-weight="700" fill="#0756a5">Cross-cutting controls</text>
+    <text x="600" y="504" text-anchor="middle" font-size="14" fill="#526b83">Reference build · interval definition · sample identity · provenance · software/resource versions · QC thresholds · orthogonal validation</text>
+  </g>
+</svg>
