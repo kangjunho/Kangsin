@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bioinformatics Theory - Kang's Bioinformatics</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/theory-course.css">
   <style>
     .category-nav .nav-link{border:2px solid #0d6efd;color:#0d6efd;font-weight:700;background:#fff;margin:.25rem;border-radius:.6rem}
     .category-nav .nav-link.active{color:#fff;background:#0d6efd}
@@ -28,7 +28,7 @@
   <main class="py-5"><div class="container">
     <div class="text-center mb-4"><span class="badge text-bg-primary mb-2">THEORY</span><h1>Bioinformatics Theory</h1><p class="text-muted">Core concepts for understanding biological data and analysis results</p></div>
     <ul class="nav nav-pills category-nav justify-content-center mb-5" role="tablist">
-      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#genomics" type="button">Genomics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#transcriptomics" type="button">Transcriptomics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#public-data" type="button">Public Data</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#microbiomics" type="button">Microbiomics</button></li>
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#genomics" type="button">Genomics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#transcriptomics" type="button">Transcriptomics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#bioinformatics" type="button">Bioinformatics</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#systems" type="button">Systems &amp; Infrastructure</button></li>
     </ul>
     <div class="tab-content">
       <section class="tab-pane fade show active" id="genomics">
@@ -48,8 +48,20 @@
           <a class="roadmap-item" href="theory/transcriptomics/03_single_cell_spatial.html"><span class="roadmap-number">03</span><span><h2>Single-cell &amp; Spatial Transcriptomics</h2><p>Cellular heterogeneity, annotation, donor-aware comparison, and tissue context</p></span><span class="roadmap-arrow" aria-hidden="true">→</span></a>
         </div>
       </section>
-      <section class="tab-pane fade" id="public-data"><div class="row g-4"><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">1</span><h2 class="h5 mt-3">Repositories</h2><p>GEO, SRA, TCGA, and major sources of reusable biomedical datasets.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">2</span><h2 class="h5 mt-3">Study Selection</h2><p>Research questions, metadata, platforms, cohorts, and dataset suitability.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">3</span><h2 class="h5 mt-3">Reproducibility</h2><p>Bias, batch effects, validation, documentation, and responsible data reuse.</p></div></article></div></div></section>
-      <section class="tab-pane fade" id="microbiomics"><div class="row g-4"><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">1</span><h2 class="h5 mt-3">Microbial Communities</h2><p>Microbiota, microbiome, taxonomy, ecology, and host-microbe relationships.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">2</span><h2 class="h5 mt-3">Profiling Strategies</h2><p>16S amplicon and shotgun metagenomic sequencing principles and tradeoffs.</p></div></article></div><div class="col-md-4"><article class="card theory-card"><div class="card-body"><span class="lesson-number">3</span><h2 class="h5 mt-3">Diversity &amp; Interpretation</h2><p>Alpha/beta diversity, differential abundance, compositionality, and function.</p></div></article></div></div></section>
+      <section class="tab-pane fade" id="bioinformatics">
+        <div class="hub-preview hub-preview-knowledge">
+          <div class="hub-preview-copy"><span class="hub-kicker">LIVING KNOWLEDGE HUB</span><h2>Bioinformatics</h2><p>생물정보학의 핵심 개념과 연구방법론을 배우고, 새로운 분석기술과 최신 논문을 지속적으로 검토하는 공간입니다.</p><a class="btn btn-primary" href="theory/bioinformatics/index.html">Enter Bioinformatics Hub →</a></div>
+          <div class="hub-preview-panel"><strong>How this hub grows</strong><ul class="mb-0"><li>Core concepts는 체계적으로 정리</li><li>Methods &amp; trends는 주제별로 갱신</li><li>Paper review는 날짜·분야별로 누적</li><li>연구질문과 실제 적용 가능성을 함께 평가</li></ul></div>
+        </div>
+        <div class="hub-topic-grid mt-4"><article><span>FOUNDATIONS</span><h3>Bioinformatics Foundations</h3><p>정의, 역사, 학문 간 연결과 생물정보학자의 역할</p></article><article><span>RESEARCH</span><h3>Research Workflow</h3><p>질문, 데이터, 방법, 통계, 검증과 재현성의 연결</p></article><article><span>METHODS</span><h3>Methods &amp; Emerging Topics</h3><p>Algorithms, AI, multi-omics, networks와 benchmark</p></article><article><span>REVIEWS</span><h3>Recent Paper Review</h3><p>최신 논문의 핵심 figure, 강점, 한계와 연구 적용점</p></article></div>
+      </section>
+      <section class="tab-pane fade" id="systems">
+        <div class="hub-preview hub-preview-systems">
+          <div class="hub-preview-copy"><span class="hub-kicker">BUILD &amp; OPERATE</span><h2>Systems &amp; Infrastructure</h2><p>생물정보학 분석을 안정적이고 재현 가능하게 수행하기 위한 연구 컴퓨팅 환경을 단계별로 설계하고 구축합니다.</p><a class="btn btn-primary" href="theory/systems/index.html">Open System Building Roadmap →</a></div>
+          <div class="hub-preview-panel"><strong>What belongs here</strong><ul class="mb-0"><li>Workstation, server, HPC와 cloud</li><li>Linux, users, permissions와 remote access</li><li>Storage, NAS, backup과 data governance</li><li>Conda, containers, workflow와 monitoring</li></ul></div>
+        </div>
+        <div class="system-mini-roadmap mt-4"><span><b>01</b>Architecture</span><span><b>02</b>Linux &amp; Server</span><span><b>03</b>Storage &amp; Data</span><span><b>04</b>Environments</span><span><b>05</b>Workflow &amp; Compute</span><span><b>06</b>Security &amp; Backup</span></div>
+      </section>
     </div>
     <div class="d-flex justify-content-between mt-5"><a class="btn btn-outline-secondary" href="e-learning.html">← E-learning</a><a class="btn btn-primary" href="e-learning-practice.html">Go to Hands-on →</a></div>
   </div></main>

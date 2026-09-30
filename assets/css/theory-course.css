@@ -8,6 +8,15 @@
   color: #064f9e;
 }
 
+.systems-page .course-hero {
+  border-bottom-color: #cee4dc;
+  background: linear-gradient(135deg, #f2fbf8, #e3f3ed);
+}
+
+.systems-page .course-hero h1 {
+  color: #087f5b;
+}
+
 .course-layout {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);
@@ -249,6 +258,287 @@
   margin-top: 2rem;
 }
 
+.hub-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
+  gap: 1.5rem;
+  max-width: 1040px;
+  padding: 2.2rem;
+  margin: 0 auto;
+  border: 1px solid #d8e6f5;
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgba(16, 65, 110, .09);
+}
+
+.hub-preview-knowledge {
+  background: linear-gradient(135deg, #f3f8ff, #edf4ff 55%, #f8fbff);
+}
+
+.hub-preview-systems {
+  border-color: #cddfd9;
+  background: linear-gradient(135deg, #f2fbf8, #eaf7f3 55%, #f8fcfb);
+}
+
+.hub-kicker {
+  display: inline-block;
+  margin-bottom: .55rem;
+  color: #0d6efd;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.hub-preview-systems .hub-kicker {
+  color: #087f5b;
+}
+
+.hub-preview-copy h2 {
+  margin-bottom: .75rem;
+  color: #064f9e;
+  font-size: 2rem;
+  font-weight: 750;
+}
+
+.hub-preview-systems .hub-preview-copy h2 {
+  color: #087f5b;
+}
+
+.hub-preview-copy p {
+  max-width: 650px;
+  color: #425466;
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+.hub-preview-panel {
+  padding: 1.25rem 1.35rem;
+  border: 1px solid rgba(13, 110, 253, .17);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .82);
+}
+
+.hub-preview-systems .hub-preview-panel {
+  border-color: rgba(8, 127, 91, .2);
+}
+
+.hub-preview-panel strong {
+  display: block;
+  margin-bottom: .7rem;
+  color: #173f68;
+}
+
+.hub-preview-panel li {
+  margin-bottom: .5rem;
+  color: #526474;
+}
+
+.hub-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  max-width: 1040px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.hub-topic-grid article {
+  min-height: 175px;
+  padding: 1.25rem;
+  border: 1px solid #dde7f0;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .045);
+}
+
+.hub-topic-grid span {
+  color: #0d6efd;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.hub-topic-grid h3 {
+  margin: .6rem 0 .45rem;
+  color: #173f68;
+  font-size: 1rem;
+}
+
+.hub-topic-grid p {
+  margin: 0;
+  color: #657585;
+  font-size: .9rem;
+}
+
+.system-mini-roadmap {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .7rem;
+  max-width: 1040px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.system-mini-roadmap span {
+  display: flex;
+  flex-direction: column;
+  min-height: 92px;
+  justify-content: center;
+  padding: .9rem;
+  border: 1px solid #cfe4dd;
+  border-radius: 11px;
+  color: #35584d;
+  background: #f7fcfa;
+  font-size: .83rem;
+  text-align: center;
+}
+
+.system-mini-roadmap b {
+  margin-bottom: .25rem;
+  color: #087f5b;
+  font-size: 1rem;
+}
+
+.knowledge-layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.knowledge-card {
+  grid-column: span 6;
+  padding: 1.55rem;
+  border: 1px solid #dee8f1;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+}
+
+.knowledge-card-wide {
+  grid-column: span 12;
+}
+
+.knowledge-card .card-label {
+  display: inline-block;
+  margin-bottom: .65rem;
+  color: #0d6efd;
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.knowledge-card h2,
+.knowledge-card h3 {
+  color: #173f68;
+}
+
+.review-lanes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.review-lane {
+  padding: 1.1rem;
+  border-top: 4px solid #0d6efd;
+  border-radius: 10px;
+  background: #f5f9ff;
+}
+
+.review-lane strong {
+  display: block;
+  margin-bottom: .35rem;
+  color: #0756a5;
+}
+
+.review-template {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: 1rem;
+}
+
+.review-template span {
+  padding: .7rem .55rem;
+  border: 1px solid #d6e4f2;
+  border-radius: 9px;
+  color: #35546f;
+  background: #fff;
+  font-size: .82rem;
+  text-align: center;
+}
+
+.build-map {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  counter-reset: build-stage;
+}
+
+.build-stage {
+  position: relative;
+  min-height: 255px;
+  padding: 1.4rem 1.3rem 1.25rem;
+  border: 1px solid #d2e4de;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 80, 60, .06);
+  counter-increment: build-stage;
+}
+
+.build-stage::before {
+  content: counter(build-stage, decimal-leading-zero);
+  display: inline-flex;
+  width: 2.55rem;
+  height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: .8rem;
+  border-radius: 50%;
+  color: #fff;
+  background: #087f5b;
+  font-weight: 800;
+}
+
+.build-stage h2 {
+  color: #17664f;
+  font-size: 1.12rem;
+}
+
+.build-stage p,
+.build-stage li {
+  color: #5d706a;
+  font-size: .9rem;
+}
+
+.architecture-stack {
+  display: grid;
+  gap: .7rem;
+}
+
+.architecture-stack div {
+  padding: .9rem 1rem;
+  border-radius: 10px;
+  color: #255849;
+  background: #e8f6f1;
+  text-align: center;
+  font-weight: 700;
+}
+
+.architecture-stack div:nth-child(2) { background: #dff1eb; }
+.architecture-stack div:nth-child(3) { background: #d4ebe3; }
+.architecture-stack div:nth-child(4) { background: #c9e5dc; }
+
+.scope-boundary {
+  padding: 1.2rem 1.35rem;
+  border: 1px dashed #9fb9cf;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.scope-boundary strong {
+  color: #0756a5;
+}
+
 @media (max-width: 991px) {
   .course-layout {
     grid-template-columns: 1fr;
@@ -258,6 +548,20 @@
     position: static;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hub-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .hub-topic-grid,
+  .system-mini-roadmap,
+  .build-map {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-template {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -280,5 +584,22 @@
 
   .chapter-section {
     padding: 1.3rem;
+  }
+
+  .hub-preview {
+    padding: 1.4rem;
+  }
+
+  .hub-topic-grid,
+  .system-mini-roadmap,
+  .build-map,
+  .review-lanes,
+  .review-template {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledge-card,
+  .knowledge-card-wide {
+    grid-column: span 12;
   }
 }
