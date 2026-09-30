@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">Anatomy of a FASTQ record</title>
+  <desc id="desc">A FASTQ record has four lines: an identifier beginning with at sign, a nucleotide sequence, a separator beginning with plus sign, and a quality string with one ASCII character per base. The sequence and quality strings have equal length. With Phred plus 33 encoding, the character I represents Q40.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#347bb7"/></marker></defs>
+  <rect width="1200" height="650" rx="28" fill="#f6faff"/>
+  <text x="600" y="54" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">Anatomy of One FASTQ Record</text>
+  <text x="600" y="84" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">Each sequencing read is stored as four consecutive text lines</text>
+
+  <rect x="55" y="125" width="660" height="315" rx="18" fill="#172536"/>
+  <g font-family="Courier New" font-size="18">
+    <text x="82" y="185" fill="#82c7ff">@A00123:45:H7J5LDSX2:1:1101:1000:1000 1:N:0:ATCACG</text>
+    <text x="82" y="250" fill="#7ce0b8">ACGTTGCAACCTGATCGTAC</text>
+    <text x="82" y="315" fill="#ffd36a">+</text>
+    <text x="82" y="380" fill="#e9b9ff">IIIIIIIIIIIIIIIIIIII</text>
+  </g>
+  <text x="82" y="415" font-family="Arial" font-size="14" fill="#9fb1c5">20 bases  ↔  20 quality characters</text>
+
+  <g font-family="Arial">
+    <line x1="715" y1="177" x2="770" y2="177" stroke="#347bb7" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="785" y="132" width="350" height="90" rx="13" fill="#e6f1ff"/><text x="810" y="161" font-size="18" font-weight="700" fill="#0756a5">Line 1 · Read identifier</text><text x="810" y="187" font-size="14" fill="#526b83">Starts with @. Instrument/run/read metadata;</text><text x="810" y="208" font-size="14" fill="#526b83">layout is platform-specific.</text>
+    <line x1="715" y1="242" x2="770" y2="242" stroke="#347bb7" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="785" y="230" width="350" height="76" rx="13" fill="#e9fbf6"/><text x="810" y="258" font-size="18" font-weight="700" fill="#24745f">Line 2 · Base sequence</text><text x="810" y="284" font-size="14" fill="#526b83">A, C, G, T; N means an unresolved base.</text>
+    <line x1="715" y1="307" x2="770" y2="307" stroke="#347bb7" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="785" y="314" width="350" height="76" rx="13" fill="#fff7e6"/><text x="810" y="342" font-size="18" font-weight="700" fill="#8d5d08">Line 3 · Separator</text><text x="810" y="368" font-size="14" fill="#526b83">Starts with +; identifier may be repeated or omitted.</text>
+    <line x1="715" y1="372" x2="770" y2="372" stroke="#347bb7" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="785" y="398" width="350" height="92" rx="13" fill="#f3eafa"/><text x="810" y="426" font-size="18" font-weight="700" fill="#684889">Line 4 · Base qualities</text><text x="810" y="452" font-size="14" fill="#526b83">One ASCII character per base.</text><text x="810" y="473" font-size="14" fill="#526b83">Phred+33: I = ASCII 73 → Q40.</text>
+  </g>
+
+  <rect x="55" y="500" width="1080" height="112" rx="16" fill="#ffffff" stroke="#c5d7e8" stroke-width="2"/>
+  <text x="95" y="537" font-family="Arial" font-size="20" font-weight="700" fill="#173f68">Phred quality score</text>
+  <text x="95" y="574" font-family="Arial" font-size="22" font-weight="700" fill="#0756a5">Q = −10 log₁₀(Perror)</text>
+  <text x="430" y="556" font-family="Arial" font-size="16" fill="#526b83">Q20 = 1% error</text><text x="650" y="556" font-family="Arial" font-size="16" fill="#526b83">Q30 = 0.1% error</text><text x="895" y="556" font-family="Arial" font-size="16" fill="#526b83">Q40 = 0.01% error</text>
+  <text x="600" y="594" text-anchor="middle" font-family="Arial" font-size="14" fill="#526b83">FASTQ contains raw read sequence and confidence—not its genomic position.</text>
+</svg>
