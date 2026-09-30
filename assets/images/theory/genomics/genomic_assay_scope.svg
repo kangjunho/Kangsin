@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">Scope of common genomic assays</title>
+  <desc id="desc">Targeted DNA panels deeply sequence selected genes, microarrays measure predefined probes, whole-exome sequencing captures mostly coding exons, and whole-genome sequencing surveys most of the genome. Breadth increases from panels to whole-genome sequencing, while panels commonly provide greater depth in their selected regions.</desc>
+  <rect width="1200" height="650" rx="28" fill="#f6faff"/>
+  <text x="600" y="54" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">Common Technologies in Genomics</text>
+  <text x="600" y="84" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">The best assay depends on the biological question, target region and required variant type</text>
+
+  <g font-family="Arial">
+    <rect x="60" y="125" width="255" height="365" rx="18" fill="#ffffff" stroke="#82b8e8" stroke-width="2"/>
+    <text x="187" y="165" text-anchor="middle" font-size="22" font-weight="700" fill="#0756a5">DNA Panel</text>
+    <g fill="#176fd0"><rect x="95" y="205" width="42" height="42" rx="5"/><rect x="160" y="205" width="42" height="42" rx="5"/><rect x="225" y="205" width="42" height="42" rx="5"/></g>
+    <text x="187" y="285" text-anchor="middle" font-size="16" font-weight="700" fill="#173f68">Selected genes or hotspots</text>
+    <text x="187" y="322" text-anchor="middle" font-size="15" fill="#526b83">High read depth</text>
+    <text x="187" y="350" text-anchor="middle" font-size="15" fill="#526b83">Focused interpretation</text>
+    <text x="187" y="405" text-anchor="middle" font-size="14" fill="#526b83">Does not assess regions</text>
+    <text x="187" y="426" text-anchor="middle" font-size="14" fill="#526b83">outside the panel design</text>
+
+    <rect x="335" y="125" width="255" height="365" rx="18" fill="#ffffff" stroke="#b9a4d6" stroke-width="2"/>
+    <text x="462" y="165" text-anchor="middle" font-size="22" font-weight="700" fill="#684889">Microarray</text>
+    <g fill="#8e71b5"><circle cx="400" cy="215" r="10"/><circle cx="435" cy="215" r="10"/><circle cx="470" cy="215" r="10"/><circle cx="505" cy="215" r="10"/><circle cx="400" cy="250" r="10"/><circle cx="435" cy="250" r="10"/><circle cx="470" cy="250" r="10"/><circle cx="505" cy="250" r="10"/></g>
+    <text x="462" y="305" text-anchor="middle" font-size="16" font-weight="700" fill="#173f68">Predefined probes</text>
+    <text x="462" y="342" text-anchor="middle" font-size="15" fill="#526b83">SNP genotype · CNV · expression</text>
+    <text x="462" y="405" text-anchor="middle" font-size="14" fill="#526b83">Efficient for known targets;</text>
+    <text x="462" y="426" text-anchor="middle" font-size="14" fill="#526b83">limited discovery of novel sequence</text>
+
+    <rect x="610" y="125" width="255" height="365" rx="18" fill="#ffffff" stroke="#69bba6" stroke-width="2"/>
+    <text x="737" y="165" text-anchor="middle" font-size="22" font-weight="700" fill="#24745f">WES</text>
+    <rect x="650" y="205" width="175" height="45" rx="10" fill="#dce7f2"/><rect x="650" y="205" width="14" height="45" rx="7" fill="#3ab49c"/>
+    <text x="737" y="285" text-anchor="middle" font-size="16" font-weight="700" fill="#173f68">Mostly protein-coding exons</text>
+    <text x="737" y="322" text-anchor="middle" font-size="15" fill="#526b83">~1–2% of the genome</text>
+    <text x="737" y="350" text-anchor="middle" font-size="15" fill="#526b83">Capture + sequencing</text>
+    <text x="737" y="405" text-anchor="middle" font-size="14" fill="#526b83">Misses most non-coding regions;</text>
+    <text x="737" y="426" text-anchor="middle" font-size="14" fill="#526b83">coverage can be uneven</text>
+
+    <rect x="885" y="125" width="255" height="365" rx="18" fill="#ffffff" stroke="#5b8fc5" stroke-width="2"/>
+    <text x="1012" y="165" text-anchor="middle" font-size="22" font-weight="700" fill="#315f96">WGS</text>
+    <rect x="925" y="205" width="175" height="45" rx="10" fill="#315f96"/>
+    <text x="1012" y="285" text-anchor="middle" font-size="16" font-weight="700" fill="#173f68">Most genomic regions</text>
+    <text x="1012" y="322" text-anchor="middle" font-size="15" fill="#526b83">Coding + non-coding</text>
+    <text x="1012" y="350" text-anchor="middle" font-size="15" fill="#526b83">SNV · indel · CNV · SV</text>
+    <text x="1012" y="405" text-anchor="middle" font-size="14" fill="#526b83">Largest data and analysis burden;</text>
+    <text x="1012" y="426" text-anchor="middle" font-size="14" fill="#526b83">some repetitive regions remain hard</text>
+  </g>
+
+  <text x="80" y="545" font-family="Arial" font-size="16" font-weight="700" fill="#0756a5">Narrow scope / often deeper</text>
+  <line x1="95" y1="575" x2="1100" y2="575" stroke="#347bb7" stroke-width="8"/>
+  <polygon points="1100,560 1140,575 1100,590" fill="#347bb7"/>
+  <text x="1120" y="545" text-anchor="end" font-family="Arial" font-size="16" font-weight="700" fill="#0756a5">Broad scope / more data</text>
+  <text x="600" y="622" text-anchor="middle" font-family="Arial" font-size="15" fill="#526b83">Microarray is probe-based; panel, WES and WGS are sequence-based.</text>
+</svg>

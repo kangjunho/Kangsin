@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">What counts as a gene</title>
+  <desc id="desc">A transcription factor gene is transcribed and translated into a transcription factor protein. The protein binds a regulatory DNA element near a target gene. The coding sequence, untranslated regions and introns belong to the transcribed gene structure, while promoters, enhancers and transcription factor binding sites are generally annotated as regulatory elements rather than separate genes.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#347bb7"/></marker>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f6faff"/>
+  <text x="600" y="54" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">What Counts as a Gene?</text>
+  <text x="600" y="84" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">Distinguishing the gene, its product and its regulatory elements</text>
+
+  <g font-family="Arial">
+    <rect x="65" y="125" width="315" height="190" rx="18" fill="#e6f1ff" stroke="#82b8e8" stroke-width="2"/>
+    <text x="222" y="158" text-anchor="middle" font-size="21" font-weight="700" fill="#0756a5">Transcription factor gene</text>
+    <line x1="102" y1="228" x2="342" y2="228" stroke="#71869a" stroke-width="4"/>
+    <rect x="120" y="195" width="58" height="66" rx="5" fill="#8bc3ed"/>
+    <rect x="178" y="195" width="62" height="66" rx="5" fill="#176fd0"/>
+    <line x1="240" y1="228" x2="280" y2="228" stroke="#8e71b5" stroke-width="10"/>
+    <rect x="280" y="195" width="44" height="66" rx="5" fill="#176fd0"/>
+    <text x="222" y="286" text-anchor="middle" font-size="15" fill="#526b83">DNA locus = gene</text>
+
+    <line x1="380" y1="220" x2="455" y2="220" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="418" y="204" text-anchor="middle" font-size="14" fill="#526b83">expression</text>
+
+    <rect x="470" y="145" width="245" height="150" rx="18" fill="#e9fbf6" stroke="#59b99f" stroke-width="2"/>
+    <path d="M520 220 C550 174 590 266 620 220 C650 174 680 266 700 220" fill="none" stroke="#2f9d83" stroke-width="8"/>
+    <text x="592" y="177" text-anchor="middle" font-size="21" font-weight="700" fill="#24745f">TF protein</text>
+    <text x="592" y="275" text-anchor="middle" font-size="15" fill="#526b83">Gene product, not a gene</text>
+
+    <path d="M715 220 C790 220 785 360 850 360" fill="none" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="780" y="250" text-anchor="middle" font-size="14" fill="#526b83">binds DNA</text>
+
+    <rect x="775" y="125" width="360" height="410" rx="18" fill="#ffffff" stroke="#c5d7e8" stroke-width="2"/>
+    <text x="955" y="160" text-anchor="middle" font-size="21" font-weight="700" fill="#173f68">Target gene regulatory system</text>
+    <line x1="815" y1="360" x2="1095" y2="360" stroke="#71869a" stroke-width="4"/>
+    <rect x="830" y="325" width="75" height="70" rx="7" fill="#f4b942"/>
+    <text x="868" y="309" text-anchor="middle" font-size="15" fill="#8d5d08">Enhancer / TFBS</text>
+    <path d="M905 338 C930 285 965 290 980 335" fill="none" stroke="#e0a11e" stroke-width="4" stroke-dasharray="7 6"/>
+    <rect x="955" y="330" width="70" height="60" rx="6" fill="#62a9e3"/>
+    <text x="990" y="314" text-anchor="middle" font-size="15" fill="#0756a5">Promoter</text>
+    <rect x="1040" y="320" width="38" height="80" rx="5" fill="#8bc3ed"/>
+    <rect x="1078" y="320" width="38" height="80" rx="5" fill="#176fd0"/>
+    <text x="1077" y="425" text-anchor="middle" font-size="15" fill="#0756a5">Target gene</text>
+    <rect x="820" y="458" width="270" height="48" rx="10" fill="#fff3cd"/>
+    <text x="955" y="480" text-anchor="middle" font-size="14" font-weight="700" fill="#715500">Promoter · enhancer · TF binding site</text>
+    <text x="955" y="499" text-anchor="middle" font-size="13" fill="#715500">regulatory DNA, usually not separate genes</text>
+  </g>
+
+  <g font-family="Arial">
+    <rect x="65" y="360" width="650" height="175" rx="18" fill="#ffffff" stroke="#c5d7e8" stroke-width="2"/>
+    <text x="390" y="394" text-anchor="middle" font-size="20" font-weight="700" fill="#173f68">Inside a protein-coding gene</text>
+    <rect x="105" y="430" width="75" height="55" rx="5" fill="#8bc3ed"/><text x="142" y="510" text-anchor="middle" font-size="14" fill="#526b83">5′ UTR</text>
+    <rect x="180" y="430" width="115" height="55" rx="5" fill="#176fd0"/><text x="237" y="510" text-anchor="middle" font-size="14" fill="#526b83">Coding exon</text>
+    <line x1="295" y1="457" x2="430" y2="457" stroke="#8e71b5" stroke-width="10"/><text x="362" y="510" text-anchor="middle" font-size="14" fill="#526b83">Intron</text>
+    <rect x="430" y="430" width="115" height="55" rx="5" fill="#176fd0"/><text x="487" y="510" text-anchor="middle" font-size="14" fill="#526b83">Coding exon</text>
+    <rect x="545" y="430" width="75" height="55" rx="5" fill="#8bc3ed"/><text x="582" y="510" text-anchor="middle" font-size="14" fill="#526b83">3′ UTR</text>
+    <text x="390" y="420" text-anchor="middle" font-size="14" fill="#526b83">UTRs and introns are non-coding, but belong to the gene/transcript structure</text>
+  </g>
+
+  <rect x="65" y="570" width="1070" height="48" rx="12" fill="#dceeff"/>
+  <text x="600" y="600" text-anchor="middle" font-family="Arial" font-size="17" font-weight="700" fill="#0756a5">Gene regulatory domain &gt; transcribed gene body &gt; CDS: related concepts, but not identical boundaries</text>
+</svg>

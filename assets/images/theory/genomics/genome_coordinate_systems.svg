@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">Genome coordinate systems</title>
+  <desc id="desc">A genomic interval is only meaningful when the reference assembly, chromosome, coordinate convention and strand are specified. The same interval is written with a one-based closed start in a genome browser and a zero-based half-open start in a BED file. Transcript and coding DNA coordinates are relative to a selected transcript.</desc>
+  <rect width="1200" height="650" rx="28" fill="#f6faff"/>
+  <text x="600" y="54" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">Genome Coordinates: Absolute and Relative Positions</text>
+  <text x="600" y="84" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">Assembly + sequence + coordinate convention + strand are required</text>
+
+  <g font-family="Arial">
+    <rect x="65" y="120" width="1070" height="205" rx="18" fill="#ffffff" stroke="#c5d7e8" stroke-width="2"/>
+    <text x="95" y="158" font-size="21" font-weight="700" fill="#173f68">Genome-based position: “absolute” within one reference assembly</text>
+    <rect x="95" y="182" width="1010" height="28" rx="14" fill="#dce7f2"/>
+    <rect x="340" y="182" width="590" height="28" rx="14" fill="#176fd0"/>
+    <line x1="340" y1="174" x2="340" y2="225" stroke="#0756a5" stroke-width="3"/>
+    <line x1="930" y1="174" x2="930" y2="225" stroke="#0756a5" stroke-width="3"/>
+    <text x="340" y="246" text-anchor="middle" font-size="14" fill="#526b83">start base</text>
+    <text x="930" y="246" text-anchor="middle" font-size="14" fill="#526b83">end base</text>
+    <text x="95" y="282" font-size="17" font-weight="700" fill="#0756a5">Browser / Ensembl</text>
+    <text x="300" y="282" font-size="17" fill="#173f68">GRCh38 chr1:11,111–1,212,332</text>
+    <text x="715" y="282" font-size="15" fill="#526b83">1-based, closed [start, end]</text>
+    <text x="95" y="310" font-size="17" font-weight="700" fill="#8d5d08">BED file</text>
+    <text x="300" y="310" font-size="17" fill="#173f68">chr1  11110  1212332</text>
+    <text x="715" y="310" font-size="15" fill="#526b83">0-based, half-open [start, end)</text>
+  </g>
+
+  <g font-family="Arial">
+    <rect x="65" y="355" width="520" height="215" rx="18" fill="#e6f1ff"/>
+    <text x="325" y="392" text-anchor="middle" font-size="21" font-weight="700" fill="#0756a5">Gene-relative position</text>
+    <line x1="115" y1="468" x2="535" y2="468" stroke="#71869a" stroke-width="4"/>
+    <polygon points="475,447 535,468 475,489" fill="#347bb7"/>
+    <rect x="300" y="438" width="95" height="60" rx="6" fill="#176fd0"/>
+    <line x1="270" y1="423" x2="270" y2="513" stroke="#e0a11e" stroke-width="4"/>
+    <text x="270" y="415" text-anchor="middle" font-size="15" font-weight="700" fill="#8d5d08">TSS +1</text>
+    <text x="175" y="455" text-anchor="middle" font-size="15" fill="#526b83">−1 kb upstream</text>
+    <text x="347" y="530" text-anchor="middle" font-size="14" fill="#526b83">Relative to TSS and strand</text>
+  </g>
+
+  <g font-family="Arial">
+    <rect x="615" y="355" width="520" height="215" rx="18" fill="#e9fbf6"/>
+    <text x="875" y="392" text-anchor="middle" font-size="21" font-weight="700" fill="#24745f">Reference-sequence position</text>
+    <text x="660" y="432" font-size="17" font-weight="700" fill="#173f68">Genomic</text><text x="825" y="432" font-size="17" fill="#526b83">NC_…:g.123456A&gt;G</text>
+    <text x="660" y="469" font-size="17" font-weight="700" fill="#173f68">Coding DNA</text><text x="825" y="469" font-size="17" fill="#526b83">NM_…:c.76A&gt;T</text>
+    <text x="660" y="506" font-size="17" font-weight="700" fill="#173f68">Protein</text><text x="825" y="506" font-size="17" fill="#526b83">NP_…:p.(Gly26Cys)</text>
+    <text x="875" y="545" text-anchor="middle" font-size="14" fill="#526b83">Transcript accession and version determine the relative coordinate</text>
+  </g>
+
+  <rect x="65" y="596" width="1070" height="35" rx="9" fill="#fff3cd"/>
+  <text x="600" y="620" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="#715500">A coordinate without GRCh37/GRCh38 and its convention is incomplete and may point to the wrong base.</text>
+</svg>
