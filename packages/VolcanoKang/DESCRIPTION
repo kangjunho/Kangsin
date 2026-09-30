@@ -1,0 +1,14 @@
+Package: VolcanoKang
+Type: Package
+Title: Volcano Plot Generator by Kang
+Version: 0.1.1
+Author: Junho Kang
+Maintainer: Junho Kang <junho6399@dsmc.or.kr>
+Description: Creates volcano plots for differential gene expression analysis
+    using configurable fold-change and p-value thresholds.
+Depends: R (>= 4.1.0)
+Imports: ggplot2, dplyr, ggrepel
+License: MIT + file LICENSE
+Encoding: UTF-8
+RoxygenNote: 7.3.2
+NeedsCompilation: no
