@@ -1,18 +1,357 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>04. Variant Interpretation</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="../../assets/css/theory-course.css"></head><body>
-<nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar"><div class="container"><a class="navbar-brand" href="../../index.html"><img src="../../assets/images/logo.png" alt="Dongsan Medical Center Logo"><span class="brand-text">Kang's Bioinformatics</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="navbarNav"><ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li><li class="nav-item"><a class="nav-link" href="../../about.html">About</a></li><li class="nav-item"><a class="nav-link" href="../../members.html">Members</a></li><li class="nav-item"><a class="nav-link" href="../../publications.html">Publications</a></li><li class="nav-item"><a class="nav-link active" href="../../e-learning.html">E-learning</a></li><li class="nav-item"><a class="nav-link" href="../../bioinformatics-analysis.html">Bioinformatics Analysis</a></li></ul></div></div></nav>
-<header class="course-hero text-center"><div class="container"><span class="badge text-bg-primary mb-2">GENOMICS · CHAPTER 04</span><h1>Variant Interpretation</h1><p class="lead mb-0">검출된 변이의 생물학적·임상적 의미를 평가하는 과정</p></div></header>
-<main class="py-5"><div class="container"><div class="course-layout"><aside><nav class="course-sidebar"><a class="active" href="#objectives">Learning Objectives</a><a href="#germline">1. Germline vs Somatic</a><a href="#genotype">2. Genotype &amp; Allele</a><a href="#consequence">3. Consequences</a><a href="#frequency">4. Population Frequency</a><a href="#prediction">5. Prediction</a><a href="#databases">6. Databases</a><a href="#classification">7. Classification</a><a href="#somatic">8. Somatic Evidence</a><a href="#integration">9. Evidence Integration</a><a href="#errors">10. Common Errors</a><a href="#summary">Summary &amp; Check</a></nav></aside><div>
-<section class="chapter-section" id="objectives"><h2>Learning Objectives</h2><div class="learning-objectives"><ul class="mb-0"><li>Germline과 somatic variant의 차이를 설명할 수 있다.</li><li>VAF와 population allele frequency를 구분할 수 있다.</li><li>Variant consequence와 prediction score를 올바르게 해석할 수 있다.</li><li>여러 근거를 통합하여 변이의 임상적 의미를 평가하는 원리를 이해한다.</li></ul></div></section>
-<section class="chapter-section" id="germline"><h2>1. Germline and Somatic Variants</h2><div class="concept-grid"><div class="concept-card"><strong>Germline variant</strong>수정란 단계부터 존재하며 여러 조직에서 관찰될 수 있고 가족에게 전달될 수 있습니다.</div><div class="concept-card"><strong>Somatic variant</strong>발생 이후 특정 세포집단에서 후천적으로 생기며 일반적으로 유전되지 않습니다.</div><div class="concept-card"><strong>Clonal hematopoiesis</strong>혈액세포 clone에서 발생한 somatic variant로 tumor-normal 분석의 해석을 방해할 수 있습니다.</div></div><div class="key-point"><strong>시료가 해석을 결정합니다:</strong> 말초혈액 gDNA만 분석한다면 원칙적으로 germline variant 분석입니다. 종양과 matched blood를 비교할 때 혈액은 정상 대조군으로 사용될 수 있습니다.</div></section>
-<section class="chapter-section" id="genotype"><h2>2. Genotype and Allele</h2><div class="table-responsive"><table class="table table-bordered"><thead class="table-light"><tr><th>개념</th><th>의미</th></tr></thead><tbody><tr><td>Reference allele</td><td>Reference genome에 기록된 allele</td></tr><tr><td>Alternative allele</td><td>Reference와 다른 관찰 allele</td></tr><tr><td>Heterozygous</td><td>두 allele이 서로 다른 genotype</td></tr><tr><td>Homozygous</td><td>두 allele이 동일한 genotype</td></tr><tr><td>VAF</td><td>해당 시료의 variant-supporting read 비율</td></tr><tr><td>Population AF</td><td>인구집단에서 해당 allele이 관찰되는 빈도</td></tr></tbody></table></div><div class="caution-box"><strong>혼동 주의:</strong> VAF는 한 시료 안의 read 비율이고 population allele frequency는 집단에서의 allele 빈도입니다.</div></section>
-<section class="chapter-section" id="consequence"><h2>3. Functional Consequences</h2><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Consequence</th><th>설명</th><th>가능한 영향</th></tr></thead><tbody><tr><td>Synonymous</td><td>Amino acid가 변하지 않음</td><td>대개 제한적이나 splicing 등에 영향 가능</td></tr><tr><td>Missense</td><td>Amino acid가 다른 것으로 변경</td><td>Protein function 변화 가능</td></tr><tr><td>Nonsense</td><td>조기 stop codon 생성</td><td>Truncated protein 또는 NMD</td></tr><tr><td>Frameshift</td><td>Reading frame 변화</td><td>광범위한 downstream sequence 변화</td></tr><tr><td>Splice-site</td><td>Splicing 관련 위치 변화</td><td>Exon skipping 또는 abnormal transcript</td></tr><tr><td>Regulatory</td><td>Promoter·enhancer 등 변화</td><td>Gene expression 변화 가능</td></tr></tbody></table></div><p>Consequence는 변이의 위치에 따른 1차 주석이며 병원성을 직접 의미하지 않습니다.</p></section>
-<section class="chapter-section" id="frequency"><h2>4. Population Frequency</h2><p>질환 유병률과 유전양식을 고려했을 때 지나치게 흔한 variant는 희귀 단일유전자 질환의 원인일 가능성이 낮습니다. gnomAD와 같은 자원은 다양한 인구집단의 allele frequency를 제공합니다.</p><ul><li>전체 population frequency뿐 아니라 ancestry-specific frequency를 확인합니다.</li><li>Database의 coverage와 sample quality를 함께 고려합니다.</li><li>Founder variant처럼 특정 집단에서 상대적으로 흔한 병원성 변이도 존재합니다.</li></ul><div class="caution-box"><strong>주의:</strong> 데이터베이스에 없다는 사실만으로 pathogenic variant가 되지는 않습니다.</div></section>
-<section class="chapter-section" id="prediction"><h2>5. Functional Prediction</h2><div class="table-responsive"><table class="table table-bordered"><thead class="table-light"><tr><th>Tool</th><th>주요 대상</th><th>해석상 주의</th></tr></thead><tbody><tr><td>SIFT / PolyPhen-2</td><td>Missense variant</td><td>알고리즘 간 결과가 다를 수 있음</td></tr><tr><td>CADD / REVEL</td><td>통합 deleteriousness score</td><td>진단 기준이 아닌 보조 근거</td></tr><tr><td>SpliceAI</td><td>Splicing 영향</td><td>RNA 또는 functional validation 필요 가능</td></tr></tbody></table></div><div class="key-point"><strong>Key point:</strong> In silico prediction은 독립적인 확정 근거가 아니라 다른 자료와 함께 사용하는 보조 근거입니다.</div></section>
-<section class="chapter-section" id="databases"><h2>6. Disease and Variant Databases</h2><div class="concept-grid"><div class="concept-card"><strong>ClinVar</strong>Germline variant의 임상적 분류와 제출 근거를 제공합니다.</div><div class="concept-card"><strong>OMIM</strong>유전자와 인간 유전질환의 관계를 정리합니다.</div><div class="concept-card"><strong>gnomAD</strong>Population allele frequency를 제공합니다.</div><div class="concept-card"><strong>COSMIC</strong>암에서 관찰된 somatic mutation 정보를 제공합니다.</div><div class="concept-card"><strong>CIViC / OncoKB</strong>암 변이의 임상적 근거와 치료 관련성을 제공합니다.</div><div class="concept-card"><strong>dbSNP</strong>등록된 variant identifier와 기본 정보를 제공합니다.</div></div><p class="mt-3">Database의 최신 버전, review status, 근거 수준과 상충하는 제출 내용을 확인해야 합니다.</p></section>
-<section class="chapter-section" id="classification"><h2>7. Germline Variant Classification</h2><p>ACMG/AMP framework는 population, computational, functional, segregation 및 임상 자료를 통합해 germline variant를 분류합니다.</p><div class="process-flow"><span>Pathogenic</span><b>·</b><span>Likely pathogenic</span><b>·</b><span>VUS</span><b>·</b><span>Likely benign</span><b>·</b><span>Benign</span></div><div class="caution-box"><strong>VUS:</strong> Variant of uncertain significance는 현재 근거가 부족하다는 뜻입니다. 병원성이나 양성으로 임의 해석해서는 안 됩니다.</div></section>
-<section class="chapter-section" id="somatic"><h2>8. Somatic Variant Interpretation</h2><div class="concept-grid"><div class="concept-card"><strong>Driver</strong>종양 발생과 성장에 선택적 이점을 제공하는 변이입니다.</div><div class="concept-card"><strong>Passenger</strong>종양세포에 존재하지만 성장에 직접 기여하지 않는 변이입니다.</div><div class="concept-card"><strong>Actionable</strong>진단, 예후 또는 치료 선택에 활용할 근거가 있는 변이입니다.</div></div><h3>추가로 고려할 요소</h3><ul><li>Variant hotspot과 암종별 빈도</li><li>VAF, tumor purity, copy number와 clonality</li><li>치료제 반응·저항성 근거</li><li>Evidence tier와 guideline</li></ul></section>
-<section class="chapter-section" id="integration"><h2>9. Evidence Integration</h2><div class="process-flow"><span>Technical reliability</span><b>→</b><span>Population frequency</span><b>→</b><span>Functional consequence</span><b>→</b><span>Disease evidence</span><b>→</b><span>Clinical significance</span></div><p>변이 해석은 하나의 점수나 데이터베이스 결과로 결정하지 않습니다. 분석 품질, 생물학, 환자 표현형, inheritance pattern과 문헌 근거를 함께 평가합니다.</p></section>
-<section class="chapter-section" id="errors"><h2>10. Common Interpretation Errors</h2><ul><li>검출된 모든 변이를 질환 원인으로 간주</li><li>Rare variant를 pathogenic variant와 동일시</li><li>Prediction score만으로 병원성 판정</li><li>Genome build와 transcript version을 기록하지 않음</li><li>Germline과 somatic 분석 목적을 혼동</li><li>VUS를 임상적으로 확정된 결과처럼 보고</li><li>Database 등록 여부를 인과성의 증거로 과대해석</li></ul></section>
-<section class="chapter-section" id="summary"><h2>Key Takeaways</h2><ul><li>Variant interpretation은 기술적 신뢰도에서 임상적 의미까지 근거를 단계적으로 통합합니다.</li><li>VAF와 population frequency는 서로 다른 개념입니다.</li><li>Functional prediction과 database annotation은 보조 근거입니다.</li><li>Rare, deleterious, pathogenic, actionable은 같은 의미가 아닙니다.</li></ul><h3>Check Your Understanding</h3><ol><li>말초혈액 gDNA에서 발견된 변이를 기본적으로 germline으로 보는 이유는 무엇인가요?</li><li>VUS를 임상 의사결정에 바로 사용할 수 없는 이유는 무엇인가요?</li><li>Somatic variant가 actionable한지 판단하려면 어떤 근거가 필요한가요?</li></ol></section>
-<nav class="chapter-pagination"><a class="btn btn-outline-secondary" href="03_variant_analysis.html">← Chapter 03</a><a class="btn btn-primary" href="../../e-learning-practice.html">Continue to Hands-on →</a></nav>
-</div></div></div></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04. Variant Interpretation, GWAS and PRS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/theory-course.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar">
+    <div class="container">
+      <a class="navbar-brand" href="../../index.html">
+        <img src="../../assets/images/logo.png" alt="Dongsan Medical Center Logo">
+        <span class="brand-text">Kang's Bioinformatics</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../members.html">Members</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../publications.html">Publications</a></li>
+          <li class="nav-item"><a class="nav-link active" href="../../e-learning.html">E-learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../bioinformatics-analysis.html">Bioinformatics Analysis</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="course-hero text-center">
+    <div class="container">
+      <span class="badge text-bg-primary mb-2">GENOMICS · CHAPTER 04</span>
+      <h1>Variant Interpretation, GWAS and PRS</h1>
+      <p class="lead mb-0">개별 변이의 의미에서 집단 연관성과 다유전자 위험 예측까지</p>
+    </div>
+  </header>
+
+  <main class="py-5">
+    <div class="container">
+      <div class="course-layout">
+        <aside>
+          <nav class="course-sidebar" aria-label="Chapter navigation">
+            <a class="active" href="#objectives">Learning Objectives</a>
+            <a href="#overview">Analysis Scales</a>
+            <a href="#single-variant">Part I. Single Variant</a>
+            <a href="#gwas">Part II. GWAS Design</a>
+            <a href="#gwas-results">GWAS Results</a>
+            <a href="#prs">Part III. PRS / PGS</a>
+            <a href="#comparison">Part IV. GWAS vs WGS</a>
+            <a href="#post-gwas">Post-GWAS Analysis</a>
+            <a href="#pitfalls">Common Pitfalls</a>
+            <a href="#references">References</a>
+            <a href="#summary">Summary &amp; Check</a>
+          </nav>
+        </aside>
+
+        <div>
+          <section class="chapter-section" id="objectives">
+            <h2>Learning Objectives</h2>
+            <div class="learning-objectives">
+              <ul class="mb-0">
+                <li>개별 WGS/WES variant 해석과 population-level GWAS가 답하는 질문을 구분할 수 있다.</li>
+                <li>GWAS의 phenotype 설계, genotype QC, imputation, population structure 보정과 association model을 설명할 수 있다.</li>
+                <li>Manhattan plot, QQ plot, effect size, P value, lead SNP와 LD locus를 올바르게 해석할 수 있다.</li>
+                <li>GWAS summary statistics로 PRS/PGS를 구성하고 독립 cohort에서 검증하는 원리를 이해한다.</li>
+                <li>GWAS SNP와 WGS variant의 차이와 중복관계를 설명할 수 있다.</li>
+                <li>Association, causation, prediction, diagnosis와 clinical utility를 구분할 수 있다.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="chapter-section" id="overview">
+            <h2>Analysis Scales: 같은 genome을 보는 세 가지 관점</h2>
+            <p>Genetic study는 모두 DNA variation을 다루지만 분석 단위가 다릅니다. WGS/WES에서 찾은 한 변이는 개인이나 가족에서 병원성을 평가할 수 있고, GWAS는 많은 사람을 비교하여 phenotype과 연관된 locus를 찾으며, PRS는 다수 variant의 작은 효과를 한 개인의 score로 합산합니다.</p>
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/genetic_analysis_scales.svg" alt="Single variant interpretation, GWAS, PRS가 각각 개인, 집단 연관성, 개인 위험 예측 수준에서 다른 질문을 다루는 그림">
+              <figcaption>Figure 1. 세 분석 수준. Single variant, GWAS locus와 PRS는 입력자료와 통계적 의미가 다르므로 같은 언어로 해석하면 안 됩니다.</figcaption>
+            </figure>
+            <div class="key-point"><strong>핵심 구분:</strong> 개별 variant의 병원성, GWAS의 통계적 연관성, PRS의 예측력은 서로 다른 속성입니다. 유의한 GWAS SNP가 반드시 causal/pathogenic하지 않으며, 높은 PRS가 질병 진단을 의미하지도 않습니다.</div>
+          </section>
+
+          <section class="chapter-section" id="single-variant">
+            <div class="part-heading"><span class="part-number">I</span><h2>Single-Variant Interpretation</h2></div>
+            <p>Chapter 03에서 얻은 germline 또는 somatic call을 개별적으로 평가하는 단계입니다. 먼저 BAM evidence와 caller filter를 확인한 뒤 population frequency, functional consequence, inheritance, phenotype와 disease-specific evidence를 통합합니다.</p>
+            <div class="process-flow">
+              <span>Technical reliability</span><b>→</b><span>Allele frequency</span><b>→</b><span>Gene / transcript</span><b>→</b><span>Functional evidence</span><b>→</b><span>Phenotype / clinical evidence</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>개념</th><th>의미</th><th>혼동하면 안 되는 개념</th></tr></thead>
+                <tbody>
+                  <tr><td>Sample VAF</td><td>한 sample에서 ALT를 지지하는 read 비율</td><td>Population allele frequency</td></tr>
+                  <tr><td>Population AF</td><td>Population에서 해당 allele이 존재하는 빈도</td><td>환자 sample의 VAF</td></tr>
+                  <tr><td>Functional consequence</td><td>Transcript 기준 missense, stop-gain, splice 등의 위치 영향</td><td>Pathogenicity의 확정</td></tr>
+                  <tr><td>Pathogenic variant</td><td>질환 인과성에 대한 충분한 근거가 있는 germline variant</td><td>단순히 rare/deleterious한 variant</td></tr>
+                  <tr><td>Somatic driver</td><td>Tumor clone에 선택적 이점을 제공하는 alteration</td><td>Tumor에서 관찰된 모든 passenger</td></tr>
+                  <tr><td>Actionable variant</td><td>진단·예후·치료와 연결할 근거가 있는 alteration</td><td>생물학적으로 흥미로운 모든 variant</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="term-pair">
+              <div><strong>Germline interpretation</strong><br>ACMG/AMP와 ClinGen specification을 사용해 population, segregation, functional, phenotype evidence를 통합합니다. VUS는 현재 근거가 부족하다는 뜻이지 “의심되는 pathogenic”의 동의어가 아닙니다.</div>
+              <div><strong>Somatic interpretation</strong><br>Cancer type, hotspot, VAF, purity, copy number, clonality와 therapeutic evidence tier를 평가합니다. Driver와 actionable은 겹칠 수 있지만 동일한 개념은 아닙니다.</div>
+            </div>
+          </section>
+
+          <section class="chapter-section" id="gwas">
+            <div class="part-heading"><span class="part-number">II</span><h2>Genome-Wide Association Study</h2></div>
+            <p>GWAS는 수많은 사람에서 genome 전반의 marker를 검사하여 disease 또는 quantitative trait와 통계적으로 연관된 variant를 찾는 연구입니다. 전통적으로 SNP array와 imputation을 사용하지만 WGS genotype을 이용한 sequencing-based GWAS도 가능합니다.</p>
+
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/gwas_workflow_manhattan.svg" alt="GWAS의 cohort 설계, genotype QC, imputation, association, Manhattan plot과 replication 및 fine mapping 흐름">
+              <figcaption>Figure 2. GWAS의 전체 흐름과 Manhattan plot. Genome-wide peak는 연관 locus를 의미하며, 가장 높은 lead SNP가 곧 causal variant라는 뜻은 아닙니다.</figcaption>
+            </figure>
+
+            <h3>1. Phenotype과 cohort 설계</h3>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>설계</th><th>Phenotype</th><th>대표 모델</th><th>출력 효과크기</th></tr></thead>
+                <tbody>
+                  <tr><td>Case–control</td><td>Disease yes/no</td><td>Logistic regression 또는 mixed model</td><td>Log(OR), odds ratio</td></tr>
+                  <tr><td>Quantitative trait</td><td>키, 혈압, biomarker 등 연속값</td><td>Linear regression/mixed model</td><td>Allele당 phenotype 변화 β</td></tr>
+                  <tr><td>Time-to-event</td><td>발병·재발·생존시간</td><td>Cox model 등</td><td>Hazard ratio</td></tr>
+                  <tr><td>Meta-analysis</td><td>여러 cohort의 동일/조화 phenotype</td><td>Fixed/random-effects 등</td><td>Pooled effect와 heterogeneity</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>정확한 phenotype 정의가 genotype 수보다 먼저입니다. Case ascertainment, control의 연령과 follow-up, medication, batch, recruitment site와 exclusion criteria가 불명확하면 큰 sample에서도 bias가 발생합니다. Discovery cohort와 독립 replication cohort를 처음부터 분리하는 것이 좋습니다.</p>
+
+            <h3>2. Sample-level genotype QC</h3>
+            <ul>
+              <li><strong>Call rate:</strong> Genotype가 지나치게 많이 빠진 sample을 확인합니다.</li>
+              <li><strong>Heterozygosity:</strong> 오염, inbreeding 또는 batch outlier를 탐지합니다.</li>
+              <li><strong>Genetic sex:</strong> Metadata와 sex-chromosome genotype의 불일치를 확인합니다.</li>
+              <li><strong>Relatedness/duplicates:</strong> 예상하지 않은 동일인·가족관계를 확인하고 model 또는 sample set을 조정합니다.</li>
+              <li><strong>Ancestry/PCA:</strong> Genetic ancestry와 population structure를 파악해 confounding을 통제합니다.</li>
+              <li><strong>Batch/site:</strong> Case와 control이 서로 다른 chip, center 또는 recruitment period에 집중되지 않았는지 확인합니다.</li>
+            </ul>
+
+            <h3>3. Variant-level QC and imputation</h3>
+            <ul>
+              <li><strong>Missingness:</strong> Variant call rate와 case/control 간 differential missingness를 확인합니다.</li>
+              <li><strong>Allele frequency/count:</strong> 너무 희귀하여 single-variant test가 불안정한 marker를 구분합니다.</li>
+              <li><strong>Hardy–Weinberg equilibrium:</strong> Control에서 예상과 크게 벗어난 marker는 genotyping error 가능성을 확인합니다.</li>
+              <li><strong>Strand/allele:</strong> A/T, C/G palindromic SNP와 effect allele 방향을 주의합니다.</li>
+              <li><strong>Imputation:</strong> Reference haplotype panel과 LD를 이용해 array에서 직접 측정하지 않은 genotype dosage를 추정합니다.</li>
+              <li><strong>Imputation quality:</strong> INFO/R²가 낮은 variant는 association과 PRS에서 제외하거나 민감도 분석합니다.</li>
+            </ul>
+            <div class="caution-box"><strong>Imputed genotype는 직접 sequencing한 allele count가 아닙니다.</strong> 가장 가능성 높은 0/1/2 genotype 또는 0–2 사이의 allele dosage와 불확실성으로 표현되며, reference panel과 ancestry에 따라 정확도가 달라집니다.</div>
+
+            <h3>4. Association model</h3>
+            <div class="formula-box">
+              <strong>Phenotype = α + β × genotype dosage + covariates + error</strong>
+              Genotype dosage는 보통 effect allele 0–2개이며, age·sex·ancestry PC·batch·site 등 설계에 필요한 covariate를 포함합니다.
+            </div>
+            <p>Binary trait의 logistic model에서 <code>exp(β)</code>는 allele당 odds ratio입니다. Quantitative trait에서 β는 effect allele 한 개당 평균 phenotype 변화입니다. Population structure, relatedness와 case–control imbalance가 크면 mixed model 또는 이에 적합한 방법을 사용합니다.</p>
+          </section>
+
+          <section class="chapter-section" id="gwas-results">
+            <h2>Reading GWAS Results</h2>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>결과 항목</th><th>의미</th><th>해석상 주의</th></tr></thead>
+                <tbody>
+                  <tr><td>Effect allele / other allele</td><td>효과크기가 어떤 allele 방향으로 계산되었는지 표시</td><td>Allele flip이 발생하면 PRS 방향이 반대가 됨</td></tr>
+                  <tr><td>β 또는 OR</td><td>효과의 방향과 크기</td><td>P value가 작아도 효과가 매우 작을 수 있음</td></tr>
+                  <tr><td>SE / confidence interval</td><td>효과 추정의 불확실성</td><td>표본수가 작거나 rare variant이면 불안정</td></tr>
+                  <tr><td>P value</td><td>Null model과 data의 불일치 정도</td><td>인과성·예측력·임상 중요도를 직접 의미하지 않음</td></tr>
+                  <tr><td>Lead/index SNP</td><td>한 locus에서 가장 강한 association marker</td><td>LD 때문에 causal variant의 proxy일 수 있음</td></tr>
+                  <tr><td>QQ plot</td><td>관측 P value와 null expectation 비교</td><td>초기부터 전체가 상승하면 stratification, relatedness, batch 등을 의심</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Common-variant GWAS에서는 일반적으로 <strong>P &lt; 5×10<sup>−8</sup></strong>을 genome-wide significance 기준으로 사용합니다. 하지만 study design, variant 수, ancestry 및 rare-variant test에 따라 적절한 multiple-testing 기준은 달라질 수 있습니다.</p>
+
+            <h3>Peak 하나가 gene 하나를 의미하지 않는다</h3>
+            <p>인접 variant는 linkage disequilibrium(LD) 때문에 함께 유전될 수 있습니다. 따라서 하나의 causal signal이 여러 significant SNP를 만들 수 있고, lead SNP가 intergenic region에 있거나 먼 gene의 enhancer와 연결될 수도 있습니다.</p>
+            <div class="process-flow">
+              <span>Lead SNP</span><b>→</b><span>LD locus</span><b>→</b><span>Conditional analysis</span><b>→</b><span>Fine-mapping credible set</span><b>→</b><span>Gene mapping / functional validation</span>
+            </div>
+            <div class="key-point"><strong>Replication:</strong> 같은 SNP 또는 locus가 독립 cohort에서 같은 effect direction으로 재현되는지 확인해야 합니다. 발견 cohort에서 가장 크게 보인 효과는 winner's curse로 과대 추정될 수 있습니다.</div>
+          </section>
+
+          <section class="chapter-section" id="prs">
+            <div class="part-heading"><span class="part-number">III</span><h2>Polygenic Risk Score / Polygenic Score</h2></div>
+            <p><strong>PGS</strong>는 다수 genetic variant의 effect allele dosage에 GWAS-derived weight를 곱해 합산한 값입니다. Disease risk를 대상으로 할 때 PRS라는 용어를 흔히 사용합니다. 한 개의 high-penetrance variant를 찾는 검사가 아니라, 많은 작은 효과를 합쳐 개인의 상대적 genetic predisposition을 정량화합니다.</p>
+
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/prs_construction_validation.svg" alt="GWAS summary statistics를 harmonization과 LD modeling 후 target genotype에 적용해 PRS를 계산하고 독립 cohort에서 검증하는 과정">
+              <figcaption>Figure 3. PRS 개발과 검증. Discovery, tuning/training, final evaluation sample이 중복되면 성능이 과대평가될 수 있습니다.</figcaption>
+            </figure>
+
+            <h3>1. PRS formula</h3>
+            <div class="formula-box">
+              <strong>PRS<sub>i</sub> = Σ<sub>j=1</sub><sup>M</sup> β<sub>j</sub>G<sub>ij</sub></strong>
+              β<sub>j</sub>: variant j의 effect weight · G<sub>ij</sub>: 개인 i의 effect-allele dosage
+            </div>
+            <p>Binary trait에서 β는 보통 log(OR), quantitative trait에서는 allele당 effect estimate입니다. Raw PRS 자체에는 보편적인 단위가 없으므로 target population 안에서 mean/SD, percentile 또는 risk group으로 표준화합니다.</p>
+
+            <h3>2. Variant와 weight를 어떻게 선택하는가?</h3>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>접근</th><th>원리</th><th>장단점</th></tr></thead>
+                <tbody>
+                  <tr><td>Genome-wide significant SNP only</td><td>강한 독립 signal만 합산</td><td>해석은 단순하지만 polygenic signal을 많이 놓칠 수 있음</td></tr>
+                  <tr><td>Clumping + thresholding</td><td>LD가 높은 SNP를 줄이고 여러 P-value threshold를 비교</td><td>직관적이지만 threshold tuning과 LD reference에 영향</td></tr>
+                  <tr><td>LD-aware Bayesian/shrinkage</td><td>Genome-wide effect와 LD를 함께 모델링해 weight를 축소·추정</td><td>예측력이 좋아질 수 있으나 method, prior, LD panel 의존</td></tr>
+                  <tr><td>Multi-ancestry method</td><td>여러 ancestry GWAS와 LD 정보를 통합</td><td>Portability 향상을 목표로 하나 충분한 diverse data가 필요</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>3. Allele harmonization이 가장 흔한 기술적 함정</h3>
+            <ul>
+              <li>Scoring file과 target genotype의 genome build를 맞춥니다.</li>
+              <li>Effect allele과 non-effect allele의 방향을 확인합니다.</li>
+              <li>A/T 및 C/G palindromic SNP는 strand와 allele frequency 없이 방향을 결정하기 어려울 수 있습니다.</li>
+              <li>Imputation quality와 missing score variant 비율을 보고합니다.</li>
+              <li>사용한 PGS Catalog ID, scoring file version, variant 수와 계산 software를 기록합니다.</li>
+            </ul>
+
+            <h3>4. 독립 validation에서 무엇을 평가하는가?</h3>
+            <div class="concept-grid">
+              <div class="concept-card"><strong>Discrimination</strong>Case와 control 또는 사건 발생 순서를 얼마나 구분하는지 AUC/C-index, R², OR per SD 등으로 평가합니다.</div>
+              <div class="concept-card"><strong>Calibration</strong>예측한 absolute risk와 실제 발생률이 일치하는지 평가합니다. 높은 AUC가 좋은 calibration을 보장하지 않습니다.</div>
+              <div class="concept-card"><strong>Incremental value</strong>Age, sex, family history 등 기존 clinical model에 PRS를 추가했을 때 실제로 개선되는지 비교합니다.</div>
+              <div class="concept-card"><strong>Portability</strong>Ancestry, sex, age, site, genotyping platform과 clinical setting별 성능을 확인합니다.</div>
+              <div class="concept-card"><strong>Clinical utility</strong>위험분류가 screening·prevention·treatment 결정을 바꾸고 outcome을 개선하는지 평가합니다.</div>
+              <div class="concept-card"><strong>Reproducibility</strong>Development cohort, overlap, score definition과 평가방법을 PRS-RS에 맞게 투명하게 보고합니다.</div>
+            </div>
+            <div class="caution-box"><strong>PRS는 진단검사가 아닙니다.</strong> 현재 알려진 genetic susceptibility를 상대적으로 요약하며 환경, 생활습관, rare high-impact variant와 현재의 질병 상태를 모두 포함하지 않습니다. 특히 discovery GWAS와 ancestry가 다른 population에 적용하면 성능과 calibration이 달라질 수 있습니다.</div>
+          </section>
+
+          <section class="chapter-section" id="comparison">
+            <div class="part-heading"><span class="part-number">IV</span><h2>GWAS SNP and WGS Variant: 무엇이 다른가?</h2></div>
+            <p>가장 먼저 바로잡아야 할 점은 <strong>GWAS SNP와 WGS variant가 완전히 별개의 변이 종류가 아니라는 것</strong>입니다. SNP는 single-base 위치에서 population 내 variation을 나타내는 용어이고, WGS는 sequencing read에서 variant를 관측하는 방법입니다. 따라서 WGS 결과에도 common SNP가 포함되며, WGS genotype으로 GWAS를 수행할 수도 있습니다.</p>
+
+            <figure class="course-figure">
+              <img src="../../assets/images/theory/genomics/gwas_snp_vs_wgs_variant.svg" alt="Array 기반 GWAS SNP와 개인 WGS variant의 데이터 생성 방식, 통계적 질문, 결과 차이와 공통영역을 비교한 그림">
+              <figcaption>Figure 4. Array GWAS와 WGS variant calling의 차이와 중복관계. 핵심 차이는 변이의 물질적 종류보다 관측 방식과 연구 질문입니다.</figcaption>
+            </figure>
+
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>항목</th><th>전통적 SNP-array GWAS</th><th>개인 WGS variant analysis</th></tr></thead>
+                <tbody>
+                  <tr><td>주요 목적</td><td>Population에서 genotype–phenotype association 탐색</td><td>한 sample의 sequence difference를 검출·genotype</td></tr>
+                  <tr><td>원자료</td><td>Probe intensity로 측정한 선택된 SNP genotype</td><td>Genome 전체의 sequencing reads</td></tr>
+                  <tr><td>측정되지 않은 위치</td><td>LD reference를 이용해 imputation 가능</td><td>Coverage와 mapping이 충분하면 직접 variant calling</td></tr>
+                  <tr><td>대표 변이 범위</td><td>주로 common SNP; imputed low-frequency variant 포함 가능</td><td>Common·rare·private SNV, indel, CNV, SV, mtDNA</td></tr>
+                  <tr><td>한 사람의 값</td><td>Allele dosage 또는 genotype probability</td><td>GT, DP, AD, GQ와 read-level evidence</td></tr>
+                  <tr><td>주요 통계</td><td>β/OR, SE, P value, LD와 replication</td><td>Depth, allele balance, quality, annotation와 inheritance</td></tr>
+                  <tr><td>대표 결과</td><td>Summary statistics, Manhattan/QQ plot, associated locus</td><td>VCF/gVCF, annotated variant table</td></tr>
+                  <tr><td>해석 오류</td><td>Associated lead SNP를 causal variant로 단정</td><td>검출된 rare variant를 pathogenic으로 단정</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>SNP, SNV, variant와 rsID</h3>
+            <ul>
+              <li><strong>Variant:</strong> Reference 또는 사람들 사이에서 관찰되는 DNA sequence 차이를 포괄하는 용어입니다.</li>
+              <li><strong>SNV:</strong> 한 nucleotide 위치의 차이입니다. 개인 variant calling 문맥에서 많이 사용합니다.</li>
+              <li><strong>SNP:</strong> Population에서 관찰되는 single-nucleotide polymorphism입니다. 역사적으로 common variation과 GWAS marker 문맥에서 많이 사용했지만 용법은 자료마다 다를 수 있습니다.</li>
+              <li><strong>rsID:</strong> dbSNP의 reference identifier입니다. rsID가 있다고 common, functional, causal 또는 pathogenic이라는 뜻은 아닙니다.</li>
+            </ul>
+
+            <h3>WGS가 GWAS에 추가하는 것</h3>
+            <p>WGS는 array가 직접 측정하지 못하거나 imputation이 어려운 rare SNV/indel, ancestry-specific variant와 일부 structural variant를 포괄할 수 있습니다. 하지만 rare variant는 carrier 수가 적어 variant 하나씩 검사하면 power가 부족합니다. 따라서 gene 또는 functional unit 안의 rare variant를 모으는 burden test, SKAT류의 set-based association이 자주 사용됩니다.</p>
+            <div class="key-point"><strong>정리:</strong> GWAS는 분석 설계이고 WGS는 데이터 생성 방식입니다. <em>Array GWAS vs WGS calling</em>은 비교할 수 있지만, <em>GWAS vs WGS</em>를 서로 배타적인 변이 종류로 이해하면 안 됩니다.</div>
+          </section>
+
+          <section class="chapter-section" id="post-gwas">
+            <h2>Post-GWAS and Integrated Analysis</h2>
+            <p>Genome-wide significance는 연구의 끝이 아니라 locus를 생물학으로 연결하는 출발점입니다.</p>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light"><tr><th>분석</th><th>답하려는 질문</th><th>주의점</th></tr></thead>
+                <tbody>
+                  <tr><td>Conditional analysis</td><td>한 locus에 독립 association signal이 여러 개인가?</td><td>Ancestry-matched LD reference 또는 individual data 필요</td></tr>
+                  <tr><td>Fine-mapping</td><td>Causal variant를 포함할 가능성이 높은 credible set은?</td><td>LD, sample size, ancestry 다양성에 따라 해상도 변화</td></tr>
+                  <tr><td>eQTL colocalization</td><td>Trait와 gene expression이 같은 causal signal을 공유하는가?</td><td>단순히 두 peak가 가까운 것과 colocalization은 다름</td></tr>
+                  <tr><td>Functional annotation</td><td>Variant가 enhancer, promoter, coding/splicing에 영향을 주는가?</td><td>질환 관련 tissue/cell type context가 중요</td></tr>
+                  <tr><td>Pathway / gene-set</td><td>Association이 특정 생물학적 기능에 모이는가?</td><td>Gene length, LD와 locus-to-gene mapping bias 고려</td></tr>
+                  <tr><td>Genetic correlation</td><td>두 phenotype이 polygenic architecture를 공유하는가?</td><td>Sample overlap과 population mismatch 확인</td></tr>
+                  <tr><td>Mendelian randomization</td><td>Genetic instrument를 이용해 exposure의 causal effect를 지지하는가?</td><td>Pleiotropy, weak instrument와 핵심 가정 검토</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Single-variant, GWAS와 PRS 결과를 통합할 때는 서로 다른 effect scale과 evidence level을 유지해야 합니다. 예를 들어 pathogenic monogenic variant와 PRS를 한 숫자로 임의 합산하지 않고, 각각의 검증된 model과 clinical context 안에서 별도로 제시합니다.</p>
+          </section>
+
+          <section class="chapter-section" id="pitfalls">
+            <h2>Common Interpretation Pitfalls</h2>
+            <ul class="check-list">
+              <li>Genome-wide significant SNP를 causal variant 또는 가장 가까운 gene의 변이로 단정</li>
+              <li>P value가 작은 결과를 큰 effect 또는 높은 예측력으로 해석</li>
+              <li>Population structure, relatedness, batch와 case–control imbalance를 충분히 보정하지 않음</li>
+              <li>Effect allele과 strand를 확인하지 않고 summary statistics 또는 PRS weight를 결합</li>
+              <li>Discovery/training sample이 validation cohort에 포함되어 PRS 성능이 과대평가됨</li>
+              <li>한 ancestry에서 개발한 PRS를 calibration 없이 다른 population에 적용</li>
+              <li>높은 PRS를 질병 확진 또는 필연적인 발병으로 설명</li>
+              <li>WGS에서 검출된 rare variant를 frequency가 낮다는 이유만으로 pathogenic으로 판정</li>
+              <li>rsID 존재를 common, causal, pathogenic 또는 clinically useful하다는 근거로 사용</li>
+            </ul>
+          </section>
+
+          <section class="chapter-section" id="references">
+            <h2>References &amp; Further Reading</h2>
+            <ol class="references">
+              <li>NHGRI. <a href="https://www.genome.gov/about-genomics/fact-sheets/Genome-Wide-Association-Studies-Fact-Sheet" target="_blank" rel="noopener">Genome-Wide Association Studies Fact Sheet</a>.</li>
+              <li>Uffelmann E, et al. <a href="https://doi.org/10.1038/s43586-021-00056-9" target="_blank" rel="noopener">Genome-wide association studies</a>. <em>Nature Reviews Methods Primers</em>. 2021.</li>
+              <li>NHGRI–EBI. <a href="https://www.ebi.ac.uk/gwas/" target="_blank" rel="noopener">GWAS Catalog</a>.</li>
+              <li>GWAS Catalog. <a href="https://www.ebi.ac.uk/gwas/docs/summary-statistics-format/" target="_blank" rel="noopener">GWAS summary statistics standard</a>.</li>
+              <li>NHGRI. <a href="https://www.genome.gov/about-genomics/educational-resources/fact-sheets/human-genomic-variation" target="_blank" rel="noopener">Human Genomic Variation</a>.</li>
+              <li>PGS Catalog. <a href="https://www.pgscatalog.org/" target="_blank" rel="noopener">The Polygenic Score Catalog</a>.</li>
+              <li>EMBL-EBI Training. <a href="https://www.ebi.ac.uk/training/online/courses/polygenic-scores-pgs-catalog/" target="_blank" rel="noopener">Polygenic scores and the PGS Catalog</a>.</li>
+              <li>Wand H, et al. <a href="https://doi.org/10.1038/s41586-021-03243-6" target="_blank" rel="noopener">Improving reporting standards for polygenic scores in risk prediction studies</a>. <em>Nature</em>. 2021.</li>
+              <li>Lewis CM, Vassos E. <a href="https://doi.org/10.1186/s13073-020-00742-5" target="_blank" rel="noopener">Polygenic risk scores: from research tools to clinical instruments</a>. <em>Genome Medicine</em>. 2020.</li>
+              <li>Wang Y, et al. <a href="https://doi.org/10.1016/j.gim.2023.100803" target="_blank" rel="noopener">The clinical application of polygenic risk scores: ACMG points to consider</a>. <em>Genetics in Medicine</em>. 2023.</li>
+              <li>ClinGen. <a href="https://www.clinicalgenome.org/working-groups/sequence-variant-interpretation/" target="_blank" rel="noopener">Sequence Variant Interpretation Working Group</a>.</li>
+              <li>Ensembl. <a href="https://www.ensembl.org/Tools/VEP" target="_blank" rel="noopener">Variant Effect Predictor</a>.</li>
+            </ol>
+          </section>
+
+          <section class="chapter-section" id="summary">
+            <h2>Key Takeaways</h2>
+            <ul class="takeaway-list">
+              <li>Single-variant interpretation, GWAS와 PRS는 각각 인과성, 집단 연관성, 예측이라는 다른 질문을 다룹니다.</li>
+              <li>GWAS의 신뢰도는 phenotype, sample/variant QC, ancestry·relatedness 보정, imputation과 replication에 달려 있습니다.</li>
+              <li>Manhattan peak와 lead SNP는 associated locus의 표지이며 causal variant나 gene의 확정이 아닙니다.</li>
+              <li>PRS는 GWAS effect weight와 allele dosage의 합이며 독립 cohort에서 discrimination, calibration과 portability를 검증해야 합니다.</li>
+              <li>GWAS SNP와 WGS variant는 배타적 범주가 아닙니다. WGS에도 SNP가 있고 WGS genotype으로 GWAS를 수행할 수 있습니다.</li>
+              <li>Association ≠ causation, high PRS ≠ diagnosis, rare variant ≠ pathogenic variant입니다.</li>
+            </ul>
+            <h3>Check Your Understanding</h3>
+            <ol class="check-list">
+              <li>GWAS의 lead SNP가 causal variant가 아닐 수 있는 이유를 LD를 이용해 설명해보세요.</li>
+              <li>GWAS summary statistics의 β, effect allele, P value는 각각 무엇을 의미하나요?</li>
+              <li>PRS 개발 cohort와 최종 평가 cohort가 중복되면 어떤 문제가 발생하나요?</li>
+              <li>높은 AUC를 보이는 PRS가 반드시 좋은 absolute-risk calibration을 갖는 것은 아닌 이유는 무엇인가요?</li>
+              <li>Array 기반 GWAS SNP와 WGS에서 검출된 SNV의 공통점과 차이점을 설명해보세요.</li>
+            </ol>
+          </section>
+
+          <nav class="chapter-pagination">
+            <a class="btn btn-outline-secondary" href="03_variant_analysis.html">← Chapter 03</a>
+            <a class="btn btn-primary" href="../../e-learning-practice.html">Continue to Hands-on →</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

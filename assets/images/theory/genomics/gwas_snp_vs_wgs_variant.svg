@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 850" role="img" aria-labelledby="title desc">
+  <title id="title">Difference and overlap between GWAS SNPs and WGS variants</title>
+  <desc id="desc">Array-based GWAS often tests directly genotyped or imputed common SNP dosages as population associations, while whole-genome sequencing calls variants from read evidence in each individual. The categories overlap because WGS also observes common SNPs and can be used for association studies.</desc>
+  <rect width="1200" height="850" rx="28" fill="#f6faff"/>
+  <text x="600" y="50" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">GWAS SNP vs WGS Variant: Different Data Pathways, Overlapping Biology</text>
+  <text x="600" y="80" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">“SNP” describes a single-base population variant; “WGS variant” describes how a variant was observed from sequence reads</text>
+  <g font-family="Arial">
+    <rect x="55" y="120" width="470" height="355" rx="20" fill="#f1ebfb" stroke="#9574c5" stroke-width="3"/>
+    <text x="290" y="160" text-anchor="middle" font-size="24" font-weight="700" fill="#684889">Typical array-based GWAS</text>
+    <g transform="translate(95 194)"><rect width="120" height="78" rx="10" fill="#fff"/><g fill="#7451a5"><circle cx="25" cy="22" r="6"/><circle cx="50" cy="22" r="6"/><circle cx="75" cy="22" r="6"/><circle cx="100" cy="22" r="6"/><circle cx="25" cy="44" r="6"/><circle cx="50" cy="44" r="6"/><circle cx="75" cy="44" r="6"/><circle cx="100" cy="44" r="6"/><circle cx="25" cy="66" r="6"/><circle cx="50" cy="66" r="6"/><circle cx="75" cy="66" r="6"/><circle cx="100" cy="66" r="6"/></g></g>
+    <text x="265" y="215" font-size="14" font-weight="700" fill="#173f68">SNP array</text><text x="265" y="239" font-size="13" fill="#526b83">selected tag SNPs directly genotyped</text><text x="265" y="263" font-size="13" fill="#526b83">+ untyped variants imputed from LD panel</text>
+    <text x="95" y="315" font-size="15" font-weight="700" fill="#684889">Observed value</text><text x="230" y="315" font-size="14" fill="#526b83">genotype / allele dosage for a known site</text>
+    <text x="95" y="351" font-size="15" font-weight="700" fill="#684889">Statistical unit</text><text x="230" y="351" font-size="14" fill="#526b83">variant–phenotype association across people</text>
+    <text x="95" y="387" font-size="15" font-weight="700" fill="#684889">Common output</text><text x="230" y="387" font-size="14" fill="#526b83">β/OR, SE, P value, effect allele, N</text>
+    <rect x="90" y="414" width="400" height="40" rx="10" fill="#fff"/><text x="290" y="439" text-anchor="middle" font-size="14" font-weight="700" fill="#b12b27">Lead SNP may only tag an LD block—not the causal variant.</text>
+
+    <rect x="675" y="120" width="470" height="355" rx="20" fill="#e8f3ff" stroke="#6aa6dc" stroke-width="3"/>
+    <text x="910" y="160" text-anchor="middle" font-size="24" font-weight="700" fill="#0756a5">Individual WGS calling</text>
+    <text x="720" y="205" font-family="Courier New" font-size="16" fill="#0756a5">REF  ... A C G T T G C A ...</text>
+    <text x="720" y="237" font-family="Courier New" font-size="16" fill="#24745f">R1   ... A C G T C G C A ...</text><text x="720" y="264" font-family="Courier New" font-size="16" fill="#24745f">R2   ... A C G T C G C A ...</text><text x="720" y="291" font-family="Courier New" font-size="16" fill="#526b83">R3   ... A C G T T G C A ...</text>
+    <text x="715" y="332" font-size="15" font-weight="700" fill="#0756a5">Observed value</text><text x="850" y="332" font-size="14" fill="#526b83">read evidence → called genotype/variant</text>
+    <text x="715" y="368" font-size="15" font-weight="700" fill="#0756a5">Variant scope</text><text x="850" y="368" font-size="14" fill="#526b83">common/rare SNV, indel, CNV, SV, mtDNA</text>
+    <text x="715" y="404" font-size="15" font-weight="700" fill="#0756a5">Common output</text><text x="850" y="404" font-size="14" fill="#526b83">VCF: GT, DP, AD, GQ, FILTER...</text>
+    <rect x="710" y="424" width="400" height="30" rx="10" fill="#fff"/><text x="910" y="445" text-anchor="middle" font-size="13" font-weight="700" fill="#b12b27">A WGS call is not automatically associated with disease.</text>
+
+    <circle cx="600" cy="298" r="93" fill="#e9f8f3" stroke="#46ad8d" stroke-width="3"/>
+    <text x="600" y="271" text-anchor="middle" font-size="18" font-weight="700" fill="#24745f">OVERLAP</text><text x="600" y="300" text-anchor="middle" font-size="14" fill="#173f68">WGS also observes</text><text x="600" y="322" text-anchor="middle" font-size="14" fill="#173f68">common SNPs</text><text x="600" y="350" text-anchor="middle" font-size="13" fill="#526b83">WGS can power GWAS</text>
+
+    <rect x="55" y="520" width="1090" height="266" rx="18" fill="#fff" stroke="#cadbea" stroke-width="2"/>
+    <text x="600" y="558" text-anchor="middle" font-size="21" font-weight="700" fill="#0756a5">The important distinction is the study question</text>
+    <text x="90" y="603" font-size="15" font-weight="700" fill="#173f68">Question</text><text x="300" y="603" font-size="15" font-weight="700" fill="#684889">GWAS</text><text x="710" y="603" font-size="15" font-weight="700" fill="#0756a5">WGS variant analysis</text>
+    <line x1="85" y1="618" x2="1115" y2="618" stroke="#cadbea" stroke-width="2"/>
+    <text x="90" y="651" font-size="14" fill="#526b83">Primary aim</text><text x="300" y="651" font-size="14" fill="#526b83">population-level association</text><text x="710" y="651" font-size="14" fill="#526b83">discover/genotype variants from reads</text>
+    <text x="90" y="689" font-size="14" fill="#526b83">Typical frequency</text><text x="300" y="689" font-size="14" fill="#526b83">historically common variants</text><text x="710" y="689" font-size="14" fill="#526b83">common, low-frequency, rare, private</text>
+    <text x="90" y="727" font-size="14" fill="#526b83">Main evidence</text><text x="300" y="727" font-size="14" fill="#526b83">effect size, P value, LD, replication</text><text x="710" y="727" font-size="14" fill="#526b83">DP/AD/GQ, mapping, annotation, inheritance</text>
+    <text x="90" y="765" font-size="14" fill="#526b83">Common trap</text><text x="300" y="765" font-size="14" fill="#526b83">association ≠ causation</text><text x="710" y="765" font-size="14" fill="#526b83">detected variant ≠ pathogenic variant</text>
+
+    <text x="600" y="822" text-anchor="middle" font-size="14" font-weight="700" fill="#8d5d08">An rsID is an identifier—not proof that a variant is common, causal, pathogenic, or suitable for a PRS.</text>
+  </g>
+</svg>

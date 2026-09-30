@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Three scales of genetic analysis</title>
+  <desc id="desc">Single-variant interpretation, genome-wide association studies, and polygenic risk scores answer different questions at individual, population, and prediction scales.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#347bb7"/></marker></defs>
+  <rect width="1200" height="630" rx="28" fill="#f6faff"/>
+  <text x="600" y="52" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">One Genome, Three Different Questions</text>
+  <text x="600" y="82" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">Variant interpretation, GWAS, and PRS operate at different analytical scales</text>
+  <g font-family="Arial">
+    <rect x="55" y="125" width="320" height="350" rx="20" fill="#e8f3ff" stroke="#6aa6dc" stroke-width="3"/>
+    <circle cx="215" cy="195" r="38" fill="#0756a5"/><circle cx="201" cy="184" r="10" fill="#fff"/><path d="M188 220Q215 197 242 220" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+    <text x="215" y="264" text-anchor="middle" font-size="23" font-weight="700" fill="#0756a5">Single variant</text>
+    <text x="215" y="292" text-anchor="middle" font-size="14" fill="#526b83">individual / family scale</text>
+    <text x="85" y="336" font-size="15" fill="#173f68">Question</text><text x="85" y="362" font-size="14" fill="#526b83">Is this variant causal or clinically relevant?</text>
+    <text x="85" y="398" font-size="15" fill="#173f68">Evidence</text><text x="85" y="424" font-size="14" fill="#526b83">Read QC · frequency · inheritance</text><text x="85" y="447" font-size="14" fill="#526b83">function · phenotype · guidelines</text>
+
+    <line x1="380" y1="300" x2="425" y2="300" stroke="#347bb7" stroke-width="5" marker-end="url(#arrow)"/>
+    <rect x="440" y="125" width="320" height="350" rx="20" fill="#f1ebfb" stroke="#9574c5" stroke-width="3"/>
+    <g fill="#7451a5"><circle cx="520" cy="183" r="17"/><circle cx="565" cy="177" r="17"/><circle cx="610" cy="185" r="17"/><circle cx="655" cy="177" r="17"/><circle cx="700" cy="183" r="17"/></g>
+    <g fill="none" stroke="#7451a5" stroke-width="8" stroke-linecap="round"><path d="M498 220Q520 198 542 220"/><path d="M543 214Q565 192 587 214"/><path d="M588 222Q610 200 632 222"/><path d="M633 214Q655 192 677 214"/><path d="M678 220Q700 198 722 220"/></g>
+    <text x="600" y="264" text-anchor="middle" font-size="23" font-weight="700" fill="#684889">GWAS</text>
+    <text x="600" y="292" text-anchor="middle" font-size="14" fill="#526b83">population association scale</text>
+    <text x="470" y="336" font-size="15" fill="#173f68">Question</text><text x="470" y="362" font-size="14" fill="#526b83">Which loci are associated with a trait?</text>
+    <text x="470" y="398" font-size="15" fill="#173f68">Evidence</text><text x="470" y="424" font-size="14" fill="#526b83">Large cohort · genotype dosage</text><text x="470" y="447" font-size="14" fill="#526b83">effect size · P value · LD · replication</text>
+
+    <line x1="765" y1="300" x2="810" y2="300" stroke="#347bb7" stroke-width="5" marker-end="url(#arrow)"/>
+    <rect x="825" y="125" width="320" height="350" rx="20" fill="#e9f8f3" stroke="#46ad8d" stroke-width="3"/>
+    <path d="M875 221C910 161 957 251 995 190S1078 165 1100 221" fill="none" stroke="#28a27a" stroke-width="7"/>
+    <line x1="992" y1="158" x2="992" y2="233" stroke="#d9534f" stroke-width="4"/><text x="1002" y="169" font-size="12" fill="#b12b27">individual</text>
+    <text x="985" y="264" text-anchor="middle" font-size="23" font-weight="700" fill="#24745f">PRS / PGS</text>
+    <text x="985" y="292" text-anchor="middle" font-size="14" fill="#526b83">individual prediction scale</text>
+    <text x="855" y="336" font-size="15" fill="#173f68">Question</text><text x="855" y="362" font-size="14" fill="#526b83">What is relative genetic predisposition?</text>
+    <text x="855" y="398" font-size="15" fill="#173f68">Evidence</text><text x="855" y="424" font-size="14" fill="#526b83">Many alleles × GWAS weights</text><text x="855" y="447" font-size="14" fill="#526b83">independent validation · calibration</text>
+
+    <rect x="55" y="515" width="1090" height="74" rx="15" fill="#fff" stroke="#cadbea" stroke-width="2"/>
+    <text x="600" y="546" text-anchor="middle" font-size="17" font-weight="700" fill="#0756a5">Association and prediction are not the same as causation or diagnosis.</text>
+    <text x="600" y="572" text-anchor="middle" font-size="14" fill="#526b83">A rare high-impact variant, a common GWAS signal, and a polygenic score require different evidence and reporting language.</text>
+  </g>
+</svg>

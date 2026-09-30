@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Polygenic risk score construction and validation</title>
+  <desc id="desc">A polygenic score is developed from GWAS summary statistics, harmonized and LD modeled, calculated as a weighted sum in target genotypes, standardized, and evaluated in an independent cohort for discrimination, calibration, incremental value, and subgroup portability.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#347bb7"/></marker></defs>
+  <rect width="1200" height="820" rx="28" fill="#f6faff"/>
+  <text x="600" y="50" text-anchor="middle" font-family="Arial" font-size="29" font-weight="700" fill="#074f9d">PRS / PGS: Build, Calculate, Validate</text>
+  <text x="600" y="80" text-anchor="middle" font-family="Arial" font-size="16" fill="#526b83">A weighted genetic score must be tested in people who did not generate or tune the weights</text>
+  <g font-family="Arial">
+    <g transform="translate(45 120)"><rect width="190" height="125" rx="16" fill="#e8f3ff" stroke="#6aa6dc" stroke-width="2"/><text x="95" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#0756a5">Discovery GWAS</text><text x="95" y="66" text-anchor="middle" font-size="13" fill="#526b83">variant · effect allele</text><text x="95" y="89" text-anchor="middle" font-size="13" fill="#526b83">β or log(OR) · SE · P</text><text x="95" y="112" text-anchor="middle" font-size="13" fill="#526b83">ancestry · phenotype · N</text></g>
+    <line x1="240" y1="182" x2="275" y2="182" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <g transform="translate(282 120)"><rect width="190" height="125" rx="16" fill="#fff" stroke="#6aa6dc" stroke-width="2"/><text x="95" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#0756a5">Harmonize</text><text x="95" y="66" text-anchor="middle" font-size="13" fill="#526b83">genome build</text><text x="95" y="89" text-anchor="middle" font-size="13" fill="#526b83">effect allele + strand</text><text x="95" y="112" text-anchor="middle" font-size="13" fill="#526b83">remove ambiguous/error SNPs</text></g>
+    <line x1="477" y1="182" x2="512" y2="182" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <g transform="translate(519 120)"><rect width="190" height="125" rx="16" fill="#f1ebfb" stroke="#9574c5" stroke-width="2"/><text x="95" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#684889">Model LD + weights</text><text x="95" y="66" text-anchor="middle" font-size="13" fill="#526b83">C+T or Bayesian method</text><text x="95" y="89" text-anchor="middle" font-size="13" fill="#526b83">ancestry-matched LD panel</text><text x="95" y="112" text-anchor="middle" font-size="13" fill="#526b83">select/tune variants</text></g>
+    <line x1="714" y1="182" x2="749" y2="182" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <g transform="translate(756 120)"><rect width="190" height="125" rx="16" fill="#fff" stroke="#46ad8d" stroke-width="2"/><text x="95" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#24745f">Target genotypes</text><text x="95" y="66" text-anchor="middle" font-size="13" fill="#526b83">QC + imputation</text><text x="95" y="89" text-anchor="middle" font-size="13" fill="#526b83">allele dosage 0–2</text><text x="95" y="112" text-anchor="middle" font-size="13" fill="#526b83">missingness checked</text></g>
+    <line x1="951" y1="182" x2="986" y2="182" stroke="#347bb7" stroke-width="4" marker-end="url(#arrow)"/>
+    <g transform="translate(993 120)"><rect width="162" height="125" rx="16" fill="#e9f8f3" stroke="#46ad8d" stroke-width="2"/><text x="81" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#24745f">Calculate</text><text x="81" y="66" text-anchor="middle" font-size="13" fill="#526b83">weighted sum</text><text x="81" y="89" text-anchor="middle" font-size="13" fill="#526b83">standardize</text><text x="81" y="112" text-anchor="middle" font-size="13" fill="#526b83">percentile/group</text></g>
+
+    <rect x="55" y="285" width="1090" height="112" rx="17" fill="#fff" stroke="#cadbea" stroke-width="2"/>
+    <text x="600" y="324" text-anchor="middle" font-size="23" font-weight="700" fill="#0756a5">PRS<sub>i</sub> = Σ<sub>j</sub> β<sub>j</sub> × G<sub>ij</sub></text>
+    <text x="600" y="354" text-anchor="middle" font-size="15" fill="#526b83">β<sub>j</sub>: GWAS-derived effect weight · G<sub>ij</sub>: individual i's effect-allele dosage (0, 1, 2 or imputed dosage)</text>
+    <text x="600" y="380" text-anchor="middle" font-size="14" fill="#526b83">The raw score has no universal unit; interpretation depends on the reference distribution and validated population.</text>
+
+    <rect x="55" y="435" width="500" height="290" rx="18" fill="#fff" stroke="#cadbea" stroke-width="2"/>
+    <text x="305" y="474" text-anchor="middle" font-size="21" font-weight="700" fill="#0756a5">Example weighted alleles</text>
+    <text x="100" y="520" font-size="14" font-weight="700" fill="#173f68">Variant</text><text x="225" y="520" font-size="14" font-weight="700" fill="#173f68">Dosage</text><text x="335" y="520" font-size="14" font-weight="700" fill="#173f68">Weight</text><text x="445" y="520" font-size="14" font-weight="700" fill="#173f68">Contribution</text>
+    <line x1="90" y1="534" x2="520" y2="534" stroke="#cadbea" stroke-width="2"/>
+    <text x="100" y="567" font-size="14" fill="#526b83">rsA</text><text x="240" y="567" font-size="14" fill="#526b83">2</text><text x="345" y="567" font-size="14" fill="#526b83">+0.12</text><text x="458" y="567" font-size="14" fill="#526b83">+0.24</text>
+    <text x="100" y="606" font-size="14" fill="#526b83">rsB</text><text x="240" y="606" font-size="14" fill="#526b83">1</text><text x="345" y="606" font-size="14" fill="#526b83">−0.08</text><text x="458" y="606" font-size="14" fill="#526b83">−0.08</text>
+    <text x="100" y="645" font-size="14" fill="#526b83">rsC</text><text x="240" y="645" font-size="14" fill="#526b83">0.6</text><text x="345" y="645" font-size="14" fill="#526b83">+0.20</text><text x="458" y="645" font-size="14" fill="#526b83">+0.12</text>
+    <line x1="90" y1="663" x2="520" y2="663" stroke="#cadbea" stroke-width="2"/><text x="305" y="696" text-anchor="middle" font-size="16" font-weight="700" fill="#24745f">Raw PRS = 0.28</text>
+
+    <rect x="585" y="435" width="560" height="290" rx="18" fill="#fff" stroke="#cadbea" stroke-width="2"/>
+    <text x="865" y="474" text-anchor="middle" font-size="21" font-weight="700" fill="#0756a5">Independent validation</text>
+    <text x="625" y="515" font-size="14" font-weight="700" fill="#173f68">Discrimination</text><text x="785" y="515" font-size="14" fill="#526b83">AUC/C-index, R², odds per SD</text>
+    <text x="625" y="553" font-size="14" font-weight="700" fill="#173f68">Calibration</text><text x="785" y="553" font-size="14" fill="#526b83">predicted vs observed absolute risk</text>
+    <text x="625" y="591" font-size="14" font-weight="700" fill="#173f68">Incremental value</text><text x="785" y="591" font-size="14" fill="#526b83">clinical model vs clinical + PRS</text>
+    <text x="625" y="629" font-size="14" font-weight="700" fill="#173f68">Portability</text><text x="785" y="629" font-size="14" fill="#526b83">ancestry, sex, age, site, platform</text>
+    <text x="625" y="667" font-size="14" font-weight="700" fill="#173f68">Reporting</text><text x="785" y="667" font-size="14" fill="#526b83">score ID, variants, weights, build, cohorts</text>
+    <text x="865" y="705" text-anchor="middle" font-size="14" font-weight="700" fill="#b12b27">No sample overlap between discovery/training and final evaluation</text>
+
+    <rect x="55" y="752" width="1090" height="40" rx="11" fill="#fff5df" stroke="#e3b341" stroke-width="2"/>
+    <text x="600" y="778" text-anchor="middle" font-size="14" fill="#8d5d08">PRS estimates relative genetic predisposition—not certainty, diagnosis, environment, lifestyle, or treatment response by itself.</text>
+  </g>
+</svg>
