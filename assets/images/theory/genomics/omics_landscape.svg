@@ -1,18 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
   <title id="title">From genome to phenotype: the omics landscape</title>
-  <desc id="desc">Biological information flows through genome, transcriptome, proteome and metabolome, while environment affects multiple layers.</desc>
-  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4f9ff"/><stop offset="1" stop-color="#e4f1ff"/></linearGradient><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#3b76b8"/></marker></defs>
-  <rect width="1200" height="650" rx="28" fill="url(#bg)"/>
-  <text x="600" y="58" text-anchor="middle" font-family="Arial" font-size="30" font-weight="700" fill="#074f9d">The Omics Landscape</text>
-  <text x="600" y="92" text-anchor="middle" font-family="Arial" font-size="17" fill="#526b83">-ome = the complete set · -omics = large-scale study of that set</text>
-  <g font-family="Arial" text-anchor="middle">
-    <g transform="translate(60 190)"><rect width="190" height="180" rx="18" fill="#126fd1"/><text x="95" y="54" font-size="24" font-weight="700" fill="white">Genome</text><text x="95" y="88" font-size="17" fill="#eaf4ff">DNA</text><text x="95" y="118" font-size="16" fill="white">Genomics</text><text x="95" y="150" font-size="14" fill="#d8ebff">Biological potential</text></g>
-    <g transform="translate(285 190)"><rect width="190" height="180" rx="18" fill="#2489d8"/><text x="95" y="54" font-size="23" font-weight="700" fill="white">Transcriptome</text><text x="95" y="88" font-size="17" fill="#eaf4ff">RNA</text><text x="95" y="118" font-size="16" fill="white">Transcriptomics</text><text x="95" y="150" font-size="14" fill="#e0f1ff">Genes being expressed</text></g>
-    <g transform="translate(510 190)"><rect width="190" height="180" rx="18" fill="#2ca5c8"/><text x="95" y="54" font-size="23" font-weight="700" fill="white">Proteome</text><text x="95" y="88" font-size="17" fill="#eaffff">Proteins</text><text x="95" y="118" font-size="16" fill="white">Proteomics</text><text x="95" y="150" font-size="14" fill="#e0fbff">Cellular machinery</text></g>
-    <g transform="translate(735 190)"><rect width="190" height="180" rx="18" fill="#3ab49c"/><text x="95" y="54" font-size="23" font-weight="700" fill="white">Metabolome</text><text x="95" y="88" font-size="17" fill="#effff9">Metabolites</text><text x="95" y="118" font-size="16" fill="white">Metabolomics</text><text x="95" y="150" font-size="14" fill="#e1fff6">Biochemical state</text></g>
-    <g transform="translate(960 190)"><rect width="180" height="180" rx="18" fill="#4c78a8"/><text x="90" y="62" font-size="23" font-weight="700" fill="white">Phenotype</text><text x="90" y="103" font-size="16" fill="white">Traits · Disease</text><text x="90" y="139" font-size="14" fill="#e8f1fb">Observed outcome</text></g>
+  <desc id="desc">Genome, epigenome, transcriptome, proteome and metabolome provide complementary views of a biological system and can be integrated in multi-omics.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4f9ff"/><stop offset="1" stop-color="#e8f5f1"/></linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#527da9"/></marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#294761" flood-opacity="0.14"/></filter>
+  </defs>
+  <rect width="1200" height="680" rx="28" fill="url(#bg)"/>
+  <text x="600" y="58" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" fill="#074f9d">The Omics Landscape</text>
+  <text x="600" y="93" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#526b83">-ome = a biological set · -omics = systematic, large-scale measurement and analysis</text>
+
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle" filter="url(#shadow)">
+    <g transform="translate(42 184)"><rect width="165" height="190" rx="18" fill="#126fd1"/><text x="82.5" y="49" font-size="23" font-weight="700" fill="white">Genome</text><text x="82.5" y="82" font-size="16" fill="#eaf4ff">DNA sequence</text><text x="82.5" y="116" font-size="15" fill="white">Genomics</text><text x="82.5" y="151" font-size="13" fill="#d8ebff">Genetic potential</text><text x="82.5" y="172" font-size="13" fill="#d8ebff">and variation</text></g>
+    <g transform="translate(232 184)"><rect width="165" height="190" rx="18" fill="#7d63b8"/><text x="82.5" y="49" font-size="22" font-weight="700" fill="white">Epigenome</text><text x="82.5" y="82" font-size="15" fill="#f4efff">DNA · chromatin</text><text x="82.5" y="116" font-size="15" fill="white">Epigenomics</text><text x="82.5" y="151" font-size="13" fill="#f2ecff">Access and</text><text x="82.5" y="172" font-size="13" fill="#f2ecff">regulation</text></g>
+    <g transform="translate(422 184)"><rect width="165" height="190" rx="18" fill="#2489d8"/><text x="82.5" y="49" font-size="20" font-weight="700" fill="white">Transcriptome</text><text x="82.5" y="82" font-size="16" fill="#eaf4ff">RNA</text><text x="82.5" y="116" font-size="14" fill="white">Transcriptomics</text><text x="82.5" y="151" font-size="13" fill="#e0f1ff">Genes being</text><text x="82.5" y="172" font-size="13" fill="#e0f1ff">expressed</text></g>
+    <g transform="translate(612 184)"><rect width="165" height="190" rx="18" fill="#2ca5c8"/><text x="82.5" y="49" font-size="22" font-weight="700" fill="white">Proteome</text><text x="82.5" y="82" font-size="16" fill="#eaffff">Proteins</text><text x="82.5" y="116" font-size="15" fill="white">Proteomics</text><text x="82.5" y="151" font-size="13" fill="#e0fbff">Function and</text><text x="82.5" y="172" font-size="13" fill="#e0fbff">signalling</text></g>
+    <g transform="translate(802 184)"><rect width="165" height="190" rx="18" fill="#3ab49c"/><text x="82.5" y="49" font-size="21" font-weight="700" fill="white">Metabolome</text><text x="82.5" y="82" font-size="16" fill="#effff9">Metabolites</text><text x="82.5" y="116" font-size="14" fill="white">Metabolomics</text><text x="82.5" y="151" font-size="13" fill="#e1fff6">Biochemical</text><text x="82.5" y="172" font-size="13" fill="#e1fff6">state</text></g>
+    <g transform="translate(992 184)"><rect width="165" height="190" rx="18" fill="#4c78a8"/><text x="82.5" y="59" font-size="22" font-weight="700" fill="white">Phenotype</text><text x="82.5" y="99" font-size="15" fill="#eef5fd">Traits · Disease</text><text x="82.5" y="140" font-size="13" fill="#e8f1fb">Observed</text><text x="82.5" y="161" font-size="13" fill="#e8f1fb">outcome</text></g>
   </g>
-  <g stroke="#3b76b8" stroke-width="4" marker-end="url(#arrow)"><line x1="252" y1="280" x2="280" y2="280"/><line x1="477" y1="280" x2="505" y2="280"/><line x1="702" y1="280" x2="730" y2="280"/><line x1="927" y1="280" x2="955" y2="280"/></g>
-  <g font-family="Arial"><rect x="280" y="465" width="640" height="110" rx="18" fill="white" stroke="#a9caeb" stroke-width="2"/><text x="600" y="505" text-anchor="middle" font-size="22" font-weight="700" fill="#074f9d">Multi-omics integration</text><text x="600" y="540" text-anchor="middle" font-size="17" fill="#526b83">Combines molecular layers to understand biological systems</text><text x="600" y="565" text-anchor="middle" font-size="15" fill="#6a7f92">Context matters: cell type · tissue · time · environment</text></g>
-  <g stroke="#e49b2f" stroke-width="3" stroke-dasharray="8 7"><line x1="100" y1="430" x2="1090" y2="430"/></g><text x="1100" y="424" text-anchor="end" font-family="Arial" font-size="16" font-weight="700" fill="#a86708">Environment</text>
+
+  <g stroke="#527da9" stroke-width="4" marker-end="url(#arrow)"><line x1="209" y1="279" x2="226" y2="279"/><line x1="399" y1="279" x2="416" y2="279"/><line x1="589" y1="279" x2="606" y2="279"/><line x1="779" y1="279" x2="796" y2="279"/><line x1="969" y1="279" x2="986" y2="279"/></g>
+
+  <path d="M1080 394 C1060 458 876 458 820 401" fill="none" stroke="#8b6bb8" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+  <text x="949" y="468" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#6f548f">feedback and regulation</text>
+
+  <rect x="115" y="487" width="970" height="120" rx="20" fill="#ffffff" stroke="#a9caeb" stroke-width="2"/>
+  <text x="600" y="528" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" fill="#074f9d">Multi-omics integration</text>
+  <text x="600" y="563" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#526b83">Combines complementary molecular layers to study a biological system</text>
+  <text x="600" y="591" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#6a7f92">Interpret with context: cell type · tissue · time · environment · assay</text>
+  <text x="1102" y="628" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#a86708">Environment and biological context can affect multiple layers</text>
+  <line x1="95" y1="640" x2="1115" y2="640" stroke="#e49b2f" stroke-width="3" stroke-dasharray="8 7"/>
 </svg>
