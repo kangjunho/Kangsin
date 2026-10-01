@@ -5,6 +5,33 @@ body {
     color: #333;
 }
 
+/* Shared navigation across all main pages */
+.site-navbar .navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.site-navbar .navbar-brand img {
+    width: 80px;
+    height: auto;
+}
+
+.site-navbar .nav-link {
+    white-space: nowrap;
+}
+
+@media (min-width: 576px) and (max-width: 900px) {
+    .site-navbar .brand-text {
+        display: none;
+    }
+
+    .site-navbar .nav-link {
+        font-size: 0.82rem;
+    }
+}
+
 /* 헤더 스타일 */
 header {
     background: linear-gradient(90deg, #007bff, #0056b3);
