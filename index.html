@@ -1,170 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ko">
 <head>
-  <script defer src="assets/js/analytics.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kang's Bioinformatics</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* 메인 이미지 카드 스타일 */
-        .main-card {
-            margin: 20px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-        }
-
-        .main-card img {
-            object-fit: cover;
-            height: 200px;
-            width: 100%;
-        }
-
-        .main-card .card-body {
-            text-align: center;
-        }
-
-        .main-card .card-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #0056b3;
-        }
-
-        .main-card .card-text {
-            font-size: 0.9rem;
-            color: #333;
-        }
-
-        @media (min-width: 576px) and (max-width: 900px) {
-            .main-card {
-                margin: 10px;
-            }
-        }
-
-        /* 메인 헤더 텍스트 수정 */
-        header h1 {
-            font-size: 3rem;
-            font-weight: bold;
-            color: white;
-        }
-
-        header p {
-            font-size: 1.2rem;
-            color: #e0e0e0;
-        }
-
-        /* 링크 버튼 스타일 */
-        .link-section {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .link-section a {
-            margin: 10px;
-            text-decoration: none;
-            font-size: 1rem;
-            padding: 10px 20px;
-            color: white;
-            background-color: #0056b3;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .link-section a:hover {
-            background-color: #003d80;
-        }
-
-        /* Footer 스타일 */
-        footer {
-            border-top: 2px solid #333;
-            margin-top: 50px;
-            padding: 20px 0;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #777;
-        }
-    </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kang's Bioinformatics | Bioinformatics Research & Data Analysis</title>
+<meta name="description" content="Kang's Bioinformatics: 유전체학, 전사체학 및 생물정보학 연구 성과와 NCBI GEO, GEO2R, RNA-seq, R 실습 자료 및 분석 도구를 공유하는 연구자 홈페이지.">
+<link rel="canonical" href="https://kangjunho.github.io/Kangsin/">
+<meta property="og:title" content="Kang's Bioinformatics | Research & Data Analysis">
+<meta property="og:description" content="생물정보학 연구 성과, GEO 및 RNA-seq 분석 실습, R 기반 분석 도구">
+<meta property="og:url" content="https://kangjunho.github.io/Kangsin/">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<script defer src="assets/js/analytics.js"></script>
+<style>
+:root{--navy:#12284e;--blue:#0758b9;--muted:#60728a;--line:#e0e8f3}body.home{font-family:system-ui,'Malgun Gothic',sans-serif;color:#283950;background:#fff}body.home h1,body.home h2,body.home h3{color:var(--navy)}a{text-decoration:none}.home .container{max-width:1190px}.topbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}.topbar .navbar-brand{color:var(--navy);font-size:1.28rem;font-weight:800}.topbar .navbar-brand img{width:48px}.topbar .nav-link{color:#314462;font-size:.91rem;padding:.65rem}.topbar .nav-link.active,.topbar .nav-link:hover{color:var(--blue)!important}.hero{padding:4.7rem 0 7rem;background:linear-gradient(115deg,#fafdff,#eaf4ff);position:relative}.eyebrow{font-size:.8rem;font-weight:750;letter-spacing:.12em;color:var(--blue);margin-bottom:1rem}.hero h1{font-size:clamp(2.5rem,4vw,4rem);font-weight:850;line-height:1.13;letter-spacing:-.04em}.hero h2{font-size:clamp(1.3rem,2vw,1.8rem);font-weight:750;margin-top:.7rem}.hero h3{font-size:1.25rem;font-weight:700;margin:.6rem 0 1.2rem}.hero p{color:#425571;line-height:1.9;font-size:1rem;word-break:keep-all}.hero .en{color:#6881a0;font-style:italic;font-size:.92rem}.hero .btn{padding:.8rem 1.35rem;border-radius:9px;font-weight:700}.hero .btn-primary{background:#093e86;border-color:#093e86}.hero .btn-outline-primary{background:white;border-color:#8caad0;color:#093e86}.hero-media{border-radius:22px;overflow:hidden;box-shadow:0 22px 50px #183c6c29;height:345px;position:relative}.hero-media img{width:100%;height:100%;object-fit:cover}.hero-media span{position:absolute;bottom:18px;left:18px;background:#ffffffeb;border-radius:8px;padding:.55rem .8rem;color:#153760;font-size:.82rem;font-weight:700}.pillars{margin-top:-4.3rem;position:relative;z-index:2}.pillar{display:block;height:100%;padding:1.4rem;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 9px 26px #183c6c15;color:#30415b}.pillar:hover,.tutorial:hover{transform:translateY(-3px);box-shadow:0 14px 30px #183c6c21}.pillar,.tutorial{transition:.2s}.pillar h2{font-size:1.25rem;font-weight:750}.pillar .kr{font-weight:700;color:var(--blue);margin-bottom:.4rem}.pillar p{font-size:.9rem;line-height:1.7;color:var(--muted);margin:0}.roundicon{display:inline-flex;width:46px;height:46px;align-items:center;justify-content:center;background:#e3f0ff;border-radius:14px;font-size:1.6rem;margin-bottom:.7rem}.section{padding:4rem 0 0}.section h2{font-weight:800;letter-spacing:-.03em}.section h2 small,.panel h2 small{font-size:.9rem;font-weight:550;color:#6983a4;margin-left:.4rem}.section .intro{color:var(--muted);margin-bottom:1.6rem}.more{font-size:.9rem;font-weight:700;color:var(--blue)}.tutorial{display:flex;flex-direction:column;height:100%;padding:.7rem;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 12px #183c6c0b;color:#263d5e}.tutorial img{width:100%;height:148px;object-fit:cover;background:#eaf3fb;border-radius:10px}.tutorial .info{display:flex;flex-direction:column;flex:1;padding:1rem .35rem .35rem}.tutorial h3{font-size:1.17rem;font-weight:750;margin:0 0 .2rem}.tutorial .keywords{color:#245b9e;font-size:.81rem;margin-bottom:.75rem}.tutorial p{color:var(--muted);font-size:.89rem;line-height:1.7;flex:1;word-break:keep-all}.tutorial .link{font-size:.88rem;font-weight:700;color:var(--blue)}.bottom{padding:2.6rem 0 4.5rem}.panel{height:100%;padding:1.65rem;border:1px solid var(--line);border-radius:16px;background:#fafdff}.panel h2{font-size:1.35rem;font-weight:750}.panel>p{color:var(--muted);font-size:.92rem}.pub{border-top:1px solid var(--line);padding:.8rem 0}.pub strong{font-size:.92rem;display:block;line-height:1.5;color:#263e62}.pub span{color:#7589a5;font-size:.82rem}.tags{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:1.2rem}.tags span{background:#e7f1ff;color:#456c99;border-radius:100px;padding:.45rem .85rem;font-size:.88rem}.footer{background:#102847;color:#d4e3f4;padding:2.2rem 0}.footer strong{font-size:1.15rem;color:white}.footer a{color:#d4e3f4;margin-right:1rem;font-size:.9rem}.footer p{font-size:.85rem;color:#b2c9df;margin:.5rem 0 0}@media(max-width:992px){.hero{padding:3.5rem 0 6rem}.hero-media{margin-top:1.3rem;height:280px}}@media(max-width:575px){.hero h1{font-size:2.35rem}.hero-media{height:215px}.pillars{margin-top:-3.5rem}.section h2 small{display:block;margin:.25rem 0 0}}@media(prefers-reduced-motion:reduce){.pillar,.tutorial{transition:none}}
+</style>
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-sm navbar-light bg-light site-navbar">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <img src="assets/images/logo.png" alt="Dongsan Medical Center Logo" style="width: 80px; height: auto;" class="d-inline-block align-text-top">
-                <span class="brand-text">Kang's Bioinformatics</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
-                    <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
-                    <li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li>
-                    <li class="nav-item"><a class="nav-link" href="e-learning.html">E-learning</a></li>
-                    <li class="nav-item"><a class="nav-link" href="bioinformatics-analysis.html">Bioinformatics Analysis</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Section 2: Hero Section -->
-    <header class="bg-primary text-white text-center py-5">
-        <div class="container">
-            <h1 class="mb-0">Kang's Bioinformatics</h1>
-        </div>
-    </header>
-
-    <!-- Section 3: Main Image Cards -->
-    <section id="main-images" class="py-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <!-- Card 1: Publications -->
-                <div class="col-sm-4">
-                    <a href="publications.html">
-                        <div class="card main-card">
-                            <img src="assets/images/publications.png" class="card-img-top" alt="Publications">
-                            <div class="card-body">
-                                <h5 class="card-title">Publications</h5>
-                                <p class="card-text">Explore peer-reviewed publications in genomics, transcriptomics, and biomedical research.</p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <!-- Card 2: E-learning -->
-                <div class="col-sm-4">
-                    <a href="e-learning.html">
-                        <div class="card main-card">
-                            <img src="assets/images/e_learning.jpg" class="card-img-top" alt="E-learning">
-                            <div class="card-body">
-                                <h5 class="card-title">E-learning</h5>
-                                <p class="card-text">Access online resources for bioinformatics, genomics, and computational biology.</p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <!-- Card 3: Bioinformatics Analysis -->
-                <div class="col-sm-4">
-                    <a href="bioinformatics-analysis.html">
-                        <div class="card main-card">
-                            <img src="assets/images/bioinformatics_analysis.jpg" class="card-img-top" alt="Bioinformatics Analysis">
-                            <div class="card-body">
-                                <h5 class="card-title">Bioinformatics Analysis</h5>
-                                <p class="card-text">Leverage cutting-edge bioinformatics tools for genomics and transcriptomics analysis.</p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer Section -->
-    <footer>
-        &copy; 2024 Kang's Bioinformatics Lab. All rights reserved.
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<body class="home">
+<nav class="navbar navbar-expand-lg topbar" aria-label="Main navigation"><div class="container"><a class="navbar-brand d-flex align-items-center gap-2" href="index.html"><img src="assets/images/logo.png" alt=""><span>Kang's Bioinformatics</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="메뉴 열기"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="mainNav"><ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link active" href="index.html" aria-current="page">Home</a></li><li class="nav-item"><a class="nav-link" href="about.html">About</a></li><li class="nav-item"><a class="nav-link" href="members.html">Members</a></li><li class="nav-item"><a class="nav-link" href="publications.html">Publications</a></li><li class="nav-item"><a class="nav-link" href="e-learning.html">E-learning</a></li><li class="nav-item"><a class="nav-link" href="bioinformatics-analysis.html">Bioinformatics Analysis</a></li></ul></div></div></nav>
+<main>
+<header class="hero"><div class="container"><div class="row align-items-center g-4"><div class="col-lg-7"><div class="eyebrow">RESEARCH · EDUCATION · DATA ANALYSIS</div><h1>Kang's Bioinformatics</h1><h2>Bioinformatics Research &amp; Data Analysis</h2><h3>생물정보학 연구와 데이터 분석을 위한 공간</h3><p>유전체학(Genomics), 전사체학(Transcriptomics)을 비롯한 다양한 생물의학 데이터를 활용하여 질환의 생물학적 특성을 연구하고 있습니다. 이 홈페이지에서는 주요 연구 성과와 함께 생물정보학의 기초 개념, 실제 연구 데이터를 활용한 분석 방법, R 기반 실습 자료 및 분석 도구를 공유합니다.</p><p class="en" lang="en">Exploring biological questions through computational analysis and sharing practical resources for bioinformatics research.</p><div class="d-flex gap-2 flex-wrap"><a class="btn btn-primary" href="e-learning.html">Explore E-learning →</a><a class="btn btn-outline-primary" href="publications.html">View Publications →</a></div></div><div class="col-lg-5"><div class="hero-media"><img src="assets/images/bioinformatics_analysis.jpg" alt="생물정보학 및 생물의학 데이터 분석" fetchpriority="high"><span>Genomics · Transcriptomics · Bioinformatics</span></div></div></div></div></header>
+<section class="pillars" aria-label="Research Education Data Analysis"><div class="container"><div class="row g-3"><div class="col-lg-4"><a class="pillar" href="publications.html"><div class="roundicon">🔬</div><h2>Research</h2><div class="kr">생물정보학 기반 질환 연구</div><p>유전체 및 전사체 데이터를 통합 분석하여 질환의 생물학적 특성과 관련된 연구를 수행합니다.</p></a></div><div class="col-lg-4"><a class="pillar" href="e-learning.html"><div class="roundicon">📖</div><h2>Education</h2><div class="kr">생물정보학 이론과 실습 자료</div><p>공개 데이터를 활용한 단계별 분석 방법과 R 기반 실습 자료를 공유합니다.</p></a></div><div class="col-lg-4"><a class="pillar" href="bioinformatics-analysis.html"><div class="roundicon">⚙️</div><h2>Data Analysis</h2><div class="kr">생물정보학 분석 도구와 코드</div><p>연구에 활용할 수 있는 R 패키지, 분석 함수 및 재현 가능한 분석 코드를 제공합니다.</p></a></div></div></div></section>
+<section class="section" id="featured-tutorials"><div class="container"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><h2>Featured Tutorials <small>주요 생물정보학 교육 자료</small></h2><a class="more" href="e-learning-practice.html">전체 실습 자료 보기 →</a></div><p class="intro">실제 연구 데이터를 기반으로 생물정보학 분석 방법을 단계별로 학습할 수 있습니다.</p><div class="row g-3">
+<div class="col-sm-6 col-lg-3"><a class="tutorial" href="public/geo/index.html"><img src="assets/images/geo.png" alt="NCBI GEO 자료" loading="lazy"><div class="info"><h3>NCBI GEO Analysis</h3><div class="keywords">GEOquery · GEO2R · DEG Analysis</div><p>NCBI GEO의 공개 유전자 발현 데이터를 검색하고, R과 GEO2R을 이용한 차등발현 분석 방법을 학습합니다.</p><span class="link">GEO 실습 시작하기 →</span></div></a></div>
+<div class="col-sm-6 col-lg-3"><a class="tutorial" href="transcriptomics/rnaseq/index.html"><img src="assets/images/rnaseq_intro.png" alt="RNA-seq 데이터 분석" loading="lazy"><div class="info"><h3>RNA-seq Analysis</h3><div class="keywords">DESeq2 · Differential Expression</div><p>RNA-seq 데이터의 분석 원리와 차등발현 분석, 품질 관리 및 결과 해석 과정을 학습합니다.</p><span class="link">RNA-seq 실습 보기 →</span></div></a></div>
+<div class="col-sm-6 col-lg-3"><a class="tutorial" href="public/geo/06_go_kegg.html"><img src="assets/images/microarray_enrichment.png" alt="기능 및 경로 분석" loading="lazy"><div class="info"><h3>Functional Analysis</h3><div class="keywords">GO · KEGG · STRING · Cytoscape</div><p>차등발현유전자 결과를 바탕으로 유전자 기능, 경로 분석 및 단백질 네트워크 분석 방법을 학습합니다.</p><span class="link">기능 분석 실습 보기 →</span></div></a></div>
+<div class="col-sm-6 col-lg-3"><a class="tutorial" href="theory/genomics/01_overview.html"><img src="assets/images/variant_calling.png" alt="유전체 변이 분석" loading="lazy"><div class="info"><h3>Genomics Basics</h3><div class="keywords">WGS · WES · Variant Calling</div><p>유전체학의 기초 개념과 NGS 데이터의 특징, 변이 탐지 및 해석의 기본 흐름을 학습합니다.</p><span class="link">유전체 분석 자료 보기 →</span></div></a></div>
+</div></div></section>
+<section class="bottom"><div class="container"><div class="row g-3"><div class="col-lg-7"><div class="panel"><div class="d-flex flex-wrap justify-content-between gap-2"><h2>Selected Publications <small>주요 연구 성과</small></h2><a class="more" href="publications.html">전체 논문 보기 →</a></div><p>유전체 및 전사체 기반 질환 연구와 관련된 주요 논문입니다.</p><article class="pub"><strong>Characterization of Korean Colorectal Cancer Reveals Novel Driver Gene and Clinically Relevant Mutations</strong><span>MedComm · 2026</span></article><article class="pub"><strong>Identification of Predictive Biomarkers for Chemoradiotherapy Response in Rectal Cancer</strong><span>JCO Precision Oncology · 2026</span></article><article class="pub"><strong>Genomic insights into somatic mutations from occupational exposure to low-dose ionizing radiation</strong><span>Scandinavian Journal of Work, Environment &amp; Health · 2026</span></article></div></div><div class="col-lg-5"><div class="panel"><h2>Research Interests <small>주요 연구 분야</small></h2><p>다양한 생물의학 데이터를 활용하여 질환의 분자적 특성과 기전을 연구합니다.</p><div class="tags"><span>Genomics</span><span>Transcriptomics</span><span>Multi-omics</span><span>Cancer Genomics</span><span>Spatial Transcriptomics</span><span>Bioinformatics</span><span>Biomedical Data Analysis</span></div><p class="mt-4">연구 경력과 세부 프로젝트는 About에서 확인할 수 있습니다.</p><a class="more" href="about.html">연구자 소개 보기 →</a></div></div></div></div></section>
+</main><footer class="footer"><div class="container d-flex flex-column flex-md-row justify-content-between gap-3"><div><strong>Kang's Bioinformatics</strong><p>Bioinformatics Research · Education · Data Analysis</p><p>© 2026 Kang's Bioinformatics. All rights reserved.</p></div><div><a href="about.html">About</a><a href="publications.html">Publications</a><a href="e-learning.html">E-learning</a><a href="bioinformatics-analysis.html">Analysis Tools</a><a href="contact.html">Contact</a></div></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body></html>
