@@ -1,149 +1,366 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <script defer src="../../assets/js/analytics.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GEO Microarray 실습 | Kang's Bioinformatics</title>
+  <title>NCBI GEO 데이터 분석 실습 | GEO2R, R, DEG, GO·KEGG - Kang's Bioinformatics</title>
+  <meta name="description" content="NCBI GEO 공개 유전자 발현 데이터 분석 실습. R과 RStudio 설치부터 GEO 검색, GEO2R, GEOquery·limma 기반 DEG 분석, GO·KEGG, STRING, Cytoscape까지 10단계로 학습합니다.">
+  <link rel="canonical" href="https://kangjunho.github.io/Kangsin/public/geo/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Kang's Bioinformatics">
+  <meta property="og:title" content="NCBI GEO 데이터 분석 실습 | Kang's Bioinformatics">
+  <meta property="og:description" content="GEO 검색부터 GEO2R, R 기반 DEG, GO·KEGG 및 네트워크 분석까지 단계별 실습합니다.">
+  <meta property="og:url" content="https://kangjunho.github.io/Kangsin/public/geo/">
+  <meta property="og:image" content="https://kangjunho.github.io/Kangsin/assets/images/geo.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/style.css">
+  <script defer src="../../assets/js/analytics.js"></script>
   <style>
-    body { background:#f7f9fc; }
-    .course-hero { background:linear-gradient(135deg,#0d6efd,#164e9b); color:#fff; }
-    .course-hero h1 { color:#fff; }
-    .course-card { border:0; border-radius:14px; box-shadow:0 6px 18px rgba(26,54,93,.08); transition:.2s ease; }
-    .course-card:hover { transform:translateY(-4px); box-shadow:0 10px 24px rgba(26,54,93,.14); }
-    .step-number { width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; background:#e8f1ff; color:#0d6efd; font-weight:800; }
-    .badge-level { background:#e9f7ef; color:#18794e; }
-    .course-card .btn.disabled { pointer-events:none; opacity:.6; }
+    :root { --geo-navy:#10264f; --geo-blue:#0956c8; --geo-blue-deep:#063b84; --geo-text:#334560; --geo-muted:#5e718d; --geo-border:#dce7f6; --geo-soft:#f7faff; }
+    html { scroll-behavior:smooth; }
+    body.geo-page { margin:0; background:#fff; color:var(--geo-text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif; line-height:1.65; }
+    .geo-page h1,.geo-page h2,.geo-page h3 { color:var(--geo-navy); }
+    .geo-page a { text-decoration:none; }
+    .geo-page .container { max-width:1200px; }
+    .geo-page .site-navbar { position:sticky; top:0; z-index:1030; background:rgba(255,255,255,.98)!important; border-bottom:1px solid var(--geo-border); padding:.56rem 0; box-shadow:0 3px 12px rgba(16,45,85,.035); }
+    .geo-page .site-navbar .navbar-brand { display:inline-flex; align-items:center; gap:8px; color:var(--geo-navy); font-size:1.2rem; font-weight:800; letter-spacing:-.04em; }
+    .geo-page .site-navbar .navbar-brand img { width:45px; max-width:45px; height:auto; margin-right:0; }
+    .geo-page .site-navbar .nav-link { font-size:.89rem; color:#2c4062; padding:.7rem .6rem; }
+    .geo-page .site-navbar .nav-link:hover,.geo-page .site-navbar .nav-link.active { color:var(--geo-blue)!important; }
+    .geo-page .site-navbar .nav-link.active { border-bottom:2px solid var(--geo-blue); }
+    .geo-page .site-navbar .brand-text { display:inline; }
+    .geo-page .site-navbar .navbar-toggler { border:1px solid var(--geo-border); }
+    .geo-hero { position:relative; overflow:hidden; text-align:left; color:var(--geo-text); background:linear-gradient(110deg,#f9fcff 0%,#f0f8ff 53%,#dceefe 100%); padding:1.4rem 0 6.25rem; }
+    .geo-hero::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 88% 40%,rgba(26,114,213,.16),transparent 49%); }
+    .geo-hero .container { position:relative; z-index:1; }
+    .geo-crumb { margin:0 0 2.2rem; display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; color:#58739a; font-size:.88rem; }
+    .geo-crumb a { color:#4e77ab; }
+    .geo-crumb a:hover { text-decoration:underline; }
+    .geo-eyebrow { font-size:.76rem; text-transform:uppercase; letter-spacing:.15em; color:var(--geo-blue); font-weight:800; margin-bottom:.7rem; }
+    .geo-hero h1 { color:var(--geo-navy)!important; font-size:clamp(2.4rem,4.4vw,3.55rem); font-weight:840; letter-spacing:-.05em; line-height:1.11; margin:0 0 .65rem; }
+    .geo-hero-korean { font-size:clamp(1.23rem,2vw,1.7rem); font-weight:760; color:#1c416f; margin-bottom:1.05rem; }
+    .geo-hero-copy { max-width:650px; font-size:1rem; line-height:1.95; color:#39506e; word-break:keep-all; margin-bottom:.95rem; }
+    .geo-hero-en { max-width:640px; color:#637fa3; font-style:italic; font-size:.93rem; margin-bottom:1.5rem; }
+    .geo-primary-btn,.geo-secondary-btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; min-height:46px; padding:.75rem 1.22rem; border-radius:9px; font-weight:740; font-size:.94rem; transition:transform .18s ease, background-color .18s ease; }
+    .geo-primary-btn { background:var(--geo-blue-deep); color:#fff; border:1px solid var(--geo-blue-deep); }
+    .geo-primary-btn:hover { color:#fff; background:#052a63; transform:translateY(-2px); }
+    .geo-secondary-btn { background:rgba(255,255,255,.86); border:1px solid #97b4dc; color:var(--geo-blue-deep); }
+    .geo-secondary-btn:hover { background:#fff; color:var(--geo-blue-deep); transform:translateY(-2px); }
+    .geo-art { position:relative; margin:1rem auto 0; max-width:520px; padding:1.2rem 0 2rem; }
+    .geo-visual-logo { display:flex; justify-content:center; align-items:center; gap:.8rem; margin:0 auto 1rem; font-size:.94rem; color:#274c7f; font-weight:800; }
+    .geo-visual-logo img { height:48px; width:auto; max-width:155px; object-fit:contain; }
+    .geo-window { position:relative; width:82%; margin:0 auto; padding:8px; background:#0d2950; border:5px solid #18385f; border-radius:15px; box-shadow:0 25px 46px rgba(14,59,113,.22); }
+    .geo-window-bar { display:flex; align-items:center; gap:5px; height:23px; background:#edf4ff; padding:0 9px; border-radius:5px 5px 0 0; }
+    .geo-window-bar i { width:7px; height:7px; border-radius:50%; background:#b9cce3; }
+    .geo-window-bar span { font-size:.56rem; color:#65809e; margin-left:5px; }
+    .geo-window img { display:block; width:100%; height:225px; background:#fff; object-fit:contain; object-position:center; border-radius:0 0 6px 6px; }
+    .geo-window-stand { width:18%; height:18px; background:linear-gradient(#7e9cb9,#c5d5e7); margin:0 auto; clip-path:polygon(27% 0,73% 0,91% 100%,9% 100%); }
+    .geo-window-foot { height:8px; width:31%; background:linear-gradient(90deg,#9fb6d0,#dbe5ef,#9fb6d0); border-radius:100% 100% 5px 5px; margin:auto; }
+    .geo-float { position:absolute; padding:.5rem .7rem; border-radius:12px; background:rgba(255,255,255,.94); border:1px solid #dce7f6; color:#2d588a; font-size:.75rem; font-weight:750; box-shadow:0 9px 25px rgba(36,87,142,.11); }
+    .geo-float.one { top:23%; right:-1%; } .geo-float.two { top:48%; left:-2%; } .geo-float.three { bottom:17%; right:-4%; }
+    .geo-benefits { position:relative; z-index:2; margin-top:-4.25rem; }
+    .geo-benefit { height:100%; background:#fff; border:1px solid var(--geo-border); box-shadow:0 8px 22px rgba(21,65,120,.08); padding:1.2rem; border-radius:14px; }
+    .geo-benefit-icon { width:45px; height:45px; display:grid; place-items:center; border-radius:14px; background:#e4efff; color:#0865d0; font-size:1.27rem; font-weight:850; margin-bottom:.85rem; }
+    .geo-benefit:nth-child(2) .geo-benefit-icon { background:#e8f7fe; color:#087fba; }
+    .geo-benefit h2 { font-size:1.02rem; font-weight:790; margin:0 0 .13rem; }
+    .geo-benefit .geo-benefit-ko { font-size:.86rem; color:var(--geo-blue-deep); font-weight:690; margin-bottom:.42rem; }
+    .geo-benefit p { margin:0; font-size:.87rem; color:var(--geo-muted); line-height:1.65; word-break:keep-all; }
+    .geo-section { padding:3.5rem 0 0; }
+    .geo-section-head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:.65rem 1rem; margin-bottom:.35rem; }
+    .geo-section-title { font-size:clamp(1.66rem,2.55vw,2.12rem); color:var(--geo-navy)!important; font-weight:850; letter-spacing:-.04em; margin:0; }
+    .geo-section-title small { color:#6c86aa; font-size:.88rem; font-weight:630; letter-spacing:0; margin-left:.4rem; }
+    .geo-section-intro { margin:0 0 1.4rem; color:var(--geo-muted); font-size:.94rem; line-height:1.7; }
+    .geo-plain-link { color:var(--geo-blue); font-weight:750; font-size:.88rem; }
+    .geo-plain-link:hover { color:var(--geo-blue-deep); text-decoration:underline; }
+    .geo-workflow { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.8rem; }
+    .geo-step { position:relative; display:flex; flex-direction:column; height:100%; min-height:220px; padding:1.1rem 1rem; border:1px solid var(--geo-border); border-radius:13px; background:#fff; box-shadow:0 3px 10px rgba(16,53,104,.035); color:inherit; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .geo-step:hover { transform:translateY(-4px); border-color:#85b2ed; box-shadow:0 13px 25px rgba(13,63,127,.11); color:inherit; }
+    .geo-step:focus-visible,.geo-primary-btn:focus-visible,.geo-secondary-btn:focus-visible,.geo-plain-link:focus-visible { outline:3px solid #f3a934; outline-offset:3px; }
+    .geo-step-no { display:inline-flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:50%; background:#075bcb; color:#fff; font-size:.77rem; font-weight:850; margin-bottom:.9rem; }
+    .geo-step-phase { text-transform:uppercase; letter-spacing:.075em; font-size:.67rem; font-weight:740; color:#7290b5; margin-bottom:.35rem; }
+    .geo-step h3 { font-size:1rem!important; font-weight:810; line-height:1.35; color:var(--geo-navy)!important; margin:0 0 .22rem!important; }
+    .geo-step-sub { color:#4372aa; font-size:.77rem; margin-bottom:.5rem; font-weight:550; }
+    .geo-step p { color:var(--geo-muted); font-size:.82rem; line-height:1.55; margin:0 0 .9rem; word-break:keep-all; }
+    .geo-step-go { color:var(--geo-blue); font-weight:750; font-size:.8rem; margin-top:auto; }
+    .geo-detail { padding:2.1rem 0 4.7rem; }
+    .geo-detail-panel { height:100%; background:#fbfdff; border:1px solid var(--geo-border); border-radius:15px; padding:1.3rem 1.4rem; }
+    .geo-detail-panel h2 { color:var(--geo-navy)!important; font-size:1.14rem; font-weight:800; margin:0 0 .25rem; }
+    .geo-detail-panel .panel-sub { font-size:.84rem; color:#6784a6; font-weight:610; margin-bottom:.95rem; }
+    .geo-detail-panel p { font-size:.88rem; line-height:1.7; color:var(--geo-muted); }
+    .geo-data-tag { font-size:.75rem; color:#3c689a; background:#ebf3ff; padding:.25rem .58rem; border-radius:30px; display:inline-block; margin:0 .3rem .5rem 0; }
+    .geo-dataset-name { font-weight:800; color:var(--geo-blue-deep); font-size:1.08rem; }
+    .geo-resource-list { list-style:none; padding:0; margin:0; }
+    .geo-resource-list li + li { margin-top:.58rem; }
+    .geo-resource-list a { display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.64rem .75rem; border:1px solid #e4edf8; border-radius:8px; color:#315c8a; background:#f1f6fd; font-weight:650; font-size:.84rem; }
+    .geo-resource-list a:hover { background:#e5f0ff; }
+    .geo-tool-links { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+    .geo-tool-links a { font-size:.86rem; font-weight:630; color:var(--geo-blue-deep); }
+    .geo-tool-links a:hover { text-decoration:underline; }
+    .geo-footer { background:#102849; color:#d8e6f6; padding:1.8rem 0; }
+    .geo-footer strong { color:#fff; }
+    .geo-footer p { font-size:.83rem; margin:.4rem 0 0; color:#b8cde2; }
+    .geo-footer a { color:#d8e6f6; font-size:.83rem; margin-left:1rem; }
+    .geo-footer a:hover { text-decoration:underline; color:#fff; }
+    @media (max-width:1199px) { .geo-workflow { grid-template-columns:repeat(3,minmax(0,1fr)); } .geo-step { min-height:205px; } }
+    @media (max-width:991px) {
+      .geo-page .site-navbar .nav-link.active { border-bottom:0; }
+      .geo-hero { padding-bottom:5.5rem; }
+      .geo-art { max-width:460px; }
+      .geo-benefits { margin-top:-3.3rem; }
+    }
+    @media (max-width:767px) {
+      .geo-hero { padding:1rem 0 5.2rem; }
+      .geo-crumb { margin-bottom:1.4rem; }
+      .geo-workflow { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .geo-benefit { padding:1rem; }
+      .geo-section { padding-top:2.9rem; }
+      .geo-section-title small { display:block; margin:.25rem 0 0; }
+      .geo-visual-logo { margin-top:.2rem; }
+      .geo-float { font-size:.69rem; }
+      .geo-footer a { margin:0 1rem 0 0; }
+    }
+    @media (max-width:480px) {
+      .geo-hero h1 { font-size:2.3rem; }
+      .geo-hero-korean { font-size:1.18rem; }
+      .geo-hero-copy { font-size:.92rem; }
+      .geo-primary-btn,.geo-secondary-btn { padding:.7rem 1rem; font-size:.85rem; }
+      .geo-hero { padding-bottom:4.8rem; }
+      .geo-workflow { grid-template-columns:1fr; }
+      .geo-step { min-height:auto; padding:1.12rem 1.2rem; }
+      .geo-step p { margin-bottom:.6rem; }
+      .geo-float.one { right:0; }.geo-float.two { left:0; }.geo-float.three { right:0; }
+      .geo-window img { height:195px; }
+      .geo-detail-panel { padding:1.1rem; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .geo-step,.geo-primary-btn,.geo-secondary-btn { transition:none; } }
   </style>
 </head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+<body class="geo-page">
+  <nav class="navbar navbar-expand-lg navbar-light site-navbar" aria-label="메인 메뉴">
     <div class="container">
       <a class="navbar-brand" href="../../index.html">
-        <img src="../../assets/images/logo.png" alt="Logo" style="width:80px" class="d-inline-block align-text-top">
-        Kang's Bioinformatics
+        <img src="../../assets/images/logo.png" alt="" aria-hidden="true" width="45" height="45">
+        <span class="brand-text">Kang's Bioinformatics</span>
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="메뉴 열기">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="메뉴 열기">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="../../index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link active" href="../../e-learning.html">E-learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../members.html">Members</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../publications.html">Publications</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="../../e-learning.html">E-learning</a></li>
+          <li class="nav-item"><a class="nav-link" href="../../bioinformatics-analysis.html">Bioinformatics Analysis</a></li>
         </ul>
       </div>
     </div>
   </nav>
 
-  <header class="course-hero py-5">
-    <div class="container text-center py-3">
-      <span class="badge rounded-pill bg-light text-primary mb-3">Public Data Analysis</span>
-      <h1 class="display-5 fw-bold mb-3">GEO Microarray Analysis</h1>
-      <p class="lead mb-3">Windows 환경 설정부터 GEO 공개데이터의 DEG 및 기능분석까지 진행하는 입문 실습입니다.</p>
-      <span class="badge badge-level px-3 py-2">초급 · R 기반 · 단계별 실습</span>
-    </div>
-  </header>
+  <main>
+    <header class="geo-hero">
+      <div class="container">
+        <nav aria-label="Breadcrumb" class="geo-crumb">
+          <a href="../../index.html">Home</a><span aria-hidden="true">›</span>
+          <a href="../../e-learning.html">E-learning</a><span aria-hidden="true">›</span>
+          <span aria-current="page">NCBI GEO Analysis</span>
+        </nav>
+        <div class="row align-items-center g-4">
+          <div class="col-lg-7">
+            <div class="geo-eyebrow">Hands-on Tutorial · Public Data Analysis</div>
+            <h1>NCBI GEO Data Analysis</h1>
+            <div class="geo-hero-korean">공개 유전자 발현 데이터 분석 실습</div>
+            <p class="geo-hero-copy">
+              NCBI Gene Expression Omnibus(GEO)는 연구자들이 공개한 유전자 발현 데이터를 제공하는 데이터베이스입니다.
+              이 과정에서는 GEO 데이터 검색부터 다운로드, GEO2R 분석, R 기반 차등발현유전자(DEG) 분석,
+              GO·KEGG 기능 분석과 STRING·Cytoscape 네트워크 분석까지 단계별로 학습합니다.
+            </p>
+            <p class="geo-hero-en" lang="en">Hands-on tutorials for public gene expression data analysis using GEO, GEO2R, R and bioinformatics tools.</p>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="geo-primary-btn" href="00_installation.html">시작하기: Step 00 <span aria-hidden="true">→</span></a>
+              <a class="geo-secondary-btn" href="#workflow">전체 실습 과정 보기 <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="geo-art" aria-label="NCBI GEO 화면 예시">
+              <div class="geo-visual-logo"><img src="../../assets/images/geo.png" alt="NCBI GEO 로고" loading="eager"><span>Gene Expression Omnibus</span></div>
+              <div class="geo-window">
+                <div class="geo-window-bar" aria-hidden="true"><i></i><i></i><i></i><span>NCBI GEO · Public Expression Data</span></div>
+                <img src="assets/images/geo-home.png" alt="NCBI GEO 데이터베이스 홈페이지 화면 예시" loading="eager">
+              </div>
+              <div class="geo-window-stand" aria-hidden="true"></div><div class="geo-window-foot" aria-hidden="true"></div>
+              <span class="geo-float one" aria-hidden="true">⌕ GEO Data Search</span>
+              <span class="geo-float two" aria-hidden="true">↗ DEG Analysis</span>
+              <span class="geo-float three" aria-hidden="true">✧ Functional Analysis</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-  <main class="container py-5">
-    <section class="mb-5">
-      <h2 class="h3 mb-3">교육 목표</h2>
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <p class="mb-2">GEO에서 연구 목적에 맞는 microarray 데이터를 찾고, R을 이용해 재현 가능한 분석을 수행합니다.</p>
-          <p class="mb-0">하나의 예제 데이터셋을 이용하여 다운로드, 임상정보 정리, QC, DEG, 시각화 및 기능분석을 순서대로 연결합니다.</p>
+    <section class="geo-benefits" aria-label="실습 과정의 특징">
+      <div class="container">
+        <div class="row g-3">
+          <div class="col-sm-6 col-lg-3"><div class="geo-benefit"><div class="geo-benefit-icon" aria-hidden="true">▤</div><h2>Public Data</h2><div class="geo-benefit-ko">공개 데이터 활용</div><p>NCBI GEO의 실제 유전자 발현 데이터를 사용해 분석합니다.</p></div></div>
+          <div class="col-sm-6 col-lg-3"><div class="geo-benefit"><div class="geo-benefit-icon" aria-hidden="true">&lt;/&gt;</div><h2>Reproducible Analysis</h2><div class="geo-benefit-ko">재현 가능한 분석</div><p>R 분석 코드와 예제 데이터를 활용해 직접 실습합니다.</p></div></div>
+          <div class="col-sm-6 col-lg-3"><div class="geo-benefit"><div class="geo-benefit-icon" aria-hidden="true">◎</div><h2>Step-by-step Tutorial</h2><div class="geo-benefit-ko">단계별 실습</div><p>데이터 검색부터 통계 분석과 결과 해석까지 이어집니다.</p></div></div>
+          <div class="col-sm-6 col-lg-3"><div class="geo-benefit"><div class="geo-benefit-icon" aria-hidden="true">✦</div><h2>Biological Interpretation</h2><div class="geo-benefit-ko">생물학적 결과 해석</div><p>유전자 기능과 네트워크 결과를 해석하는 방법을 다룹니다.</p></div></div>
         </div>
       </div>
     </section>
 
-    <section>
-      <div class="d-flex justify-content-between align-items-end mb-3">
-        <div>
-          <h2 class="h3 mb-1">실습 과정</h2>
-          <p class="text-muted mb-0">Step 00부터 순서대로 진행하세요.</p>
+    <section id="workflow" class="geo-section" aria-labelledby="workflow-title">
+      <div class="container">
+        <div class="geo-section-head">
+          <h2 id="workflow-title" class="geo-section-title">Tutorial Workflow <small>실습 전체 흐름</small></h2>
+          <a class="geo-plain-link" href="00_installation.html">첫 단계부터 시작하기 <span aria-hidden="true">→</span></a>
         </div>
-      </div>
-
-      <div class="row g-4">
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">00</span>
-              <h3 class="h5">R과 RStudio 설치</h3>
-              <p class="text-muted">Windows에서 R, RStudio 및 실습 패키지를 설치하고 환경을 점검합니다.</p>
-              <a href="00_installation.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
+        <p class="geo-section-intro">실습 과정은 총 10단계(Step 00~09)로 구성되어 있습니다. 각 단계를 선택하면 해당 교육 페이지로 이동합니다.</p>
+        <div class="geo-workflow">
+          <a class="geo-step" href="00_installation.html" aria-label="Step 00: R과 RStudio 설치">
+            <span class="geo-step-no">00</span>
+            <span class="geo-step-phase">환경 설정</span>
+            <h3>R과 RStudio 설치</h3>
+            <div class="geo-step-sub" lang="en">Setup &amp; Installation</div>
+            <p>Windows에서 R과 RStudio를 설치하고 분석 환경을 준비합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="01_r_basics.html" aria-label="Step 01: R 기초와 작업환경">
+            <span class="geo-step-no">01</span>
+            <span class="geo-step-phase">R 기초</span>
+            <h3>R 기초와 작업환경</h3>
+            <div class="geo-step-sub" lang="en">R Basics</div>
+            <p>RStudio 사용법, 프로젝트, 데이터프레임과 패키지 사용법을 익힙니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="02_geo_search.html" aria-label="Step 02: GEO 데이터 검색">
+            <span class="geo-step-no">02</span>
+            <span class="geo-step-phase">GEO 검색</span>
+            <h3>GEO 데이터 검색</h3>
+            <div class="geo-step-sub" lang="en">GEO Search</div>
+            <p>NCBI GEO에서 공개 유전자 발현 데이터를 검색하고 GSE·GSM·GPL을 이해합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="03_dataset_selection.html" aria-label="Step 03: 데이터셋 선정">
+            <span class="geo-step-no">03</span>
+            <span class="geo-step-phase">데이터 선정</span>
+            <h3>데이터셋 선정</h3>
+            <div class="geo-step-sub" lang="en">Dataset Selection</div>
+            <p>GSE 기록과 메타데이터를 확인하고 분석 가능한 비교군을 선정합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="04_geo2r.html" aria-label="Step 04: GEO2R 차등발현 분석">
+            <span class="geo-step-no">04</span>
+            <span class="geo-step-phase">GEO2R</span>
+            <h3>GEO2R 차등발현 분석</h3>
+            <div class="geo-step-sub" lang="en">GEO2R Analysis</div>
+            <p>웹 기반 GEO2R에서 그룹을 설정하고 DEG 분석 결과를 읽습니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="05_geo2r_script.html" aria-label="Step 05: R 기반 DEG 분석">
+            <span class="geo-step-no">05</span>
+            <span class="geo-step-phase">R 분석</span>
+            <h3>R 기반 DEG 분석</h3>
+            <div class="geo-step-sub" lang="en">GEOquery &amp; limma</div>
+            <p>발현값·임상정보·유전자 주석을 정리하고 limma 결과를 GEO2R과 비교합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="06_go_kegg.html" aria-label="Step 06: GO·KEGG·PPI 분석 개요">
+            <span class="geo-step-no">06</span>
+            <span class="geo-step-phase">기능 분석 기초</span>
+            <h3>GO·KEGG·PPI 분석 개요</h3>
+            <div class="geo-step-sub" lang="en">Functional Analysis</div>
+            <p>GO·KEGG·PPI 분석의 목적과 ORA·GSEA의 차이를 이해합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="07_david.html" aria-label="Step 07: DAVID GO·Pathway 분석">
+            <span class="geo-step-no">07</span>
+            <span class="geo-step-phase">DAVID</span>
+            <h3>DAVID GO·Pathway 분석</h3>
+            <div class="geo-step-sub" lang="en">DAVID Enrichment</div>
+            <p>Up·Down DEG에서 과대표현된 생물학적 기능 및 경로를 탐색합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="08_string.html" aria-label="Step 08: STRING 네트워크 분석">
+            <span class="geo-step-no">08</span>
+            <span class="geo-step-phase">STRING</span>
+            <h3>STRING 네트워크 분석</h3>
+            <div class="geo-step-sub" lang="en">PPI Network Analysis</div>
+            <p>STRING에서 단백질 연관 네트워크와 기능 풍부도 결과를 확인합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="geo-step" href="09_cytoscape.html" aria-label="Step 09: Cytoscape 네트워크 분석">
+            <span class="geo-step-no">09</span>
+            <span class="geo-step-phase">Cytoscape</span>
+            <h3>Cytoscape 네트워크 분석</h3>
+            <div class="geo-step-sub" lang="en">Network &amp; Hub Analysis</div>
+            <p>stringApp·MCODE·cytoHubba로 모듈과 hub gene 후보를 탐색합니다.</p>
+            <span class="geo-step-go">실습 보기 <span aria-hidden="true">→</span></span>
+          </a>
         </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">01</span>
-              <h3 class="h5">R 기초와 작업환경</h3>
-              <p class="text-muted">RStudio 화면, 프로젝트, 작업 폴더, 패키지와 데이터프레임을 익힙니다.</p>
-              <a href="01_r_basics.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">02</span>
-              <h3 class="h5">GEO 데이터 검색</h3>
-              <p class="text-muted">GEO의 GSE, GSM, GPL 구조를 이해하고 적절한 데이터셋을 선택합니다.</p>
-              <a href="02_geo_search.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">03</span>
-              <h3 class="h5">데이터셋 선정</h3>
-              <p class="text-muted">GSE record와 metadata를 읽고 분석 가능한 비교를 정의합니다.</p>
-              <a href="03_dataset_selection.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">04</span>
-              <h3 class="h5">GEO2R 빠른 분석</h3>
-              <p class="text-muted">웹에서 그룹을 정의하고 DEG 결과와 분석 방향을 확인합니다.</p>
-              <a href="04_geo2r.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4">
-          <div class="card course-card h-100">
-            <div class="card-body p-4">
-              <span class="step-number mb-3">05</span>
-              <h3 class="h5">직접 분석과 GEO2R 비교</h3>
-              <p class="text-muted">임상정보에서 그룹을 선택하고 Probe ID를 gene symbol로 통합하여 limma 분석을 수행합니다.</p>
-              <a href="05_geo2r_script.html" class="btn btn-primary">실습 시작</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">06</span><h3 class="h5">GO·KEGG·PPI 이해와 입력 준비</h3><p class="text-muted">DEG 이후 기능분석을 수행하는 이유와 ORA·GSEA의 차이를 이해하고 입력자료를 준비합니다.</p><a href="06_go_kegg.html" class="btn btn-primary">학습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">07</span><h3 class="h5">DAVID GO·Pathway</h3><p class="text-muted">Up·Down DEG에서 과대표현된 기능과 경로를 탐색합니다.</p><a href="07_david.html" class="btn btn-primary">실습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">08</span><h3 class="h5">STRING 기능분석</h3><p class="text-muted">단백질 연관 network, PPI enrichment와 GO·pathway 결과를 해석합니다.</p><a href="08_string.html" class="btn btn-primary">실습 시작</a></div></div></div>
-        <div class="col-md-6 col-xl-4"><div class="card course-card h-100"><div class="card-body p-4"><span class="step-number mb-3">09</span><h3 class="h5">Cytoscape 네트워크</h3><p class="text-muted">stringApp·MCODE·cytoHubba로 module과 hub gene 후보를 탐색합니다.</p><a href="09_cytoscape.html" class="btn btn-primary">실습 시작</a></div></div></div>
       </div>
     </section>
 
-    <div class="text-center mt-5">
-      <a href="../../e-learning.html" class="btn btn-outline-secondary">← E-learning으로 돌아가기</a>
-    </div>
+    <section class="geo-detail" aria-label="실습 데이터와 추가 자료">
+      <div class="container">
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="geo-detail-panel">
+              <h2>Example Dataset</h2>
+              <div class="panel-sub">실습에서 사용하는 예제 데이터</div>
+              <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE69657" target="_blank" rel="noopener noreferrer" class="geo-dataset-name">GSE69657 ↗</a>
+              <p class="mt-2 mb-3">대장암(Colorectal cancer) 조직의 마이크로어레이 데이터를 이용해 GEO2R 및 R 기반 분석을 실습합니다.</p>
+              <span class="geo-data-tag">30 samples</span>
+              <span class="geo-data-tag">GPL570</span>
+              <span class="geo-data-tag">Microarray</span>
+              <p class="mt-2 mb-0">예제 데이터의 그룹 설정과 분석 방법은 Step 04~05에서 확인할 수 있습니다.</p>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="geo-detail-panel">
+              <h2>Learning Materials</h2>
+              <div class="panel-sub">바로 사용할 수 있는 실습 자료</div>
+              <ul class="geo-resource-list">
+                <li><a href="scripts/04_geo2r_gse69657.R" download>GEO2R 결과 확인용 R 스크립트 <span aria-hidden="true">↓</span></a></li>
+                <li><a href="scripts/05_geo2r_gse69657.R" download>GEO 전처리·DEG 분석 R 스크립트 <span aria-hidden="true">↓</span></a></li>
+                <li><a href="05_geo2r_script.html">데이터 처리 및 limma 분석 가이드 <span aria-hidden="true">→</span></a></li>
+                <li><a href="06_go_kegg.html">GO·KEGG 기능 분석 학습 자료 <span aria-hidden="true">→</span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="geo-detail-panel">
+              <h2>Related Resources</h2>
+              <div class="panel-sub">공식 데이터베이스 및 분석 도구</div>
+              <div class="geo-tool-links">
+                <a href="https://www.ncbi.nlm.nih.gov/geo/" target="_blank" rel="noopener noreferrer">↗ NCBI GEO</a>
+                <a href="https://www.ncbi.nlm.nih.gov/geo/geo2r/" target="_blank" rel="noopener noreferrer">↗ GEO2R</a>
+                <a href="https://bioconductor.org/packages/GEOquery/" target="_blank" rel="noopener noreferrer">↗ GEOquery</a>
+                <a href="https://bioconductor.org/packages/limma/" target="_blank" rel="noopener noreferrer">↗ limma</a>
+                <a href="https://davidbioinformatics.nih.gov/" target="_blank" rel="noopener noreferrer">↗ DAVID</a>
+                <a href="https://string-db.org/" target="_blank" rel="noopener noreferrer">↗ STRING</a>
+                <a href="https://cytoscape.org/" target="_blank" rel="noopener noreferrer">↗ Cytoscape</a>
+                <a href="../../e-learning.html">↗ E-learning</a>
+              </div>
+              <p class="mb-0 mt-3">공식 사이트의 화면이나 버전은 실습 자료와 다를 수 있습니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <footer class="geo-footer">
+    <div class="container d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+      <div><strong>Kang's Bioinformatics</strong><p>Research · Education · Data Analysis</p></div>
+      <div>
+        <a href="../../index.html">Home</a>
+        <a href="../../e-learning.html">E-learning</a>
+        <a href="../../publications.html">Publications</a>
+      </div>
+    </div>
+  </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
